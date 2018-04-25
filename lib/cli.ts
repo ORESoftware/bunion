@@ -13,7 +13,7 @@ const options = [
     help: 'Print tool version and exit.'
   },
   {
-    names: ['help', 'h'],
+    names: ['help'],
     type: 'bool',
     help: 'Print this help and exit.'
   },
@@ -42,6 +42,16 @@ const options = [
     type: 'arrayOfString',
     default: [] as Array<string>
   },
+  {
+    names: ['highlight'],
+    type: 'bool',
+    default: true
+  },
+  {
+    names: ['no-highlight'],
+    type: 'bool',
+    default: false
+  }
 
 ];
 
@@ -71,6 +81,7 @@ const maxLevel = String(level || 'trace').toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel);
 const andMatches = flattenDeep([opts.must_match]).filter(v => v).map(v => new RegExp(v, 'g'));
 const orMatches = flattenDeep([opts.match]).filter(v => v).map(v => new RegExp(v, 'g'));
+const highlight = opts.highlight || opts.no_highlight !== true;
 
 if (maxIndex < 0) {
   throw new Error('Your value for env var "bunion_max_level" is not set to a valid value (\'WARN\' | \'INFO\' | \'DEBUG\' | \'ERROR\' | \'TRACE\')');
@@ -111,23 +122,17 @@ process.stdin.resume().pipe(createParser())
     return;
   }
   
-  // if (!mustMatches(v.value)) {
-  //   console.log('did not match AND:', v.value);
-  //   return;
-  // }
-  //
-  // if (!matches(v.value)) {
-  //   console.log('did not match OR:', v.value);
-  //   return;
-  // }
-  
-  if(allMatches.length > 0){
+  if(highlight){
     v.value = getHighlightedString(v.value);
   }
- 
   
-  if (v.level === 'ERROR') {
-    process.stderr.write(`${v.date} ${v.appName} ${chalk.red(v.level)} ${chalk.black.bold(v.value)} \n`);
+  if (v.level === 'FATAL') {
+    process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.red.bold(v.value)} \n`);
+    return;
+  }
+  
+  if (v.level === 'ERROR' && maxIndex < 5) {
+    process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.whiteBright.bold(v.value)} \n`);
     return;
   }
   
@@ -137,7 +142,7 @@ process.stdin.resume().pipe(createParser())
   }
   
   if (v.level === 'DEBUG' && maxIndex < 3) {
-    process.stdout.write(`${v.date} ${v.appName} ${chalk.yellow(v.level)} ${chalk.blue(v.value)} \n`);
+    process.stdout.write(`${v.date} ${v.appName} ${chalk.yellowBright.bold(v.level)} ${chalk.yellow(v.value)} \n`);
     return;
   }
   
