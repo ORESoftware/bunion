@@ -7,4 +7,4 @@ test
 *.md
 *.json
 *.DS_Store
-
+lib
