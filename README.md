@@ -1,50 +1,40 @@
 
 
-# Your Project Readme Goes Here
-
-Steps to making this project skeleton into your own project.
-
-1. Clone this repo: <br>
-    `git clone https://github.com/your-org/bunion.git YOUR-PROJECT-NAME`
-2. Update package.json so that `name` property matches `YOUR-PROJECT-NAME`.
-3. Update other package.json fields so that they are accurate.
-
-To check to see if `YOUR-PROJECT-NAME` is available on NPM, uses this command at the command line:
-
-`$ npm view YOUR-PROJECT-NAME`  # will give you a 404 if the name is available.
+# Bunion - Bunyan's weird, simpleton cousin. Has more foot-related problems.
 
 
-### This project skeleton uses:
+## <i> Installation </i>
 
-* the correct semver initial value (npm init defaults to 1.0.0 which is just wrong).
-* typescript 2.x
-* nodejs version 9
-* travis (for automated testing of your library)
-* MIT license
-* good simple default settings for .gitignore / .npmignore
-
-
-
-To compile your *.ts files to a dist directory (keeps your source and target files separate),
-<br>
-simply add this to tsconfig.json:
-
-
-```json
-"compilerOptions": {
-    "outDir": "dist"
-}
+```bash
+  npm install bunion
 ```
 
-and
+## Usage
 
-```json
- "include": [
-    "src"
-  ]
+```javascript
+
+import log from 'bunion';
+
+log.info('just saying hi.');
+log.warn('shit hit the fan');
+log.error(new Error('foo'));
+
 ```
 
-For small libraries with a couple of files, I find that using a dist folder (target directory) is more trouble
-than it's worth. For projects with just one .ts/.js file, you can just get rid of the lib folder, and put your index.ts
-file in the root of the project. In that case, make sure to change the `main` property in package.json from 'lib/index.js' to
-'index.js'. Same with the `typings/types` properties.
+and then you can read the logs via:
+
+
+```bash
+
+ $ node foo.js | bunion --level warn
+
+```
+
+Use the following env value for higher performance:
+
+
+```bash
+
+ $ bunion_max_level=warn node foo.js | bunion --level warn
+
+```
