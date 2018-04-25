@@ -1,13 +1,13 @@
 {
   "name": "bunion",
   "bin": {
-    "bunion": "lib/cli.js"
+    "bunion": "dist/cli.js"
   },
-  "version": "0.0.102",
+  "version": "0.0.103",
   "description": "Semver-oriented TypeScript library skeleton.",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "typings": "lib/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/bunion.d.ts",
+  "typings": "dist/bunion.d.ts",
   "scripts": {
     "test": "suman test"
   },
