@@ -32,6 +32,7 @@
     "@types/node": "^9.6.2"
   },
   "dependencies": {
-    "chalk": "^2.4.0"
+    "chalk": "^2.4.0",
+    "dashdash": "^1.14.1"
   }
 }
