@@ -96,13 +96,12 @@ const mustMatches = function (v: string) {
 const allMatches = andMatches.concat(orMatches);
 
 const getHighlightedString = function (str: string) {
-  return allMatches.map(function (v) {
-    return str.replace(v, function replacer(match, p1, p2, p3, offset, string) {
+  return allMatches.reduce(function (s, r) {
+    return s.replace(r, function replacer(match, p1, p2, p3, offset, string) {
       // p1 is nondigits, p2 digits, and p3 non-alphanumerics
-      return chalk.yellow.bold(match);
+      return chalk.magentaBright.bold(match);
     });
-  })
-  .join('');
+  }, str);
 };
 
 process.stdin.resume().pipe(createParser())
@@ -122,7 +121,10 @@ process.stdin.resume().pipe(createParser())
   //   return;
   // }
   
-  v.value = getHighlightedString(v.value);
+  if(allMatches.length > 0){
+    v.value = getHighlightedString(v.value);
+  }
+ 
   
   if (v.level === 'ERROR') {
     process.stderr.write(`${v.date} ${v.appName} ${chalk.red(v.level)} ${chalk.black.bold(v.value)} \n`);
@@ -135,12 +137,12 @@ process.stdin.resume().pipe(createParser())
   }
   
   if (v.level === 'DEBUG' && maxIndex < 3) {
-    process.stdout.write(`${v.date} ${v.appName} ${chalk.gray(v.level)} ${chalk.blue(v.value)} \n`);
+    process.stdout.write(`${v.date} ${v.appName} ${chalk.yellow(v.level)} ${chalk.blue(v.value)} \n`);
     return;
   }
   
   if (v.level === 'INFO' && maxIndex < 2) {
-    process.stdout.write(`${v.date} ${v.appName} ${chalk.gray(v.level)} ${chalk.cyan.bold(v.value)} \n`);
+    process.stdout.write(`${v.date} ${v.appName} ${chalk.cyan(v.level)} ${chalk.cyan.bold(v.value)} \n`);
     return;
   }
   
