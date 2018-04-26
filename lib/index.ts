@@ -71,7 +71,7 @@ const getJSON = function (level: string, args: any[], appName: string, isDefault
 
 export const getLogger = function (opts?: BunionOpts) {
   
-  const appName: string = opts && opts.appName || '';
+  const appName: string = String(opts && opts.appName || '');
   const isDefaultLogger: boolean = Boolean(opts && opts.isDefaultLogger);
   
   return {

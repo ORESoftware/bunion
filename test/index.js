@@ -19,6 +19,9 @@
 
 const Bunion = require('bunion');
 
+const v = Bunion.createLogger({})
+
+
 
 
 
