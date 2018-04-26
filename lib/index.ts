@@ -2,6 +2,7 @@
 
 import util = require('util');
 import chalk from 'chalk';
+import {customStringify} from "./util";
 
 export interface BunionJSON {
   '@bunion': true,
@@ -15,7 +16,8 @@ export interface BunionJSON {
 export interface BunionOpts {
   maxlevel?: 'WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL',
   appName?: string,
-  isDefaultLogger?: boolean
+  isDefaultLogger?: boolean,
+  fields?: object;
 }
 
 export const ordered = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
@@ -31,22 +33,8 @@ const defaultLoggerValues = {
   maxFieldKeys: 8
 };
 
-const customStringify = function (v: object) {
-  let cache = new Map<any, true>();
-  return JSON.stringify(v, function (key, value) {
-    if (typeof value === 'object' && value !== null) {
-      if (cache.get(value) === true) {
-        // Circular reference found, discard key
-        return;
-      }
-      // Store value in our collection
-      cache.set(value, true);
-    }
-    return value;
-  });
-};
 
-const getJSON = function (level: string, args: any[], appName: string, isDefaultLogger: boolean, fields?: object) {
+const getJSON = function (level: string, args: any[], appName: string, isDefaultLogger: boolean, fields: object) {
   
   if (isDefaultLogger) {
     appName = defaultLoggerValues.appName;
@@ -70,11 +58,11 @@ const getJSON = function (level: string, args: any[], appName: string, isDefault
     }
     
     if (a && a.message && a.stack && typeof a.stack === 'string') {
-      return ' (see below) \n\n' + a.stack.split('\n')
+      return ' (see below ⬃ ) \n\n' + a.stack.split('\n')
       .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v)).join('\n') + '\n';
     }
     
-    return ' (see below) \n\n' + util.inspect(a) + '\n';
+    return ' (see below ⬃ ) \n\n' + util.inspect(a) + '\n';
   });
   
   return customStringify({
@@ -88,98 +76,112 @@ const getJSON = function (level: string, args: any[], appName: string, isDefault
   }) + '\n';
 };
 
-export const getLogger = function (opts?: BunionOpts) {
+const getCombinedFields = function (v: object, fields: object) {
+  return Object.assign({}, v, fields);
+};
+
+export class BunionLogger {
   
-  const appName: string = String(opts && opts.appName || '');
+  appName: string;
+  isDefaultLogger: boolean;
+  fields: object;
   
-  console.log('the opts:', opts);
+  constructor(opts?: BunionOpts) {
+    this.appName = String(opts && opts.appName || '');
+    this.isDefaultLogger = Boolean(opts && opts.isDefaultLogger);
+    this.fields = opts && opts.fields || null;
+  }
   
-  // if(!appName){
-  //   throw new Error('"appName" is a required field.');
-  // }
+  getFields(){
+    return this.fields;
+  }
   
-  const isDefaultLogger: boolean = Boolean(opts && opts.isDefaultLogger);
+  child(v: object) {
+    return new BunionLogger({
+      appName: this.appName,
+      fields: Object.assign({}, this.fields || {}, v)
+    });
+  }
   
-  return {
-    
-    fatal(...args: any[]) {
-      process.stdout.write(getJSON('FATAL', args, appName, isDefaultLogger));
-    },
-    
-    fatalx(v: object, ...args: any[]) {
-      process.stdout.write(getJSON('FATAL', args, appName, isDefaultLogger, v));
-    },
-    
-    ////
-    
-    error(...args: any[]) {
-      if (maxIndex > 4) return;
-      process.stdout.write(getJSON('ERROR', args, appName, isDefaultLogger));
-    },
-    
-    errorx(v: object, ...args: any[]) {
-      if (maxIndex > 4) return;
-      process.stdout.write(getJSON('ERROR', args, appName, isDefaultLogger, v));
-    },
-    
-    ////
-    
-    warn(...args: any[]) {
-      if (maxIndex > 3) return;
-      process.stdout.write(getJSON('WARN', args, appName, isDefaultLogger));
-    },
-    
-    warnx(v: object, ...args: any[]) {
-      if (maxIndex > 3) return;
-      process.stdout.write(getJSON('WARN', args, appName, isDefaultLogger, v));
-    },
-    
-    ////
-    
-    info(...args: any[]) {
-      if (maxIndex > 2) return;
-      process.stdout.write(getJSON('INFO', args, appName, isDefaultLogger));
-    },
-    
-    infox(v: object, ...args: any[]) {
-      if (maxIndex > 2) return;
-      process.stdout.write(getJSON('INFO', args, appName, isDefaultLogger, v));
-    },
-    
-    ////
-    
-    debug(...args: any[]) {
-      if (maxIndex > 1) return;
-      process.stdout.write(getJSON('DEBUG', args, appName, isDefaultLogger));
-    },
-    
-    debugx(v: object, ...args: any[]) {
-      if (maxIndex > 1) return;
-      process.stdout.write(getJSON('DEBUG', args, appName, isDefaultLogger, v));
-    },
-    
-    /////
-    
-    trace(...args: any[]) {
-      if (maxIndex > 0) return;
-      process.stdout.write(getJSON('TRACE', args, appName, isDefaultLogger));
-    },
-    
-    tracex(v: object, ...args: any[]) {
-      if (maxIndex > 0) return;
-      process.stdout.write(getJSON('TRACE', args, appName, isDefaultLogger, v));
-    },
-    
-    //////
-    
-    isEnabled(level: string) {
-      const index = ordered.indexOf(String(level || '').toUpperCase());
-      if (index < 0) {
-        throw new Error(`The log level passed does not match one of ['WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL']`);
-      }
-      return index > maxIndex;
+  fatal(...args: any[]) {
+    process.stdout.write(getJSON('FATAL', args, this.appName, this.isDefaultLogger, this.fields));
+  }
+  
+  fatalx(v: object, ...args: any[]) {
+    process.stdout.write(getJSON('FATAL', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
+  }
+  
+  ////
+  
+  error(...args: any[]) {
+    if (maxIndex > 4) return;
+    process.stdout.write(getJSON('ERROR', args, this.appName, this.isDefaultLogger, this.fields));
+  }
+  
+  errorx(v: object, ...args: any[]) {
+    if (maxIndex > 4) return;
+    process.stdout.write(getJSON('ERROR', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
+  }
+  
+  ////
+  
+  warn(...args: any[]) {
+    if (maxIndex > 3) return;
+    process.stdout.write(getJSON('WARN', args, this.appName, this.isDefaultLogger, this.fields));
+  }
+  
+  warnx(v: object, ...args: any[]) {
+    if (maxIndex > 3) return;
+    process.stdout.write(getJSON('WARN', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
+  }
+  
+  ////
+  
+  info(...args: any[]) {
+    if (maxIndex > 2) return;
+    process.stdout.write(getJSON('INFO', args, this.appName, this.isDefaultLogger, this.fields));
+  }
+  
+  infox(v: object, ...args: any[]) {
+    if (maxIndex > 2) return;
+    process.stdout.write(getJSON('INFO', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
+  }
+  
+  ////
+  
+  debug(...args: any[]) {
+    if (maxIndex > 1) return;
+    process.stdout.write(getJSON('DEBUG', args, this.appName, this.isDefaultLogger, this.fields));
+  }
+  
+  debugx(v: object, ...args: any[]) {
+    if (maxIndex > 1) return;
+    process.stdout.write(getJSON('DEBUG', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
+  }
+  
+  /////
+  
+  trace(...args: any[]) {
+    if (maxIndex > 0) return;
+    process.stdout.write(getJSON('TRACE', args, this.appName, this.isDefaultLogger, this.fields));
+  }
+  
+  tracex(v: object, ...args: any[]) {
+    if (maxIndex > 0) return;
+    process.stdout.write(getJSON('TRACE', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
+  }
+  
+  isEnabled(level: string) {
+    const index = ordered.indexOf(String(level || '').toUpperCase());
+    if (index < 0) {
+      throw new Error(`The log level passed does not match one of ['WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL']`);
     }
-  };
+    return index > maxIndex;
+  }
+}
+
+export const getLogger = function (opts?: BunionOpts) {
+  return new BunionLogger(opts);
 };
 
 export const createLogger = getLogger;

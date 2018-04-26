@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import {createParser} from "./json-parser";
 import {BunionJSON, log, ordered} from "./index";
 const dashdash = require('dashdash');
+import readline = require('readline');
 
 const options = [
   {
@@ -53,11 +54,13 @@ const options = [
     default: false
   },
   {
+    // names: ['dark-background', 'dark-bg', 'darkbg', 'dark'],
     names: ['dark'],
     type: 'bool',
-    default: true
+    default: false
   },
   {
+    // names: ['light-background', 'light-bg', 'lightbg', 'light'],
     names: ['light'],
     type: 'bool',
     default: false
@@ -65,12 +68,23 @@ const options = [
   {
     names: ['background', 'bg'],
     type: 'string',
-    default: 'dark'
-  }
+    default: '',
+    enum: ['light', 'dark']
+  },
+  {
+    names: ['only-parseable', 'only'],
+    type: 'bool',
+    default: false
+  },
+  {
+    names: ['no-show-match-count'],
+    type: 'bool',
+    default: false
+  },
 
 ];
 
-let opts, parser = dashdash.createParser({options: options});
+let opts: any, parser = dashdash.createParser({options: options});
 
 try {
   opts = parser.parse(process.argv);
@@ -96,7 +110,27 @@ const maxLevel = String(level || 'trace').toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel);
 const andMatches = flattenDeep([opts.must_match]).filter(v => v).map(v => new RegExp(v, 'g'));
 const orMatches = flattenDeep([opts.match]).filter(v => v).map(v => new RegExp(v, 'g'));
-const highlight = opts.highlight || opts.no_highlight !== true;
+const highlight = opts.highlight && opts.no_highlight !== true || false;
+const bg = String(opts.background || '').toLowerCase();
+
+if (bg && !['dark', 'light'].includes(bg)) {
+  throw new Error('Use either --bg=dark or --bg=light...');
+}
+
+if (opts.light && opts.dark) {
+  throw new Error('User specified both --dark and --light, pick one.');
+}
+
+if (bg === 'dark' && opts.light) {
+  throw new Error('User specified both --bg=dark and --light, pick one.');
+}
+
+if (bg === 'light' && opts.dark) {
+  throw new Error('User specified both --bg=light and --dark, pick one.');
+}
+
+const darkBackground = (opts.bg !== 'light' && !opts.light);
+const lightBackground = !darkBackground;
 
 if (maxIndex < 0) {
   throw new Error('Your value for env var "bunion_max_level" is not set to a valid value (\'WARN\' | \'INFO\' | \'DEBUG\' | \'ERROR\' | \'TRACE\')');
@@ -129,61 +163,86 @@ const getHighlightedString = function (str: string) {
   }, str);
 };
 
-const getFields = function(fields: any){
-  return Object.keys(fields).reduce(function(s, k){
-      return s+= `(${k}=${String(fields[k])}) `;
-  },'');
+const getFields = function (fields: any) {
+  return Object.keys(fields).reduce(function (s, k) {
+    return s += `(${k}=${String(fields[k])}) `;
+  }, '');
   
 };
 
-console.log('max level:',maxLevel);
-console.log('all matches:',allMatches);
+const getDarkOrlight = function (str: string) {
+  return darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;
+};
 
-process.stdin.resume().pipe(createParser())
+const getMatchCountLine = function (matchCount: number, filteredCount: number) {
+  const total = `[${chalk.cyan(String(matchCount + filteredCount))}]`;
+  const match = `[${chalk.cyan(String(matchCount))}]`;
+  const filtered = `[${chalk.cyan(String(filteredCount))}]`;
+  
+  return chalk.magenta.bold(`Total records so far: ${total}, matched records:` +
+    ` ${match}, records that were filtered out: ${filtered}.`);
+};
+
+let filteredCount = 0, matchCount = 0;
+
+const jsonParser = createParser({
+  onlyParseableOutput: Boolean(opts.only_parseable),
+  clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
+});
+
+process.stdin.resume().pipe(jsonParser)
 .on('bunion-json', function (v: BunionJSON) {
   
+  if (allMatches.length > 0 && filteredCount > 0 && opts.no_show_match_count !== true) {
+    readline.clearLine(process.stdout, 0);  // clear current text
+    readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
+  }
+  
   if (!(matches(v.value) && mustMatches(v.value))) {
+    filteredCount++;
+    if (opts.no_show_match_count !== true) {
+      process.stdout.write(getMatchCountLine(matchCount, filteredCount));
+    }
     return;
   }
   
+  matchCount++;
   let fields = '';
   
   if (highlight) {
     v.value = getHighlightedString(v.value);
   }
   
-  if(v.fields){
+  if (v.fields) {
     fields = getFields(v.fields);
   }
   
   if (v.level === 'FATAL') {
     process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`);
-    return;
   }
   
   if (v.level === 'ERROR' && maxIndex < 5) {
-    process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.gray(fields)} ${chalk.whiteBright.bold(v.value)} \n`);
-    return;
+    process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`);
   }
   
   if (v.level === 'WARN' && maxIndex < 4) {
-    process.stderr.write(`${v.date} ${v.appName} ${chalk.magentaBright(v.level)} ${chalk.gray(fields)} ${chalk.black.bold(v.value)} \n`);
-    return;
+    process.stderr.write(`${v.date} ${v.appName} ${chalk.magentaBright(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`);
   }
   
   if (v.level === 'DEBUG' && maxIndex < 3) {
     process.stdout.write(`${v.date} ${v.appName} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`);
-    return;
   }
   
   if (v.level === 'INFO' && maxIndex < 2) {
     process.stdout.write(`${v.date} ${v.appName} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`);
-    return;
   }
   
   if (v.level === 'TRACE' && maxIndex < 1) {
-    process.stdout.write(`${v.date} ${v.appName} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray(v.value)} \n`);
-    return;
+    process.stdout.write(`${v.date} ${v.appName} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`);
+  }
+  
+  if (allMatches.length > 0 && filteredCount > 0 && opts.no_show_match_count !== true) {
+    process.stdout.write(getMatchCountLine(matchCount, filteredCount));
   }
   
 });

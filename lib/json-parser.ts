@@ -1,6 +1,8 @@
 'use strict';
 
 import * as stream from 'stream';
+import readline = require('readline');
+import {customStringify} from "./util";
 
 //////////////////////////////////////////////////
 
@@ -8,9 +10,17 @@ export interface IParsedObject {
   [index: string]: any
 }
 
+export interface ParserOptions {
+  onlyParseableOutput: boolean,
+  clearLine: boolean
+}
+
 //////////////////////////////////////////////////
 
-export const createParser =  function () {
+export const createParser = function (opts: ParserOptions) {
+  
+  const onlyParseableOutput = Boolean(opts.onlyParseableOutput);
+  const clearLine = Boolean(opts.clearLine);
   
   let lastLineData = '';
   
@@ -34,7 +44,7 @@ export const createParser =  function () {
           l && this.push(JSON.parse(l));
         }
         catch (err) {
-          // noop
+          l && this.push(l);
         }
       });
       
@@ -48,7 +58,7 @@ export const createParser =  function () {
           this.push(JSON.parse(lastLineData));
         }
         catch (err) {
-          // noop
+          this.push(lastLineData);
         }
       }
       lastLineData = '';
@@ -56,10 +66,34 @@ export const createParser =  function () {
     }
   });
   
-  strm.on('data', function (d: IParsedObject) {
+  strm.on('data', function (d: string | IParsedObject) {
+  
+    if(clearLine){
+      readline.clearLine(process.stdout, 0);  // clear current text
+      readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
+    }
+    
+    if (typeof d === 'string') {
+      if (onlyParseableOutput === false) {
+        process.stdout.write(d + '\n');
+      }
+      return;
+    }
+    
+    if (d && !d['@bunion'] && onlyParseableOutput === false) {
+      try {
+        process.stdout.write(customStringify(d) + '\n');
+      }
+      catch (err) {
+        process.stdout.write(String(d) + '\n');
+      }
+    }
+  
     if (d && d['@bunion'] === true) {
       strm.emit('bunion-json', d);
+      return;
     }
+    
   });
   
   return strm;
