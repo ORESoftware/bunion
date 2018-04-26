@@ -157,32 +157,32 @@ process.stdin.resume().pipe(createParser())
   }
   
   if (v.level === 'FATAL') {
-    process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.black(fields)} ${chalk.red.bold(v.value)} \n`);
+    process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`);
     return;
   }
   
   if (v.level === 'ERROR' && maxIndex < 5) {
-    process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.black(fields)} ${chalk.whiteBright.bold(v.value)} \n`);
+    process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.gray(fields)} ${chalk.whiteBright.bold(v.value)} \n`);
     return;
   }
   
   if (v.level === 'WARN' && maxIndex < 4) {
-    process.stderr.write(`${v.date} ${v.appName} ${chalk.magentaBright(v.level)} ${chalk.black(fields)} ${chalk.black.bold(v.value)} \n`);
+    process.stderr.write(`${v.date} ${v.appName} ${chalk.magentaBright(v.level)} ${chalk.gray(fields)} ${chalk.black.bold(v.value)} \n`);
     return;
   }
   
   if (v.level === 'DEBUG' && maxIndex < 3) {
-    process.stdout.write(`${v.date} ${v.appName} ${chalk.yellowBright.bold(v.level)} ${chalk.black(fields)} ${chalk.yellow(v.value)} \n`);
+    process.stdout.write(`${v.date} ${v.appName} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`);
     return;
   }
   
   if (v.level === 'INFO' && maxIndex < 2) {
-    process.stdout.write(`${v.date} ${v.appName} ${chalk.cyan(v.level)} ${chalk.black(fields)} ${chalk.cyan.bold(v.value)} \n`);
+    process.stdout.write(`${v.date} ${v.appName} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`);
     return;
   }
   
   if (v.level === 'TRACE' && maxIndex < 1) {
-    process.stdout.write(`${v.date} ${v.appName} ${chalk.gray(v.level)} ${chalk.black(fields)} ${chalk.gray(v.value)} \n`);
+    process.stdout.write(`${v.date} ${v.appName} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray(v.value)} \n`);
     return;
   }
   
