@@ -51,18 +51,18 @@ const getJSON = function (level: string, args: any[], appName: string, isDefault
     throw new Error('Fields object can have no more than 8 keys.');
   }
   
-  const clean = args.map(function (a): string {
+  const clean = args.map(function (a ,i ): string {
     
     if (typeof a === 'string') {
       return a;
     }
     
     if (a && a.message && a.stack && typeof a.stack === 'string') {
-      return ' (see below ⬃ ) \n\n' + a.stack.split('\n')
+      return (i > 0 ? '' :' (see below ⬃ )') + ' \n\n' + a.stack.split('\n')
       .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v)).join('\n') + '\n';
     }
     
-    return ' (see below ⬃ ) \n\n' + util.inspect(a) + '\n';
+    return (i > 0 ? '' :' (see below ⬃ )') + util.inspect(a); //+ '\n';
   });
   
   return customStringify({

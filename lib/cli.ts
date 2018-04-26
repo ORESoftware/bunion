@@ -81,6 +81,11 @@ const options = [
     type: 'bool',
     default: false
   },
+  {
+    names: ['always-show-match-count'],
+    type: 'bool',
+    default: false
+  },
 
 ];
 
@@ -179,7 +184,7 @@ const getMatchCountLine = function (matchCount: number, filteredCount: number) {
   const match = `[${chalk.cyan(String(matchCount))}]`;
   const filtered = `[${chalk.cyan(String(filteredCount))}]`;
   
-  return chalk.magenta.bold(`Total records so far: ${total}, matched records:` +
+  return chalk.blueBright.bold(`Total records so far: ${total}, matched records:` +
     ` ${match}, records that were filtered out: ${filtered}.`);
 };
 
