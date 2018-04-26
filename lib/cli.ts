@@ -51,6 +51,21 @@ const options = [
     names: ['no-highlight'],
     type: 'bool',
     default: false
+  },
+  {
+    names: ['dark'],
+    type: 'bool',
+    default: true
+  },
+  {
+    names: ['light'],
+    type: 'bool',
+    default: false
+  },
+  {
+    names: ['background', 'bg'],
+    type: 'string',
+    default: 'dark'
   }
 
 ];
@@ -87,7 +102,6 @@ if (maxIndex < 0) {
   throw new Error('Your value for env var "bunion_max_level" is not set to a valid value (\'WARN\' | \'INFO\' | \'DEBUG\' | \'ERROR\' | \'TRACE\')');
 }
 
-
 const matches = function (v: string) {
   if (orMatches.length < 1) {
     return true;
@@ -122,7 +136,7 @@ process.stdin.resume().pipe(createParser())
     return;
   }
   
-  if(highlight){
+  if (highlight) {
     v.value = getHighlightedString(v.value);
   }
   
