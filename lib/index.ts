@@ -8,7 +8,8 @@ export interface BunionJSON {
   level: 'WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL',
   value: string,
   date: number,
-  appName: string
+  appName: string,
+  fields: object
 }
 
 export interface BunionOpts {
@@ -25,17 +26,34 @@ if (maxIndex < 0) {
   throw new Error('Your value for env var "bunion_max_level" is not set to a valid value.');
 }
 
-const pid = process.pid;
 const defaultLoggerValues = {
-  appName: '',
+  appName: process.env.bunion_app_name || '',
   maxFieldKeys: 8
+};
+
+const customStringify = function (v: object) {
+  let cache = new Map<any, true>();
+  return JSON.stringify(v, function (key, value) {
+    if (typeof value === 'object' && value !== null) {
+      if (cache.get(value) === true) {
+        // Circular reference found, discard key
+        return;
+      }
+      // Store value in our collection
+      cache.set(value, true);
+    }
+    return value;
+  });
 };
 
 const getJSON = function (level: string, args: any[], appName: string, isDefaultLogger: boolean, fields?: object) {
   
   if (isDefaultLogger) {
     appName = defaultLoggerValues.appName;
+    // console.log('setting app name to default val:', defaultLoggerValues.appName)
   }
+  
+  fields = fields || null;
   
   if (fields && typeof fields !== 'object') {
     throw new Error('First argument must be a "fields" object.');
@@ -59,19 +77,27 @@ const getJSON = function (level: string, args: any[], appName: string, isDefault
     return ' (see below) \n\n' + util.inspect(a) + '\n';
   });
   
-  return JSON.stringify({
+  return customStringify({
     '@bunion': true,
     date: Date.now(),
     value: clean.join(' '),
     appName: appName,
     level: level,
-    pid: pid
+    pid: process.pid,
+    fields: fields
   }) + '\n';
 };
 
 export const getLogger = function (opts?: BunionOpts) {
   
   const appName: string = String(opts && opts.appName || '');
+  
+  console.log('the opts:', opts);
+  
+  // if(!appName){
+  //   throw new Error('"appName" is a required field.');
+  // }
+  
   const isDefaultLogger: boolean = Boolean(opts && opts.isDefaultLogger);
   
   return {
@@ -147,7 +173,7 @@ export const getLogger = function (opts?: BunionOpts) {
     //////
     
     isEnabled(level: string) {
-      const index = ordered.indexOf(String(level).toUpperCase());
+      const index = ordered.indexOf(String(level || '').toUpperCase());
       if (index < 0) {
         throw new Error(`The log level passed does not match one of ['WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL']`);
       }
