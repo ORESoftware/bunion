@@ -4,11 +4,13 @@
 
 # Bunion - Bunyan's weird, simpleton cousin. Has more foot-related problems.
 
+This module is still in development, but should reach 1.0.0 by ~May 15, 2018
+
 
 ## <i> Installation </i>
 
 ```bash
-  npm install bunion
+$ npm install bunion
 ```
 
 ## Usage
@@ -40,3 +42,23 @@ Use the following env value for higher performance:
  $ bunion_max_level=warn node foo.js | bunion --level warn
 
 ```
+
+### Using the bunion config file to setup a default logger
+
+`=> .bunion.json` (TBD)
+
+ Will look a little something like this:
+
+```
+
+{
+ "producer":{
+ 
+ },
+ "consumer":{
+ 
+ 
+ }
+}
+```
+
