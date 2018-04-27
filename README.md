@@ -1,4 +1,6 @@
 
+<img align="right" width="20%" height="20%" src="https://raw.githubusercontent.com/oresoftware/bunion/master/media/bunion.png">
+
 
 # Bunion - Bunyan's weird, simpleton cousin. Has more foot-related problems.
 
