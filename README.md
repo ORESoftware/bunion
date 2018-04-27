@@ -2,7 +2,8 @@
 <img align="right" width="20%" height="20%" src="https://raw.githubusercontent.com/oresoftware/bunion/master/media/bunion.png">
 
 
-# Bunion - Bunyan's weird, simpleton cousin. Has more foot-related problems.
+# Bunion - Bunyan's weird, simpleton cousin. 
+### Has more foot-related problems.
 
 This module is still in development, but should reach 1.0.0 by ~May 15, 2018
 
@@ -61,4 +62,18 @@ Use the following env value for higher performance:
  }
 }
 ```
+
+
+### How it works:
+
+Something like this:
+
+```bash
+echo '{"@bunion":true,"level":"WARN","appName":"my-api","date":"08-22-1984","value":"this is the end"}' | bunion
+
+```
+
+Will display this in your terminal:
+
+// TBD
 

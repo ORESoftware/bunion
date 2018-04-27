@@ -1,7 +1,8 @@
 {
   "name": "bunion",
   "bin": {
-    "bunion": "dist/cli.js"
+    "bunion": "dist/cli.js",
+    "bun": "dist/cli.js"
   },
   "version": "0.0.106",
   "description": "Semver-oriented TypeScript library skeleton.",
