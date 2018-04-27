@@ -18,6 +18,7 @@ export interface BunionOpts {
   appName?: string,
   isDefaultLogger?: boolean,
   fields?: object;
+  level?: string;
 }
 
 export const ordered = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
@@ -28,11 +29,20 @@ if (maxIndex < 0) {
   throw new Error('Your value for env var "bunion_max_level" is not set to a valid value.');
 }
 
+const globalSettings = {
+  globalMaxLevel: '',
+  globalMaxIndex: 0
+};
+
 const defaultLoggerValues = {
   appName: process.env.bunion_app_name || '',
   maxFieldKeys: 8
 };
 
+const utilOpts = {
+  depth: 4,
+  maxArrayLength: 10
+};
 
 const getJSON = function (level: string, args: any[], appName: string, isDefaultLogger: boolean, fields: object) {
   
@@ -62,7 +72,7 @@ const getJSON = function (level: string, args: any[], appName: string, isDefault
       .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v)).join('\n') + '\n';
     }
     
-    return (i > 0 ? '' :' (see below ⬃ )') + util.inspect(a); //+ '\n';
+    return util.inspect(a, utilOpts); //+ '\n';
   });
   
   return customStringify({
@@ -80,20 +90,47 @@ const getCombinedFields = function (v: object, fields: object) {
   return Object.assign({}, v, fields);
 };
 
+
 export class BunionLogger {
   
   appName: string;
   isDefaultLogger: boolean;
   fields: object;
+  level: string;
+  maxIndex: number;
   
   constructor(opts?: BunionOpts) {
     this.appName = String(opts && opts.appName || '');
     this.isDefaultLogger = Boolean(opts && opts.isDefaultLogger);
     this.fields = opts && opts.fields || null;
+    this.level = String(opts.level || maxLevel || '').toUpperCase();
+    this.maxIndex = ordered.indexOf(this.level);
+  
+    if (this.maxIndex < 0) {
+      throw new Error('Option "level" is not set to a valid value.');
+    }
+    
   }
   
   getFields(){
     return this.fields;
+  }
+  
+  setLevel(v: string){
+    const maxIndex = ordered.indexOf(String(v || '').toUpperCase());
+    if (maxIndex < 0) {
+      throw new Error('Option "level" is not set to a valid value.');
+    }
+    this.level = v;
+    this.maxIndex = maxIndex;
+  }
+  
+  getCurrentLevel(){
+    return globalSettings.globalMaxLevel || this.level;
+  }
+  
+  getCurrentMaxIndex(){
+    return globalSettings.globalMaxIndex || this.maxIndex;
   }
   
   child(v: object) {
@@ -171,6 +208,7 @@ export class BunionLogger {
     process.stdout.write(getJSON('TRACE', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
   }
   
+  
   isEnabled(level: string) {
     const index = ordered.indexOf(String(level || '').toUpperCase());
     if (index < 0) {
@@ -180,12 +218,12 @@ export class BunionLogger {
   }
 }
 
-export const getLogger = function (opts?: BunionOpts) {
+export const getNewLogger = function (opts?: BunionOpts) {
   return new BunionLogger(opts);
 };
 
-export const createLogger = getLogger;
-export const log = getLogger({isDefaultLogger: true});
+export const createLogger = getNewLogger;
+export const log = getNewLogger({isDefaultLogger: true});
 export default log;
 
 export const initDefaultLogger = function (opts: BunionOpts) {
