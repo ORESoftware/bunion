@@ -1,8 +1,9 @@
 'use strict';
 
 import util = require('util');
-import chalk from 'chalk';
 import {customStringify} from "./util";
+import {findProjectRoot} from "residence";
+import path = require('path');
 
 export interface BunionJSON {
   '@bunion': true,
@@ -21,6 +22,37 @@ export interface BunionOpts {
   level?: string;
 }
 
+export interface BunionConf {
+  producer: {
+    inspect?: {
+      array?: {
+        length?: number
+      },
+      object?: {
+        depth?: number
+      }
+    }
+  },
+  consumer: {}
+}
+
+let projectRoot: string, bunionConf: BunionConf;
+
+try {
+  projectRoot = findProjectRoot(process.cwd());
+}
+catch (err) {
+  console.error('bunion could not find the project root given the current working directory:', process.cwd());
+  throw err;
+}
+
+try {
+  bunionConf = require(path.resolve(projectRoot + '/' + '.bunion.json'))
+}
+catch (err) {
+  bunionConf = {producer: {}, consumer: {}};
+}
+
 export const ordered = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
 const maxLevel = String(process.env.bunion_max_level || 'trace').toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel);
@@ -32,6 +64,15 @@ if (maxIndex < 0) {
 const globalSettings = {
   globalMaxLevel: '',
   globalMaxIndex: 0
+};
+
+export const updateGlobalLogLevel = function (v: string) {
+  const maxIndex = ordered.indexOf(String(v || '').toUpperCase());
+  if (maxIndex < 0) {
+    throw new Error('Option "level" is not set to a valid value.');
+  }
+  globalSettings.globalMaxLevel = v;
+  globalSettings.globalMaxIndex = maxIndex;
 };
 
 const defaultLoggerValues = {
@@ -61,14 +102,14 @@ const getJSON = function (level: string, args: any[], appName: string, isDefault
     throw new Error('Fields object can have no more than 8 keys.');
   }
   
-  const clean = args.map(function (a ,i ): string {
+  const clean = args.map(function (a, i): string {
     
     if (typeof a === 'string') {
       return a;
     }
     
     if (a && a.message && a.stack && typeof a.stack === 'string') {
-      return (i > 0 ? '' :' (see below ⬃ )') + ' \n\n' + a.stack.split('\n')
+      return (i > 0 ? '' : ' (see below ⬃ )') + ' \n\n' + a.stack.split('\n')
       .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v)).join('\n') + '\n';
     }
     
@@ -90,7 +131,6 @@ const getCombinedFields = function (v: object, fields: object) {
   return Object.assign({}, v, fields);
 };
 
-
 export class BunionLogger {
   
   appName: string;
@@ -103,20 +143,20 @@ export class BunionLogger {
     this.appName = String(opts && opts.appName || '');
     this.isDefaultLogger = Boolean(opts && opts.isDefaultLogger);
     this.fields = opts && opts.fields || null;
-    this.level = String(opts.level || maxLevel || '').toUpperCase();
+    this.level = String((opts && opts.level) || maxLevel || '').toUpperCase();
     this.maxIndex = ordered.indexOf(this.level);
-  
+    
     if (this.maxIndex < 0) {
       throw new Error('Option "level" is not set to a valid value.');
     }
     
   }
   
-  getFields(){
+  getFields() {
     return this.fields;
   }
   
-  setLevel(v: string){
+  setLevel(v: string) {
     const maxIndex = ordered.indexOf(String(v || '').toUpperCase());
     if (maxIndex < 0) {
       throw new Error('Option "level" is not set to a valid value.');
@@ -125,11 +165,11 @@ export class BunionLogger {
     this.maxIndex = maxIndex;
   }
   
-  getCurrentLevel(){
+  getCurrentLevel() {
     return globalSettings.globalMaxLevel || this.level;
   }
   
-  getCurrentMaxIndex(){
+  getCurrentMaxIndex() {
     return globalSettings.globalMaxIndex || this.maxIndex;
   }
   
@@ -148,66 +188,55 @@ export class BunionLogger {
     process.stdout.write(getJSON('FATAL', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
   }
   
-  ////
-  
   error(...args: any[]) {
-    if (maxIndex > 4) return;
+    if (this.getCurrentMaxIndex() > 4) return;
     process.stdout.write(getJSON('ERROR', args, this.appName, this.isDefaultLogger, this.fields));
   }
   
   errorx(v: object, ...args: any[]) {
-    if (maxIndex > 4) return;
+    if (this.getCurrentMaxIndex() > 4) return;
     process.stdout.write(getJSON('ERROR', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
   }
   
-  ////
-  
   warn(...args: any[]) {
-    if (maxIndex > 3) return;
+    if (this.getCurrentMaxIndex() > 3) return;
     process.stdout.write(getJSON('WARN', args, this.appName, this.isDefaultLogger, this.fields));
   }
   
   warnx(v: object, ...args: any[]) {
-    if (maxIndex > 3) return;
+    if (this.getCurrentMaxIndex() > 3) return;
     process.stdout.write(getJSON('WARN', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
   }
   
-  ////
-  
   info(...args: any[]) {
-    if (maxIndex > 2) return;
+    if (this.getCurrentMaxIndex() > 2) return;
     process.stdout.write(getJSON('INFO', args, this.appName, this.isDefaultLogger, this.fields));
   }
   
   infox(v: object, ...args: any[]) {
-    if (maxIndex > 2) return;
+    if (this.getCurrentMaxIndex() > 2) return;
     process.stdout.write(getJSON('INFO', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
   }
   
-  ////
-  
   debug(...args: any[]) {
-    if (maxIndex > 1) return;
+    if (this.getCurrentMaxIndex() > 1) return;
     process.stdout.write(getJSON('DEBUG', args, this.appName, this.isDefaultLogger, this.fields));
   }
   
   debugx(v: object, ...args: any[]) {
-    if (maxIndex > 1) return;
+    if (this.getCurrentMaxIndex() > 1) return;
     process.stdout.write(getJSON('DEBUG', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
   }
   
-  /////
-  
   trace(...args: any[]) {
-    if (maxIndex > 0) return;
+    if (this.getCurrentMaxIndex() > 0) return;
     process.stdout.write(getJSON('TRACE', args, this.appName, this.isDefaultLogger, this.fields));
   }
   
   tracex(v: object, ...args: any[]) {
-    if (maxIndex > 0) return;
+    if (this.getCurrentMaxIndex() > 0) return;
     process.stdout.write(getJSON('TRACE', args, this.appName, this.isDefaultLogger, getCombinedFields(v, this.fields)));
   }
-  
   
   isEnabled(level: string) {
     const index = ordered.indexOf(String(level || '').toUpperCase());

@@ -145,7 +145,6 @@ const matches = function (v: string) {
   if (orMatches.length < 1) {
     return true;
   }
-  
   return orMatches.some(function (m) {
     return m.test(v);
   });
@@ -195,8 +194,7 @@ const jsonParser = createParser({
   clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
 });
 
-process.stdin.resume().pipe(jsonParser)
-.on('bunion-json', function (v: BunionJSON) {
+process.stdin.resume().pipe(jsonParser).on('bunion-json', function (v: BunionJSON) {
   
   if (allMatches.length > 0 && filteredCount > 0 && opts.no_show_match_count !== true) {
     readline.clearLine(process.stdout, 0);  // clear current text
