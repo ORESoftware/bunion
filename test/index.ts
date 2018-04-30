@@ -19,7 +19,7 @@
 
 import Bunion = require('bunion');
 
-const log = Bunion.createLogger({appName: 'foo'})
+const log = Bunion.createLogger({appName: 'foo'});
 
 
 log.warnx({x:'a'});

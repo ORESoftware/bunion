@@ -1,5 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-console.log('require main:', require.main.filename);
-console.log('module parent:', module.parent.filename);
-exports.default = 'bar';
+debugger;
+const bunion_1 = require("bunion");
+bunion_1.log.warn('foo');
+const child = bunion_1.log.child().setLevel(bunion_1.Level.INFO);
+child.debug('money');
+exports.default = 'b';

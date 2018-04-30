@@ -1,0 +1,6 @@
+{
+  "producer":{
+    "appName": "testname",
+    "level": "warn"
+  }
+}

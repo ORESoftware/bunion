@@ -1,5 +1,11 @@
-console.log('require main:', require.main.filename);
 
-console.log('module parent:', module.parent.filename);
+debugger;
+import {log, Level} from 'bunion';
 
-export default 'bar';
+log.warn('foo');
+
+const child = log.child().setLevel(Level.INFO);
+
+child.debug('money');
+
+export default 'b';

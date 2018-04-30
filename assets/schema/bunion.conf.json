@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "definitions": {
+    "BunionLevel": {
+      "enum": [
+        "DEBUG",
+        "ERROR",
+        "FATAL",
+        "INFO",
+        "TRACE",
+        "WARN",
+        "debug",
+        "error",
+        "fatal",
+        "info",
+        "trace",
+        "warn"
+      ],
+      "type": "string"
+    }
+  },
+  "properties": {
+    "consumer": {
+      "properties": {
+        "highlightMatches": {
+          "type": "boolean"
+        },
+        "level": {
+          "$ref": "#/definitions/BunionLevel"
+        },
+        "match": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "matchAll": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "matchAny": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "producer": {
+      "properties": {
+        "appName": {
+          "type": "string"
+        },
+        "inspect": {
+          "properties": {
+            "array": {
+              "properties": {
+                "length": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
+            "object": {
+              "properties": {
+                "depth": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "level": {
+          "$ref": "#/definitions/BunionLevel"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}
+

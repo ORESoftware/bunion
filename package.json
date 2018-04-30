@@ -31,7 +31,8 @@
   "dependencies": {
     "chalk": "^2.4.0",
     "dashdash": "^1.14.1",
-    "residence": "0.0.207"
+    "residence": "0.0.207",
+    "typescript-json-schema": "^0.23.0"
   },
   "devDependencies": {
     "@types/core-js": "^0.9.46",
