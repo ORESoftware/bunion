@@ -2,7 +2,7 @@
 
 import * as stream from 'stream';
 import readline = require('readline');
-import {customStringify} from "./util";
+import {customStringify} from "./utils";
 
 //////////////////////////////////////////////////
 

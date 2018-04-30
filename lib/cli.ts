@@ -3,9 +3,10 @@
 
 import chalk from 'chalk';
 import {createParser} from "./json-parser";
-import {BunionJSON, log, ordered} from "./index";
 const dashdash = require('dashdash');
 import readline = require('readline');
+import {getConf} from "./utils";
+import {ordered, Level, BunionLevelInternal} from "./bunion";
 
 const options = [
   {
@@ -109,10 +110,17 @@ const flattenDeep = function (a: Array<string>): Array<string> {
   return a.reduce((acc, val) => Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
 };
 
+const bunionConf = getConf();
+
 const level = opts.level;
 const output = opts.output;
-const maxLevel = String(level || 'trace').toUpperCase();
+const maxLevel = String(level || (bunionConf.consumer && bunionConf.consumer.level) || 'trace').toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel);
+
+if (maxIndex < 0) {
+  throw new Error('Your value for env var "bunion_max_level" is not set to a valid value, must be one of: ' + Object.keys(Level));
+}
+
 const andMatches = flattenDeep([opts.must_match]).filter(v => v).map(v => new RegExp(v, 'g'));
 const orMatches = flattenDeep([opts.match]).filter(v => v).map(v => new RegExp(v, 'g'));
 const highlight = opts.highlight && opts.no_highlight !== true || false;
@@ -136,10 +144,6 @@ if (bg === 'light' && opts.dark) {
 
 const darkBackground = (opts.bg !== 'light' && !opts.light);
 const lightBackground = !darkBackground;
-
-if (maxIndex < 0) {
-  throw new Error('Your value for env var "bunion_max_level" is not set to a valid value (\'WARN\' | \'INFO\' | \'DEBUG\' | \'ERROR\' | \'TRACE\')');
-}
 
 const matches = function (v: string) {
   if (orMatches.length < 1) {
@@ -221,31 +225,45 @@ process.stdin.resume().pipe(jsonParser).on('bunion-json', function (v: BunionJSO
   }
   
   if (v.level === 'FATAL') {
-    process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`);
+    process.stderr.write(
+      `${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`
+    );
   }
   
   if (v.level === 'ERROR' && maxIndex < 5) {
-    process.stderr.write(`${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`);
+    process.stderr.write(
+      `${v.date} ${v.appName} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
+    );
   }
   
   if (v.level === 'WARN' && maxIndex < 4) {
-    process.stderr.write(`${v.date} ${v.appName} ${chalk.magentaBright(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`);
+    process.stderr.write(
+      `${v.date} ${v.appName} ${chalk.magentaBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
+    );
   }
   
   if (v.level === 'DEBUG' && maxIndex < 3) {
-    process.stdout.write(`${v.date} ${v.appName} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`);
+    process.stdout.write(
+      `${v.date} ${v.appName} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`
+    );
   }
   
   if (v.level === 'INFO' && maxIndex < 2) {
-    process.stdout.write(`${v.date} ${v.appName} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`);
+    process.stdout.write(
+      `${v.date} ${v.appName} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`
+    );
   }
   
   if (v.level === 'TRACE' && maxIndex < 1) {
-    process.stdout.write(`${v.date} ${v.appName} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`);
+    process.stdout.write(
+      `${v.date} ${v.appName} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`
+    );
   }
   
   if (allMatches.length > 0 && filteredCount > 0 && opts.no_show_match_count !== true) {
-    process.stdout.write(getMatchCountLine(matchCount, filteredCount));
+    process.stdout.write(
+      getMatchCountLine(matchCount, filteredCount)
+    );
   }
   
 });

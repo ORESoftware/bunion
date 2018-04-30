@@ -1,121 +1,21 @@
 'use strict';
 
 import util = require('util');
-import {customStringify} from "./util";
+import {customStringify, getConf} from "./utils";
 import {findProjectRoot} from "residence";
 import path = require('path');
 import * as TJS from "typescript-json-schema";
+import {
+  BunionFields,
+  BunionLevelInternal,
+  BunionOpts,
+  ordered,
+  Level,
+  BunionLevel
+} from "./bunion";
 
 
-
-// export type BunionLevel =
-//   'WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL' |
-//   'warn' | 'info' | 'debug' | 'error' | 'trace' | 'fatal'
-
-export enum BunionLevel {
-  WARN = 'WARN',
-  DEBUG = 'DEBUG',
-  INFO = 'INFO',
-  FATAL = 'FATAL',
-  TRACE = 'TRACE',
-  ERROR = 'ERROR',
-  warn = 'warn',
-  debug = 'debug',
-  info = 'info',
-  fatal = 'fatal',
-  trace = 'trace',
-  error = 'error'
-}
-
-export interface BunionJSON {
-  '@bunion': true,
-  level: BunionLevel
-  value: string
-  date: number
-  appName: string
-  fields: object
-}
-
-export interface BunionFields {
-  [key: string]: string
-}
-
-export interface BunionOpts {
-  level?: BunionLevel
-  maxlevel?: BunionLevel
-  appName?: string
-  name?: string
-  fields?: BunionFields
-}
-
-export interface BunionConf {
-  producer: {
-    name?: string
-    appName?: string
-    level?: BunionLevel
-    inspect?: {
-      array?: {
-        length?: number
-      },
-      object?: {
-        depth?: number
-      }
-    }
-  },
-  consumer: {
-    highlightMatches?: boolean
-    level?: BunionLevel
-    match?: Array<string>
-    matchAny?: Array<string>
-    matchAll?: Array<string>
-  }
-}
-
-let projectRoot: string, bunionConf: BunionConf;
-
-try {
-  projectRoot = findProjectRoot(process.cwd());
-}
-catch (err) {
-  console.error('bunion could not find the project root given the current working directory:', process.cwd());
-  throw err;
-}
-
-const getDefaultBunionConf = function (): BunionConf {
-  return {
-    producer: {
-      name: null,
-      appName: null,
-      level: BunionLevel.INFO,
-      inspect: {
-        array: {
-          length: 5
-        },
-        object: {
-          depth: 5
-        }
-      }
-    },
-    consumer: {
-      highlightMatches: true,
-      level:  BunionLevel.INFO,
-      match: [],
-      matchAny: [],
-      matchAll: []
-    }
-  }
-};
-
-try {
-  const confPath = path.resolve(projectRoot + '/' + '.bunion.json');
-  const conf = require(confPath);
-  bunionConf = Object.assign({}, getDefaultBunionConf(), conf);
-  console.log('Bunion: loaded configuration file located here:', confPath);
-}
-catch (err) {
-  bunionConf = getDefaultBunionConf();
-  console.log('Bunion: using default configuration.');
-}
+const bunionConf = getConf();
 
 const getDefaultAppName = function () {
   return process.env.bunyan_app_name || bunionConf.producer.appName || bunionConf.producer.name || '';
@@ -125,12 +25,11 @@ const getDefaultMaxLevel = function () {
   return process.env.bunion_max_level || bunionConf.producer.level || 'info';
 };
 
-export const ordered = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
 const maxLevel = String(getDefaultMaxLevel()).toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel);
 
 if (maxIndex < 0) {
-  throw new Error('Your value for env var "bunion_max_level" is not set to a valid value.');
+  throw new Error('Your value for env var "bunion_max_level" is not set to a valid value => ' + Object.keys(BunionLevelInternal));
 }
 
 const globalSettings = {
@@ -138,10 +37,10 @@ const globalSettings = {
   globalMaxIndex: 0
 };
 
-export const setGlobalLogLevel = function (v: BunionLevel) {
+export const setGlobalLogLevel = function (v: BunionLevelInternal) {
   const maxIndex = ordered.indexOf(String(v || '').toUpperCase());
   if (maxIndex < 0) {
-    throw new Error('Buntion Log level is not set to a valid value.');
+    throw new Error('Buntion Log level is not set to a valid value, must be one of => ' + Object.keys(BunionLevelInternal));
   }
   globalSettings.globalMaxLevel = v;
   globalSettings.globalMaxIndex = maxIndex;
@@ -198,8 +97,8 @@ const getCombinedFields = function (v: object, fields: object) {
   return Object.assign({}, v, fields);
 };
 
-
-export const Level = BunionLevel;
+export {BunionLevel};
+export {Level};
 
 export class BunionLogger {
   
@@ -211,11 +110,11 @@ export class BunionLogger {
   constructor(opts?: BunionOpts) {
     this.appName = String((opts && (opts.appName || opts.name)) || getDefaultAppName());
     this.fields = opts && opts.fields || null;
-    this.level = <BunionLevel> String((opts && (opts.level || opts.maxlevel) || maxLevel || '')).toUpperCase();
+    this.level = <BunionLevelInternal> String((opts && (opts.level || opts.maxlevel) || maxLevel || '')).toUpperCase();
     this.maxIndex = ordered.indexOf(this.level);
     
     if (this.maxIndex < 0) {
-      throw new Error('Option "level" is not set to a valid value.');
+      throw new Error('Option "level" is not set to a valid value, must be one of: ' + Object.keys(BunionLevelInternal));
     }
   }
   
@@ -226,7 +125,7 @@ export class BunionLogger {
   setLevel(v: BunionLevel) {
     const maxIndex = ordered.indexOf(String(v || '').toUpperCase());
     if (maxIndex < 0) {
-      throw new Error('Option "level" is not set to a valid value.');
+      throw new Error('Option "level" is not set to a valid value, must be one of: ' + Object.keys(BunionLevelInternal));
     }
     this.level = v;
     this.maxIndex = maxIndex;
@@ -241,8 +140,7 @@ export class BunionLogger {
     return globalSettings.globalMaxIndex || this.maxIndex;
   }
   
-  setFields(v: BunionFields) {
-    
+  private validateFields(v: BunionFields) {
     if (!(v && typeof v === 'object')) {
       throw new Error('Child logger initialization value must be an object.');
     }
@@ -261,8 +159,22 @@ export class BunionLogger {
         throw new Error(`Child logger initialization object has a key ("${k}") that points to an empty string. See this object: ${util.inspect(v)}`);
       }
     });
-    
+  }
+  
+  addFields(v: BunionFields) {
+    this.validateFields(v);
     this.fields = Object.assign(this.fields, v);
+  }
+  
+  addField(k: string, v: string) {
+    const f = {[k]: v};
+    this.addFields(f);
+    return this;
+  }
+  
+  setFields(v: BunionFields) {
+    this.validateFields(v);
+    this.fields = v;
     return this;
   }
   
@@ -337,7 +249,7 @@ export class BunionLogger {
     process.stdout.write(getJSON('TRACE', args, this.appName, getCombinedFields(v, this.fields)));
   }
   
-  isEnabled(level: BunionLevel) {
+  isEnabled(level: BunionLevelInternal) {
     const index = ordered.indexOf(String(level || '').toUpperCase());
     if (index < 0) {
       throw new Error(`The log level passed does not match one of ['WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL']`);
