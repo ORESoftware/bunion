@@ -4,7 +4,9 @@ import util = require('util');
 import {customStringify, getConf} from "./utils";
 import {findProjectRoot} from "residence";
 import path = require('path');
-import * as TJS from "typescript-json-schema";
+import logger from './logger';
+
+
 import {
   BunionFields,
   BunionLevelInternal,

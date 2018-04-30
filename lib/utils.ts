@@ -3,6 +3,12 @@
 import path = require('path');
 import {BunionConf, BunionLevelInternal} from "./bunion";
 import {findProjectRoot} from "residence";
+import AJV = require('ajv');
+import * as util from "util";
+import logger from "./logger";
+import chalk from "chalk";
+const ajv = new AJV();
+const schema = require('../assets/schema/bunion.conf.json');
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -58,12 +64,26 @@ export const getConf = function (): BunionConf {
     throw err;
   }
   
+  let confPath, conf;
+  
   try {
-    const confPath = path.resolve(projectRoot + '/' + '.bunion.json');
-    const conf = require(confPath);
-    return Object.assign({}, getDefaultBunionConf(), conf);
+    confPath = path.resolve(projectRoot + '/' + '.bunion.json');
+    conf = require(confPath);
   }
   catch (err) {
     return getDefaultBunionConf();
   }
+  
+  const valid = ajv.validate(schema, conf);
+  
+  if (!valid) {
+    logger.error('Your bunion configuation file has an invalid format, see the following error(s):');
+    ajv.errors.forEach(function (e) {
+      console.error(util.inspect(e));
+    });
+    throw chalk.red('Bunion configuration error - your config is invalid, see above errors.')
+  }
+  
+  return Object.assign({}, getDefaultBunionConf(), conf);
+  
 };

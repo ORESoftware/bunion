@@ -5,6 +5,6 @@ console.log('debug level is:', bunion_1.Level.DEBUG, typeof bunion_1.Level.DEBUG
 bunion_1.log.info('crescendo');
 bunion_1.log.warn('foo');
 const child = bunion_1.log.child().setLevel(bunion_1.Level.WARN).setFields({ a: 'moooo' }).addField('bar', 'mar');
-child.setLevel('ERROR');
-child.error('money');
+child.setLevel(bunion_1.Level.DEBUG);
+child.fatal('money');
 exports.default = 'b';

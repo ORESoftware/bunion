@@ -6,7 +6,8 @@ import {createParser} from "./json-parser";
 const dashdash = require('dashdash');
 import readline = require('readline');
 import {getConf} from "./utils";
-import {ordered, Level, BunionLevelInternal} from "./bunion";
+import logger from './logger';
+import {ordered, Level, BunionLevelInternal, BunionJSON} from "./bunion";
 
 const options = [
   {
@@ -95,14 +96,13 @@ let opts: any, parser = dashdash.createParser({options: options});
 try {
   opts = parser.parse(process.argv);
 } catch (e) {
-  log.error('bunion: error: %s', e.message);
+  logger.error('bunion: error: %s', e.message);
   process.exit(1);
 }
 
-// Use `parser.help()` for formatted options help.
 if (opts.help) {
   const help = parser.help({includeEnv: true}).trimRight();
-  console.log('usage: node foo.js [OPTIONS]\n' + 'options:\n' + help);
+  logger.info('usage: node foo.js [OPTIONS]\n' + 'options:\n' + help);
   process.exit(0);
 }
 
@@ -111,7 +111,6 @@ const flattenDeep = function (a: Array<string>): Array<string> {
 };
 
 const bunionConf = getConf();
-
 const level = opts.level;
 const output = opts.output;
 const maxLevel = String(level || (bunionConf.consumer && bunionConf.consumer.level) || 'trace').toUpperCase();
@@ -226,7 +225,7 @@ process.stdin.resume().pipe(jsonParser).on('bunion-json', function (v: BunionJSO
   
   if (v.level === 'FATAL') {
     process.stderr.write(
-      `${v.date} ${v.appName} ${chalk.redBright(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`
+      `${v.date} ${v.appName} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`
     );
   }
   
