@@ -5,6 +5,7 @@ import {customStringify, getConf} from "./utils";
 import {findProjectRoot} from "residence";
 import path = require('path');
 import logger from './logger';
+import os = require('os');
 
 import {
   BunionFields,
@@ -12,8 +13,9 @@ import {
   BunionOpts,
   ordered,
   Level,
-  BunionLevel
+  BunionLevel, BunionLevelInternalUnion
 } from "./bunion";
+import chalk from "chalk";
 
 const bunionConf = getConf();
 
@@ -29,7 +31,9 @@ const maxLevel = String(getDefaultMaxLevel()).toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel);
 
 if (maxIndex < 0) {
-  throw new Error('Your value for env var "bunion_max_level" is not set to a valid value => ' + Object.keys(BunionLevelInternal));
+  throw new Error(
+    chalk.red('Your value for env var "bunion_max_level" is not set to a valid value => ' + Object.keys(BunionLevelInternal))
+  );
 }
 
 const globalSettings = {
@@ -40,7 +44,9 @@ const globalSettings = {
 export const setGlobalLogLevel = function (v: BunionLevelInternal) {
   const maxIndex = ordered.indexOf(String(v || '').toUpperCase());
   if (maxIndex < 0) {
-    throw new Error('Buntion Log level is not set to a valid value, must be one of => ' + Object.keys(BunionLevelInternal));
+    throw new Error(
+      chalk.red('Bunion Log level is not set to a valid value, must be one of => ' + Object.keys(BunionLevelInternal))
+    );
   }
   globalSettings.globalMaxLevel = v;
   globalSettings.globalMaxIndex = maxIndex;
@@ -56,16 +62,16 @@ const utilOpts = {
   maxArrayLength: 10
 };
 
-const getJSON = function (level: string, args: any[], appName: string, fields: object) {
+const getJSON = function (level: string, args: any[], appName: string, fields: object, host: string) {
   
   fields = fields || null;
   
   if (fields && typeof fields !== 'object') {
-    throw new Error('First argument must be a "fields" object.');
+    throw new Error(chalk.red('First argument must be a "fields" object.'));
   }
   
   if (fields && Object.keys(fields).length > 8) {
-    throw new Error('Fields object can have no more than 8 keys.');
+    throw new Error(chalk.red('Fields object can have no more than 8 keys.'));
   }
   
   const clean = args.map(function (a, i): string {
@@ -89,7 +95,8 @@ const getJSON = function (level: string, args: any[], appName: string, fields: o
     appName: appName,
     level: level,
     pid: process.pid,
-    fields: fields
+    fields: fields,
+    host: host
   }) + '\n';
 };
 
@@ -106,15 +113,19 @@ export class BunionLogger {
   private fields: BunionFields | null;
   private level: BunionLevel;
   private maxIndex: number;
+  private hostname: string;
   
   constructor(opts?: BunionOpts) {
     this.appName = String((opts && (opts.appName || opts.name)) || getDefaultAppName());
     this.fields = opts && opts.fields || null;
     this.level = <BunionLevelInternal> String((opts && (opts.level || opts.maxlevel) || maxLevel || '')).toUpperCase();
     this.maxIndex = ordered.indexOf(this.level);
+    this.hostname = os.hostname();
     
     if (this.maxIndex < 0) {
-      throw new Error('Option "level" is not set to a valid value, must be one of: ' + Object.keys(BunionLevelInternal));
+      throw new Error(
+        chalk.red('Option "level" is not set to a valid value, must be one of: ' + Object.keys(BunionLevelInternal))
+      );
     }
   }
   
@@ -122,10 +133,12 @@ export class BunionLogger {
     return this.fields;
   }
   
-  setLevel(v: BunionLevel) {
+  setLevel(v: BunionLevel): this {
     const maxIndex = ordered.indexOf(String(v || '').toUpperCase());
     if (maxIndex < 0) {
-      throw new Error('Option "level" is not set to a valid value, must be one of: ' + Object.keys(BunionLevelInternal));
+      throw new Error(
+        chalk.red('Option "level" is not set to a valid value, must be one of: ' + Object.keys(BunionLevelInternal))
+      );
     }
     this.level = v;
     this.maxIndex = maxIndex;
@@ -140,50 +153,51 @@ export class BunionLogger {
     return globalSettings.globalMaxIndex || this.maxIndex;
   }
   
-  private validateFields(v: BunionFields) {
+  private validateFields(v: BunionFields): void {
     if (!(v && typeof v === 'object')) {
-      throw new Error('Child logger initialization value must be an object.');
+      throw new Error(chalk.red('Value must be an object.'));
     }
     
     const keys = Object.keys(v);
     
     if (keys.length > 8) {
-      throw new Error('Child logger initialization object has more than the maximum 8 keys.');
+      throw new Error(chalk.red('Object has more than the maximum 8 keys.'));
     }
     
     keys.forEach(function (k) {
       if (typeof v[k] !== 'string') {
-        throw new Error('Child logger initialization object must have key/value pairs that are both strings.');
+        throw new Error(chalk.red('Object must have key/value pairs that are all strings.'));
       }
       if (!v[k]) {
-        throw new Error(`Child logger initialization object has a key ("${k}") that points to an empty string. See this object: ${util.inspect(v)}`);
+        throw new Error(chalk.red(`Object has a key ("${k}") that points to an empty string. See this object: ${util.inspect(v)}`));
       }
     });
   }
   
-  addFields(v: BunionFields) {
+  addFields(v: BunionFields): this {
     this.validateFields(v);
-    this.fields = Object.assign(this.fields, v);
+    this.fields = Object.assign(this.fields || {}, v);
+    return this;
   }
   
-  addField(k: string, v: string) {
+  addField(k: string, v: string): this {
     const f = {[k]: v};
     this.addFields(f);
     return this;
   }
   
-  setFields(v: BunionFields) {
+  setFields(v: BunionFields): this {
     this.validateFields(v);
     this.fields = v;
     return this;
   }
   
-  clearFields() {
+  clearFields(): this {
     this.fields = {};
     return this;
   }
   
-  child() {
+  child(): BunionLogger {
     return new BunionLogger({
       appName: this.appName,
       fields: Object.assign({}, this.fields),
@@ -191,78 +205,80 @@ export class BunionLogger {
     });
   }
   
-  fatal(...args: any[]) {
-    process.stdout.write(getJSON('FATAL', args, this.appName, this.fields));
+  fatal(...args: any[]): void {
+    process.stdout.write(getJSON('FATAL', args, this.appName, this.fields, this.hostname));
   }
   
-  fatalx(v: object, ...args: any[]) {
-    process.stdout.write(getJSON('FATAL', args, this.appName, getCombinedFields(v, this.fields)));
+  fatalx(v: object, ...args: any[]): void {
+    process.stdout.write(getJSON('FATAL', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   
-  error(...args: any[]) {
+  error(...args: any[]): void {
     if (this.getCurrentMaxIndex() > 4) return;
-    process.stdout.write(getJSON('ERROR', args, this.appName, this.fields));
+    process.stdout.write(getJSON('ERROR', args, this.appName, this.fields, this.hostname));
   }
   
-  errorx(v: object, ...args: any[]) {
+  errorx(v: object, ...args: any[]): void {
     if (this.getCurrentMaxIndex() > 4) return;
-    process.stdout.write(getJSON('ERROR', args, this.appName, getCombinedFields(v, this.fields)));
+    process.stdout.write(getJSON('ERROR', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   
-  warn(...args: any[]) {
+  warn(...args: any[]): void {
     if (this.getCurrentMaxIndex() > 3) return;
-    process.stdout.write(getJSON('WARN', args, this.appName, this.fields));
+    process.stdout.write(getJSON('WARN', args, this.appName, this.fields, this.hostname));
   }
   
-  warnx(v: object, ...args: any[]) {
+  warnx(v: object, ...args: any[]): void {
     if (this.getCurrentMaxIndex() > 3) return;
-    process.stdout.write(getJSON('WARN', args, this.appName, getCombinedFields(v, this.fields)));
+    process.stdout.write(getJSON('WARN', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   
-  info(...args: any[]) {
+  info(...args: any[]): void {
     if (this.getCurrentMaxIndex() > 2) return;
-    process.stdout.write(getJSON('INFO', args, this.appName, this.fields));
+    process.stdout.write(getJSON('INFO', args, this.appName, this.fields, this.hostname));
   }
   
-  infox(v: object, ...args: any[]) {
+  infox(v: object, ...args: any[]): void {
     if (this.getCurrentMaxIndex() > 2) return;
-    process.stdout.write(getJSON('INFO', args, this.appName, getCombinedFields(v, this.fields)));
+    process.stdout.write(getJSON('INFO', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   
-  debug(...args: any[]) {
+  debug(...args: any[]): void {
     if (this.getCurrentMaxIndex() > 1) return;
-    process.stdout.write(getJSON('DEBUG', args, this.appName, this.fields));
+    process.stdout.write(getJSON('DEBUG', args, this.appName, this.fields, this.hostname));
   }
   
-  debugx(v: object, ...args: any[]) {
+  debugx(v: object, ...args: any[]): void {
     if (this.getCurrentMaxIndex() > 1) return;
-    process.stdout.write(getJSON('DEBUG', args, this.appName, getCombinedFields(v, this.fields)));
+    process.stdout.write(getJSON('DEBUG', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   
-  trace(...args: any[]) {
+  trace(...args: any[]): void {
     if (this.getCurrentMaxIndex() > 0) return;
-    process.stdout.write(getJSON('TRACE', args, this.appName, this.fields));
+    process.stdout.write(getJSON('TRACE', args, this.appName, this.fields, this.hostname));
   }
   
-  tracex(v: object, ...args: any[]) {
+  tracex(v: object, ...args: any[]): void {
     if (this.getCurrentMaxIndex() > 0) return;
-    process.stdout.write(getJSON('TRACE', args, this.appName, getCombinedFields(v, this.fields)));
+    process.stdout.write(getJSON('TRACE', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   
-  isLevelEnabled(level: BunionLevel) {
+  isLevelEnabled(level: BunionLevel): boolean {
     return this.isEnabled.apply(this, arguments);
   }
   
-  isEnabled(level: BunionLevel) {
+  isEnabled(level: BunionLevel): boolean {
     const index = ordered.indexOf(String(level || '').toUpperCase());
     if (index < 0) {
-      throw new Error(`The log level passed does not match one of ['WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL']`);
+      throw new Error(
+        chalk.red(`The log level passed does not match one of: ${Object.keys(BunionLevelInternal)}`)
+      );
     }
     return index > this.getCurrentMaxIndex();
   }
 }
 
-export const getNewLogger = function (opts?: BunionOpts) {
+export const getNewLogger = function (opts?: BunionOpts): BunionLogger {
   return new BunionLogger(opts);
 };
 

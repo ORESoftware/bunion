@@ -117,7 +117,9 @@ const maxLevel = String(level || (bunionConf.consumer && bunionConf.consumer.lev
 const maxIndex = ordered.indexOf(maxLevel);
 
 if (maxIndex < 0) {
-  throw new Error('Your value for env var "bunion_max_level" is not set to a valid value, must be one of: ' + Object.keys(Level));
+  throw new Error(
+    chalk.red('Your value for env var "bunion_max_level" is not set to a valid value, must be one of: ' + Object.keys(Level))
+  );
 }
 
 const andMatches = flattenDeep([opts.must_match]).filter(v => v).map(v => new RegExp(v, 'g'));
@@ -126,19 +128,19 @@ const highlight = opts.highlight && opts.no_highlight !== true || false;
 const bg = String(opts.background || '').toLowerCase();
 
 if (bg && !['dark', 'light'].includes(bg)) {
-  throw new Error('Use either --bg=dark or --bg=light...');
+  throw new Error(chalk.red('Use either --bg=dark or --bg=light...'));
 }
 
 if (opts.light && opts.dark) {
-  throw new Error('User specified both --dark and --light, pick one.');
+  throw new Error(chalk.red('User specified both --dark and --light, pick one.'));
 }
 
 if (bg === 'dark' && opts.light) {
-  throw new Error('User specified both --bg=dark and --light, pick one.');
+  throw new Error(chalk.red('User specified both --bg=dark and --light, pick one.'));
 }
 
 if (bg === 'light' && opts.dark) {
-  throw new Error('User specified both --bg=light and --dark, pick one.');
+  throw new Error(chalk.red('User specified both --bg=light and --dark, pick one.'));
 }
 
 const darkBackground = (opts.bg !== 'light' && !opts.light);
@@ -215,10 +217,10 @@ process.stdin.resume().pipe(jsonParser).on('bunion-json', function (v: BunionJSO
   let fields = '';
   
   const d = new Date(v.date);
-  v.d = d.toLocaleTimeString() + `.${String(d.getMilliseconds()).padStart(3,'0')}`;
+  v.d = d.toLocaleTimeString() + `.${String(d.getMilliseconds()).padStart(3, '0')}`;
   
-  if(v.appName){
-    v.appName = `app:${chalk.bold.underline(v.appName)}/${v.pid}`;
+  if (v.appName) {
+    v.appName = `${v.host} ${v.pid} app:${chalk.bold.underline(v.appName)}`;
   }
   
   if (highlight) {

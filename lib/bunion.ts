@@ -24,6 +24,7 @@ export interface BunionJSON {
   appName: string
   fields: object,
   pid: number,
+  host: string // hostname
   d?: string // formatted date
 }
 
