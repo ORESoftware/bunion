@@ -4,10 +4,12 @@ const {log} = require('bunion');
 // const log = Bunion.getNewLogger();
 
 
-log.addFields({foo:'stank'});
+// log.addFields({foo:'stank'});
 
-for(let i = 0; i < 1000000; i++){
+for(let i = 0; i < 100000; i++){
   log.info('booty');
+  log.warn('biggo');
+  log.error('zzzz');
 }
 
 

@@ -31,9 +31,19 @@ const options = [
     default: 'trace'
   },
   {
+    names: ['show'],
+    type: 'string',
+    default: 'thpalf'  // time, host, process/pid, appname, level, fields
+  },
+  {
+    names: ['hide'],
+    type: 'string',
+    default: ''  // time, host, process/pid, appname, level, fields
+  },
+  {
     names: ['output', 'o'],
     type: 'string',
-    default: 'short'
+    default: ''
   },
   {
     names: ['match', 'or'],
@@ -112,7 +122,7 @@ const flattenDeep = function (a: Array<string>): Array<string> {
 
 const bunionConf = getConf();
 const level = opts.level;
-const output = opts.output;
+const output = String(opts.output || 'medium').toLowerCase();
 const maxLevel = String(level || (bunionConf.consumer && bunionConf.consumer.level) || 'trace').toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel);
 
@@ -216,11 +226,19 @@ process.stdin.resume().pipe(jsonParser).on('bunion-json', function (v: BunionJSO
   matchCount++;
   let fields = '';
   
-  const d = new Date(v.date);
-  v.d = d.toLocaleTimeString() + `.${String(d.getMilliseconds()).padStart(3, '0')}`;
-  
-  if (v.appName) {
-    v.appName = `${v.host} ${v.pid} app:${chalk.bold.underline(v.appName)}`;
+  if (output === 'short') {
+    v.d = '';
+    v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
+  }
+  else if (output === 'medium') {
+    const d = new Date(v.date);
+    v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
+    v.appName = `app:${chalk.bold(v.appName)}`;
+  }
+  else {
+    const d = new Date(v.date);
+    v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
+    v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
   }
   
   if (highlight) {
@@ -233,37 +251,37 @@ process.stdin.resume().pipe(jsonParser).on('bunion-json', function (v: BunionJSO
   
   if (v.level === 'FATAL') {
     process.stderr.write(
-      `${chalk.gray(v.d)} ${v.appName} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`
     );
   }
   
   if (v.level === 'ERROR' && maxIndex < 5) {
     process.stderr.write(
-      `${chalk.gray(v.d)} ${v.appName} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
     );
   }
   
   if (v.level === 'WARN' && maxIndex < 4) {
     process.stderr.write(
-      `${chalk.gray(v.d)} ${v.appName} ${chalk.magentaBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.magentaBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
     );
   }
   
-  if (v.level === 'DEBUG' && maxIndex < 3) {
+  if (v.level === 'INFO' && maxIndex < 3) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${v.appName} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`
     );
   }
   
-  if (v.level === 'INFO' && maxIndex < 2) {
+  if (v.level === 'DEBUG' && maxIndex < 2) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${v.appName} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`
     );
   }
   
   if (v.level === 'TRACE' && maxIndex < 1) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${v.appName} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`
     );
   }
   
