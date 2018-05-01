@@ -6,7 +6,6 @@ import {findProjectRoot} from "residence";
 import path = require('path');
 import logger from './logger';
 
-
 import {
   BunionFields,
   BunionLevelInternal,
@@ -15,7 +14,6 @@ import {
   Level,
   BunionLevel
 } from "./bunion";
-
 
 const bunionConf = getConf();
 
@@ -251,7 +249,11 @@ export class BunionLogger {
     process.stdout.write(getJSON('TRACE', args, this.appName, getCombinedFields(v, this.fields)));
   }
   
-  isEnabled(level: BunionLevelInternal) {
+  isLevelEnabled(level: BunionLevel) {
+    return this.isEnabled.apply(this, arguments);
+  }
+  
+  isEnabled(level: BunionLevel) {
     const index = ordered.indexOf(String(level || '').toUpperCase());
     if (index < 0) {
       throw new Error(`The log level passed does not match one of ['WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL']`);

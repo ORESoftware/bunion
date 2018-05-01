@@ -174,7 +174,6 @@ const getFields = function (fields: any) {
   return Object.keys(fields).reduce(function (s, k) {
     return s += `(${k}=${String(fields[k])}) `;
   }, '');
-  
 };
 
 const getDarkOrlight = function (str: string) {
@@ -215,6 +214,13 @@ process.stdin.resume().pipe(jsonParser).on('bunion-json', function (v: BunionJSO
   matchCount++;
   let fields = '';
   
+  const d = new Date(v.date);
+  v.d = d.toLocaleTimeString() + `.${String(d.getMilliseconds()).padStart(3,'0')}`;
+  
+  if(v.appName){
+    v.appName = `app:${chalk.bold.underline(v.appName)}/${v.pid}`;
+  }
+  
   if (highlight) {
     v.value = getHighlightedString(v.value);
   }
@@ -225,37 +231,37 @@ process.stdin.resume().pipe(jsonParser).on('bunion-json', function (v: BunionJSO
   
   if (v.level === 'FATAL') {
     process.stderr.write(
-      `${v.date} ${v.appName} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`
+      `${chalk.gray(v.d)} ${v.appName} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`
     );
   }
   
   if (v.level === 'ERROR' && maxIndex < 5) {
     process.stderr.write(
-      `${v.date} ${v.appName} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
+      `${chalk.gray(v.d)} ${v.appName} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
     );
   }
   
   if (v.level === 'WARN' && maxIndex < 4) {
     process.stderr.write(
-      `${v.date} ${v.appName} ${chalk.magentaBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
+      `${chalk.gray(v.d)} ${v.appName} ${chalk.magentaBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
     );
   }
   
   if (v.level === 'DEBUG' && maxIndex < 3) {
     process.stdout.write(
-      `${v.date} ${v.appName} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`
+      `${chalk.gray(v.d)} ${v.appName} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`
     );
   }
   
   if (v.level === 'INFO' && maxIndex < 2) {
     process.stdout.write(
-      `${v.date} ${v.appName} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`
+      `${chalk.gray(v.d)} ${v.appName} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`
     );
   }
   
   if (v.level === 'TRACE' && maxIndex < 1) {
     process.stdout.write(
-      `${v.date} ${v.appName} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`
+      `${chalk.gray(v.d)} ${v.appName} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`
     );
   }
   

@@ -43,6 +43,7 @@ const getDefaultBunionConf = function (): BunionConf {
       }
     },
     consumer: {
+      localeDateString: 'en-US',
       highlightMatches: true,
       level: BunionLevelInternal.INFO,
       match: [],

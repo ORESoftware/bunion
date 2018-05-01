@@ -6,4 +6,4 @@ if [[ -z "$which_tjs" ]]; then
   npm install -g typescript-json-schema
 fi
 
-typescript-json-schema tsconfig.json BunionConf > assets/schema/bunion.conf.json
+typescript-json-schema --noExtraProps tsconfig.json BunionConf > assets/schema/bunion.conf.json

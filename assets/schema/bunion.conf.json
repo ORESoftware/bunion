@@ -1,89 +1,95 @@
 {
-  "definitions": {
-    "BunionLevel": {
-      "enum": [
-        "DEBUG",
-        "ERROR",
-        "FATAL",
-        "INFO",
-        "TRACE",
-        "WARN",
-        "debug",
-        "error",
-        "fatal",
-        "info",
-        "trace",
-        "warn"
-      ],
-      "type": "string"
-    }
-  },
-  "properties": {
-    "consumer": {
-      "properties": {
-        "highlightMatches": {
-          "type": "boolean"
-        },
-        "level": {
-          "$ref": "#/definitions/BunionLevel"
-        },
-        "match": {
-          "items": {
+    "additionalProperties": false,
+    "definitions": {
+        "BunionLevel": {
+            "enum": [
+                "DEBUG",
+                "ERROR",
+                "FATAL",
+                "INFO",
+                "TRACE",
+                "WARN",
+                "debug",
+                "error",
+                "fatal",
+                "info",
+                "trace",
+                "warn"
+            ],
             "type": "string"
-          },
-          "type": "array"
-        },
-        "matchAll": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "matchAny": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         }
-      },
-      "type": "object"
     },
-    "producer": {
-      "properties": {
-        "appName": {
-          "type": "string"
-        },
-        "inspect": {
-          "properties": {
-            "array": {
-              "properties": {
-                "length": {
-                  "type": "number"
+    "properties": {
+        "consumer": {
+            "additionalProperties": false,
+            "properties": {
+                "highlightMatches": {
+                    "type": "boolean"
+                },
+                "level": {
+                    "$ref": "#/definitions/BunionLevel"
+                },
+                "match": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "matchAll": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "matchAny": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
                 }
-              },
-              "type": "object"
             },
-            "object": {
-              "properties": {
-                "depth": {
-                  "type": "number"
+            "type": "object"
+        },
+        "producer": {
+            "additionalProperties": false,
+            "properties": {
+                "appName": {
+                    "type": "string"
+                },
+                "inspect": {
+                    "additionalProperties": false,
+                    "properties": {
+                        "array": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "length": {
+                                    "type": "number"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "object": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "depth": {
+                                    "type": "number"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "type": "object"
+                },
+                "level": {
+                    "$ref": "#/definitions/BunionLevel"
+                },
+                "name": {
+                    "type": "string"
                 }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "level": {
-          "$ref": "#/definitions/BunionLevel"
-        },
-        "name": {
-          "type": "string"
+            },
+            "type": "object"
         }
-      },
-      "type": "object"
-    }
-  },
-  "type": "object"
+    },
+    "type": "object"
 }
 

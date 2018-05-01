@@ -22,7 +22,9 @@ export interface BunionJSON {
   value: string
   date: number
   appName: string
-  fields: object
+  fields: object,
+  pid: number,
+  d?: string // formatted date
 }
 
 export interface BunionFields {
@@ -41,7 +43,7 @@ export interface BunionConf {
   producer: {
     name?: string
     appName?: string
-    level?: BunionLevelInternal
+    level?: BunionLevel
     inspect?: {
       array?: {
         length?: number
@@ -52,8 +54,9 @@ export interface BunionConf {
     }
   },
   consumer: {
+    localeDateString?: string
     highlightMatches?: boolean
-    level?: BunionLevelInternal
+    level?: BunionLevel
     match?: Array<string>
     matchAny?: Array<string>
     matchAll?: Array<string>
