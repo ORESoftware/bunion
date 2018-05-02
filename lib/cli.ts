@@ -6,8 +6,20 @@ import {createParser} from "./json-parser";
 const dashdash = require('dashdash');
 import readline = require('readline');
 import {getConf} from "./utils";
-import logger from './logger';
+import {consumer} from './logger';
 import {ordered, Level, BunionLevelInternal, BunionJSON} from "./bunion";
+
+process.on('SIGINT', function(){
+  consumer.warn('SIGINT received.');
+});
+
+process.on('SIGHUP', function(){
+  consumer.warn('SIGHUP received.');
+});
+
+process.on('SIGTERM', function(){
+  consumer.warn('SIGTERM received.');
+});
 
 const options = [
   {
@@ -106,13 +118,13 @@ let opts: any, parser = dashdash.createParser({options: options});
 try {
   opts = parser.parse(process.argv);
 } catch (e) {
-  logger.error('bunion: error: %s', e.message);
+  consumer.error('bunion: error: %s', e.message);
   process.exit(1);
 }
 
 if (opts.help) {
   const help = parser.help({includeEnv: true}).trimRight();
-  logger.info('usage: node foo.js [OPTIONS]\n' + 'options:\n' + help);
+  consumer.info('usage: node foo.js [OPTIONS]\n' + 'options:\n' + help);
   process.exit(0);
 }
 

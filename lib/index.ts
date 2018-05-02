@@ -4,7 +4,7 @@ import util = require('util');
 import {customStringify, getConf} from "./utils";
 import {findProjectRoot} from "residence";
 import path = require('path');
-import logger from './logger';
+import {producer} from './logger';
 import os = require('os');
 
 import {
@@ -16,6 +16,18 @@ import {
   BunionLevel, BunionLevelInternalUnion
 } from "./bunion";
 import chalk from "chalk";
+
+process.on('SIGINT', function(){
+  producer.warn('SIGINT received.');
+});
+
+process.on('SIGHUP', function(){
+  producer.warn('SIGHUP received.');
+});
+
+process.on('SIGTERM', function(){
+  producer.warn('SIGTERM received.');
+});
 
 const bunionConf = getConf();
 
