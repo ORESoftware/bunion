@@ -7,17 +7,17 @@ const dashdash = require('dashdash');
 import readline = require('readline');
 import {getConf} from "./utils";
 import {consumer} from './logger';
-import {ordered, Level, BunionLevelInternal, BunionJSON} from "./bunion";
+import {ordered, Level, BunionLevelInternal, BunionJSON, BunionFields} from "./bunion";
 
-process.on('SIGINT', function(){
+process.on('SIGINT', function () {
   consumer.warn('SIGINT received.');
 });
 
-process.on('SIGHUP', function(){
+process.on('SIGHUP', function () {
   consumer.warn('SIGHUP received.');
 });
 
-process.on('SIGTERM', function(){
+process.on('SIGTERM', function () {
   consumer.warn('SIGTERM received.');
 });
 
@@ -61,6 +61,11 @@ const options = [
     names: ['match', 'or'],
     type: 'arrayOfString',
     default: [] as Array<string>
+  },
+  {
+    names: ['filter'],
+    type: 'string',
+    default: ''
   },
   {
     names: ['must-match', 'and'],
@@ -133,6 +138,29 @@ const flattenDeep = function (a: Array<string>): Array<string> {
 };
 
 const bunionConf = getConf();
+
+let filter: { [key: string]: RegExp } = {};
+
+try {
+  if (opts.filter) {
+    filter = JSON.parse(opts.filter);
+  }
+}
+catch (err) {
+  consumer.error('Bunion could not parse your filter option (JSON) at the command line.');
+  throw err;
+}
+
+try {
+  Object.keys(filter).forEach(function (k) {
+    filter[k] = new RegExp(filter[k]);
+  });
+}
+catch (err) {
+  consumer.error('Bunion could not convert your filter option values to RegExp.');
+  throw err;
+}
+
 const level = opts.level;
 const output = String(opts.output || 'medium').toLowerCase();
 const maxLevel = String(level || (bunionConf.consumer && bunionConf.consumer.level) || 'trace').toUpperCase();
@@ -183,6 +211,25 @@ const mustMatches = function (v: string) {
   });
 };
 
+const filterKeys = Object.keys(filter);
+
+const matchFilterObject = function (fields: BunionFields) {
+  
+  if(!fields){
+    return false;
+  }
+  
+  if (filterKeys.length < 1) {
+    return true;
+  }
+  
+  return filterKeys.some(function (k) {
+    if (fields[k]) {
+      return filter[k].test(fields[k]);
+    }
+  });
+};
+
 const allMatches = andMatches.concat(orMatches);
 
 const getHighlightedString = function (str: string) {
@@ -222,12 +269,12 @@ const jsonParser = createParser({
 
 process.stdin.resume().pipe(jsonParser).on('bunion-json', function (v: BunionJSON) {
   
-  if (allMatches.length > 0 && filteredCount > 0 && opts.no_show_match_count !== true) {
+  if ((filterKeys.length > 0 || allMatches.length > 0) && filteredCount > 0 && opts.no_show_match_count !== true) {
     readline.clearLine(process.stdout, 0);  // clear current text
     readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
   }
   
-  if (!(matches(v.value) && mustMatches(v.value))) {
+  if (!(matches(v.value) && mustMatches(v.value) && matchFilterObject(v.fields))) {
     filteredCount++;
     if (opts.no_show_match_count !== true) {
       process.stdout.write(getMatchCountLine(matchCount, filteredCount));
@@ -297,7 +344,7 @@ process.stdin.resume().pipe(jsonParser).on('bunion-json', function (v: BunionJSO
     );
   }
   
-  if (allMatches.length > 0 && filteredCount > 0 && opts.no_show_match_count !== true) {
+  if ((allMatches.length > 0 || filterKeys.length > 0) && filteredCount > 0 && opts.no_show_match_count !== true) {
     process.stdout.write(
       getMatchCountLine(matchCount, filteredCount)
     );
