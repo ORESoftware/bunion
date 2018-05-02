@@ -6,6 +6,7 @@ import {findProjectRoot} from "residence";
 import path = require('path');
 import {producer} from './logger';
 import os = require('os');
+import chalk from "chalk";
 
 import {
   BunionFields,
@@ -15,7 +16,7 @@ import {
   Level,
   BunionLevel, BunionLevelInternalUnion
 } from "./bunion";
-import chalk from "chalk";
+
 
 process.on('SIGINT', function(){
   producer.warn('SIGINT received.');
