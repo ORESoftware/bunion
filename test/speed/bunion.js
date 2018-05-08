@@ -3,6 +3,7 @@
 const {log} = require('bunion');
 // const log = Bunion.getNewLogger();
 
+
 log.addFields({foo:'stank'});
 
 // const log2 = log.child().addField('mark','rubio');

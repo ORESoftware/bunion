@@ -1,5 +1,5 @@
 {
-  "producer":{
+  "producer": {
     "appName": "foobar",
     "level": "info"
   }
