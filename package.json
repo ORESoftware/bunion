@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-org/bunion.git"
+    "url": "git+https://github.com/ORESoftware/bunion.git"
   },
   "keywords": [
     "typescript",
@@ -25,9 +25,9 @@
   "author": "Olegzandr VD",
   "license": "SEE LICENSE IN LICENSE.md",
   "bugs": {
-    "url": "https://github.com/your-org/bunion/issues"
+    "url": "https://github.com/ORESoftware/bunion/issues"
   },
-  "homepage": "https://github.com/your-org/bunion#readme",
+  "homepage": "https://github.com/ORESoftware/bunion#readme",
   "dependencies": {
     "ajv": "^6.4.0",
     "chalk": "^2.4.0",
