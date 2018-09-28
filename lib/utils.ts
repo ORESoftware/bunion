@@ -7,27 +7,13 @@ import AJV = require('ajv');
 import * as util from "util";
 import {producer} from "./logger";
 import chalk from "chalk";
+
 const ajv = new AJV();
 const schema = require('../assets/schema/bunion.conf.json');
 
 ///////////////////////////////////////////////////////////////////////////////
 
-export const customStringify = function (v: object) {
-  let cache = new Map<any, true>();
-  return JSON.stringify(v, function (key, value) {
-    if (typeof value === 'object' && value !== null) {
-      if (cache.get(value) === true) {
-        // Circular reference found, discard key
-        return;
-      }
-      // Store value in our collection
-      cache.set(value, true);
-    }
-    return value;
-  });
-};
-
-const getDefaultBunionConf = function (): BunionConf {
+const getDefaultBunionConf = (): BunionConf => {
   return {
     producer: {
       name: null,
@@ -53,10 +39,10 @@ const getDefaultBunionConf = function (): BunionConf {
   }
 };
 
-export const getConf = function (): BunionConf {
-  
+export const getConf = (): BunionConf => {
+
   let projectRoot: string;
-  
+
   try {
     projectRoot = findProjectRoot(process.cwd());
   }
@@ -64,9 +50,9 @@ export const getConf = function (): BunionConf {
     console.error('bunion could not find the project root given the current working directory:', process.cwd());
     throw err;
   }
-  
+
   let confPath, conf;
-  
+
   try {
     confPath = path.resolve(projectRoot + '/' + '.bunion.json');
     conf = require(confPath);
@@ -74,9 +60,9 @@ export const getConf = function (): BunionConf {
   catch (err) {
     return getDefaultBunionConf();
   }
-  
+
   const valid = ajv.validate(schema, conf);
-  
+
   if (!valid) {
     producer.error('Your bunion configuation file has an invalid format, see the following error(s):');
     ajv.errors.forEach(function (e) {
@@ -84,7 +70,7 @@ export const getConf = function (): BunionConf {
     });
     throw chalk.red('Bunion configuration error - your config is invalid, see above errors.')
   }
-  
+
   return Object.assign({}, getDefaultBunionConf(), conf);
-  
+
 };

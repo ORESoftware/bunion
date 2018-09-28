@@ -1,12 +1,12 @@
 'use strict';
 
 import util = require('util');
-import {customStringify, getConf} from "./utils";
-import {findProjectRoot} from "residence";
-import path = require('path');
+import {getConf} from "./utils";
 import {producer} from './logger';
 import os = require('os');
 import chalk from "chalk";
+import * as safe from '@oresoftware/safe-stringify';
+
 
 import {
   BunionFields,
@@ -101,7 +101,7 @@ const getJSON = function (level: string, args: any[], appName: string, fields: o
     return util.inspect(a, utilOpts); //+ '\n';
   });
   
-  return customStringify({
+  return safe.stringify({
     '@bunion': true,
     date: Date.now(),
     value: clean.join(' '),
@@ -299,3 +299,7 @@ export const createLogger = getNewLogger;
 export const log = getNewLogger();
 export default log;
 
+
+export const r2gSmokeTest = async () => {
+  return true;
+};

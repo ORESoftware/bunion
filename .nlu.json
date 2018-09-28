@@ -1,7 +1,7 @@
 {
   "linkToItself": true,
   "searchRoots": [
-    "$HOME/WebstormProjects/oresoftware"
+    ".."
   ],
   "ignore": [
     "/node_modules/",
@@ -11,6 +11,8 @@
 
   ],
   "list": [
-    "residence"
+    "residence",
+    "@oresoftware/json-stream-parser",
+    "@oresoftware/safe-stringify"
   ]
 }
