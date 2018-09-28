@@ -32,11 +32,11 @@ process.on('SIGTERM', function(){
 
 const bunionConf = getConf();
 
-const getDefaultAppName = function () {
+const getDefaultAppName =  () => {
   return process.env.bunyan_app_name || bunionConf.producer.appName || bunionConf.producer.name || '';
 };
 
-const getDefaultMaxLevel = function () {
+const getDefaultMaxLevel =  () => {
   return process.env.bunion_max_level || bunionConf.producer.level || 'info';
 };
 
@@ -54,7 +54,7 @@ const globalSettings = {
   globalMaxIndex: 0
 };
 
-export const setGlobalLogLevel = function (v: BunionLevelInternal) {
+export const setGlobalLogLevel =  (v: BunionLevelInternal) => {
   const maxIndex = ordered.indexOf(String(v || '').toUpperCase());
   if (maxIndex < 0) {
     throw new Error(
@@ -75,7 +75,7 @@ const utilOpts = {
   maxArrayLength: 10
 };
 
-const getJSON = function (level: string, args: any[], appName: string, fields: object, host: string) {
+const getJSON = (level: string, args: any[], appName: string, fields: object, host: string) => {
   
   fields = fields || null;
   
@@ -122,11 +122,11 @@ export {Level};
 
 export class BunionLogger {
   
-  private appName: string;
+  private readonly appName: string;
   private fields: BunionFields | null;
   private level: BunionLevel;
   private maxIndex: number;
-  private hostname: string;
+  private readonly hostname: string;
   
   constructor(opts?: BunionOpts) {
     this.appName = String((opts && (opts.appName || opts.name)) || getDefaultAppName());
@@ -300,6 +300,6 @@ export const log = getNewLogger();
 export default log;
 
 
-export const r2gSmokeTest = async () => {
+export const r2gSmokeTest = () => {
   return true;
 };

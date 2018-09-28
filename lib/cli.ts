@@ -3,7 +3,6 @@
 
 import chalk from 'chalk';
 import {createParser} from "./json-parser";
-
 const dashdash = require('dashdash');
 import readline = require('readline');
 import {getConf} from "./utils";
