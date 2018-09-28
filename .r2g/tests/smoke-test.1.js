@@ -32,3 +32,24 @@ process.on('unhandledRejection', (reason, p) => {
 
 // your test goes here
 // assert.strictEqual(true, false, 'whoops');
+
+const k = cp.spawn('bash');
+
+// log.error(new Error('foo'));
+
+k.stdin.end('node -e "' + `
+    const {log} = require('bunion');
+    log.info('just saying hi.');
+    log.warn('shit hit the fan');
+    log.error('burrito');
+` + '"');
+
+
+
+
+k.stdout
+  .pipe(process.stdout);
+
+k.stdout
+  .pipe(cp.spawn('bunion').stdin)
+  .pipe(process.stdout);
