@@ -4,7 +4,7 @@
     "bunion": "dist/cli.js",
     "bun": "dist/cli.js"
   },
-  "version": "0.0.109",
+  "version": "0.0.110",
   "description": "Semver-oriented TypeScript library skeleton.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -29,6 +29,8 @@
   },
   "homepage": "https://github.com/ORESoftware/bunion#readme",
   "dependencies": {
+    "@oresoftware/json-stream-parser": "latest",
+    "@oresoftware/safe-stringify": "0.0.1001",
     "ajv": "^6.4.0",
     "chalk": "^2.4.0",
     "dashdash": "^1.14.1",
@@ -37,5 +39,8 @@
   "devDependencies": {
     "@types/core-js": "^0.9.46",
     "@types/node": "^9.6.2"
+  },
+  "r2g": {
+    "test": "echo 'r2g test noop'"
   }
 }
