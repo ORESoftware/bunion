@@ -50,6 +50,9 @@ k.stdin.end('node -e "' + `
 k.stdout
   .pipe(process.stdout);
 
+
+// TODO: the following does not seem to log anything to stdout, whereas the above does?
+
 k.stdout
   .pipe(cp.spawn('bunion').stdin)
   .pipe(process.stdout);
