@@ -18,25 +18,25 @@ import {
 } from "./bunion";
 
 
-process.on('SIGINT', function(){
+process.on('SIGINT', function () {
   producer.warn('SIGINT received.');
 });
 
-process.on('SIGHUP', function(){
+process.on('SIGHUP', function () {
   producer.warn('SIGHUP received.');
 });
 
-process.on('SIGTERM', function(){
+process.on('SIGTERM', function () {
   producer.warn('SIGTERM received.');
 });
 
 const bunionConf = getConf();
 
-const getDefaultAppName =  () => {
+const getDefaultAppName = () => {
   return process.env.bunyan_app_name || bunionConf.producer.appName || bunionConf.producer.name || '';
 };
 
-const getDefaultMaxLevel =  () => {
+const getDefaultMaxLevel = () => {
   return process.env.bunion_max_level || bunionConf.producer.level || 'info';
 };
 
@@ -54,7 +54,7 @@ const globalSettings = {
   globalMaxIndex: 0
 };
 
-export const setGlobalLogLevel =  (v: BunionLevelInternal) => {
+export const setGlobalLogLevel = (v: BunionLevelInternal) => {
   const maxIndex = ordered.indexOf(String(v || '').toUpperCase());
   if (maxIndex < 0) {
     throw new Error(
@@ -95,7 +95,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     
     if (a && a.message && a.stack && typeof a.stack === 'string') {
       return (i > 0 ? '' : ' (see below ⬃ )') + ' \n\n' + a.stack.split('\n')
-      .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v)).join('\n') + '\n';
+        .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v)).join('\n') + '\n';
     }
     
     return util.inspect(a, utilOpts); //+ '\n';
@@ -131,7 +131,7 @@ export class BunionLogger {
   constructor(opts?: BunionOpts) {
     this.appName = String((opts && (opts.appName || opts.name)) || getDefaultAppName());
     this.fields = opts && opts.fields || null;
-    this.level = <BunionLevelInternal> String((opts && (opts.level || opts.maxlevel) || maxLevel || '')).toUpperCase();
+    this.level = <BunionLevelInternal>String((opts && (opts.level || opts.maxlevel) || maxLevel || '')).toUpperCase();
     this.maxIndex = ordered.indexOf(this.level);
     this.hostname = os.hostname();
     
@@ -189,7 +189,7 @@ export class BunionLogger {
   
   addFields(v: BunionFields): this {
     this.validateFields(v);
-    this.fields = Object.assign(this.fields || {}, v);
+    this.fields = Object.assign({}, this.fields || {}, v);
     return this;
   }
   
@@ -201,7 +201,7 @@ export class BunionLogger {
   
   setFields(v: BunionFields): this {
     this.validateFields(v);
-    this.fields = v;
+    this.fields = Object.assign({}, v);
     return this;
   }
   
