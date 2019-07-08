@@ -20,7 +20,8 @@ export enum BunionMode {
   SCROLLING = 'SCROLLING',
   READING = 'READING',
   PAUSED = 'PAUSED',
-  SEARCHING = 'SEARCHING'
+  SEARCHING = 'SEARCHING',
+  NORMAL = 'NORMAL'
 }
 
 export interface BunionJSON {

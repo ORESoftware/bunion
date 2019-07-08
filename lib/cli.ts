@@ -309,7 +309,8 @@ const container = {
   currentLines: 0,
   mode: BunionMode.READING,
   piper: null as any,
-  prevStart: null as number
+  prevStart: null as number,
+  searchTerm: '.*'
 };
 
 const killProc = (pid: number) => {
@@ -471,6 +472,7 @@ strm.on('data', (d: any) => {
   
   if (String(d) === 's' && container.mode === BunionMode.READING) {
     container.mode = BunionMode.SEARCHING;
+    console.log(chalk.bgBlack.whiteBright(' (search mode) '));
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
     container.k.kill('SIGKILL');
     container.piper.end();
@@ -482,6 +484,8 @@ strm.on('data', (d: any) => {
     for(let s of String(b).split('\n')){
       t.write(s + '\n');
     }
+    console.log();
+    console.log(chalk.bgBlack.whiteBright(' Current search term: ' + container.searchTerm));
     return;
   }
   
@@ -498,11 +502,16 @@ strm.on('data', (d: any) => {
     for(let s of String(b).split('\n')){
       t.write(s + '\n');
     }
+    console.log();
+    console.log(chalk.bgBlack.whiteBright('Current search term: ' +  container.searchTerm));
     return;
   }
   
   if (String(d).trim() === 'p' && container.mode === BunionMode.READING) {
     container.mode = BunionMode.PAUSED;
+    console.log();
+    console.log(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
+    console.log();
     container.k.kill('SIGKILL');
     container.piper.end();
     container.piper.removeAllListeners();
@@ -522,6 +531,7 @@ strm.on('data', (d: any) => {
   
   if (String(d).trim() === '\u0010' && container.mode === BunionMode.PAUSED) {
     container.mode = BunionMode.READING;
+    console.log(chalk.bgBlack.whiteBright(' (reading/tailing mode) '));
     if (container.k) {
       killProc(container.k.pid)
     }
