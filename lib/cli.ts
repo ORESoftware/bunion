@@ -3,16 +3,21 @@
 
 import chalk from 'chalk';
 import {createParser} from "./json-parser";
-
-const dashdash = require('dashdash');
-import readline = require('readline');
 import {getConf} from "./utils";
 import {consumer} from './logger';
-import {ordered, Level, BunionLevelInternal, BunionJSON, BunionFields} from "./bunion";
+import {BunionFields, BunionJSON, Level, ordered} from "./bunion";
+import {BunionMode} from "./bunion";
 import * as uuid from 'uuid';
 import * as fs from 'fs';
 import * as cp from 'child_process';
+import {ChildProcess} from "child_process";
 import * as path from "path";
+import {ReadStream} from "tty";
+
+const dashdash = require('dashdash');
+import readline = require('readline');
+import {Transform} from "stream";
+import JSONParser from "@oresoftware/json-stream-parser";
 
 process.on('SIGINT', function () {
   consumer.warn('SIGINT received.');
@@ -272,10 +277,6 @@ const getMatchCountLine = (matchCount: number, filteredCount: number) => {
 
 let filteredCount = 0, matchCount = 0;
 
-const jsonParser = createParser({
-  onlyParseableOutput: Boolean(opts.only_parseable),
-  clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
-});
 
 const fileId = uuid.v4();
 
@@ -301,122 +302,257 @@ process.once('exit', code => {
   consumer.info('exiting with code:', code);
 });
 
-// const fd = fs.openSync(logfile, fs.constants.O_RDWR);
 
-const startReading = (d: string) => {
+const container = {
+  k: null as ChildProcess,
+  currentBytes: 0,
+  currentLines: 0,
+  mode: BunionMode.READING,
+  piper: null as any,
+  prevStart: null as number
+};
+
+const killProc = (pid: number) => {
+  const k = cp.spawn('bash');
+  k.stdin.end(`kill -9 ${pid}`);
+};
+
+
+const stdinStream = process.stdin.resume()
+  .once('data', d => startReading(200))
+  .pipe(fs.createWriteStream(logfile));
+
+const onJSON  = (v: BunionJSON) => {
   
-  const v = fs.readFileSync(logfile);
   
-  const k = cp.spawn(`bash`);
-  k.stdin.end(`tail -f ${logfile}`);
+  if ((filterKeys.length > 0 || allMatches.length > 0) && filteredCount > 0 && opts.no_show_match_count !== true) {
+    readline.clearLine(process.stdout, 0);  // clear current text
+    readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
+  }
   
-  k.stderr.pipe(process.stderr);
   
-  k.stdout.pipe(jsonParser).on('bunion-json', function (v: BunionJSON) {
-    
-    if ((filterKeys.length > 0 || allMatches.length > 0) && filteredCount > 0 && opts.no_show_match_count !== true) {
-      readline.clearLine(process.stdout, 0);  // clear current text
-      readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
+  if (!(matches(v.value) && mustMatches(v.value) && matchFilterObject(v.fields))) {
+    filteredCount++;
+    if (opts.no_show_match_count !== true) {
+      process.stdout.write(getMatchCountLine(matchCount, filteredCount));
     }
-    
-    
-    if (!(matches(v.value) && mustMatches(v.value) && matchFilterObject(v.fields))) {
-      filteredCount++;
-      if (opts.no_show_match_count !== true) {
-        process.stdout.write(getMatchCountLine(matchCount, filteredCount));
-      }
-      return;
-    }
-    
-    
-    matchCount++;
-    let fields = '';
-    
-    if (output === 'short') {
-      v.d = '';
-      v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-    } else if (output === 'medium') {
-      const d = new Date(v.date);
-      v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
-      v.appName = `app:${chalk.bold(v.appName)}`;
-    } else {
-      const d = new Date(v.date);
-      v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
-      v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
-    }
-    
-    if (highlight) {
-      v.value = getHighlightedString(v.value);
-    }
-    
-    if (v.fields) {
-      fields = getFields(v.fields);
-    }
-    
-    if (v.level === 'FATAL') {
-      process.stderr.write(
-        `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`
-      );
-    }
-    
-    if (v.level === 'ERROR' && maxIndex < 5) {
-      process.stderr.write(
-        `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
-      );
-    }
-    
-    if (v.level === 'WARN' && maxIndex < 4) {
-      process.stderr.write(
-        `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.magentaBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
-      );
-    }
-    
-    if (v.level === 'INFO' && maxIndex < 3) {
-      process.stdout.write(
-        `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`
-      );
-    }
-    
-    if (v.level === 'DEBUG' && maxIndex < 2) {
-      process.stdout.write(
-        `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`
-      );
-    }
-    
-    if (v.level === 'TRACE' && maxIndex < 1) {
-      process.stdout.write(
-        `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`
-      );
-    }
-    
-    if ((allMatches.length > 0 || filterKeys.length > 0) && filteredCount > 0 && opts.no_show_match_count !== true) {
-      process.stdout.write(
-        getMatchCountLine(matchCount, filteredCount)
-      );
-    }
-    
-  });
+    return;
+  }
   
+  
+  matchCount++;
+  let fields = '';
+  
+  if (output === 'short') {
+    v.d = '';
+    v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
+  } else if (output === 'medium') {
+    const d = new Date(v.date);
+    v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
+    v.appName = `app:${chalk.bold(v.appName)}`;
+  } else {
+    const d = new Date(v.date);
+    v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
+    v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
+  }
+  
+  if (highlight) {
+    v.value = getHighlightedString(v.value);
+  }
+  
+  if (v.fields) {
+    fields = getFields(v.fields);
+  }
+  
+  if (v.level === 'FATAL') {
+    process.stdout.write(
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`
+    );
+  }
+  
+  if (v.level === 'ERROR' && maxIndex < 5) {
+    process.stdout.write(
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
+    );
+  }
+  
+  if (v.level === 'WARN' && maxIndex < 4) {
+    process.stdout.write(
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.magentaBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
+    );
+  }
+  
+  if (v.level === 'INFO' && maxIndex < 3) {
+    process.stdout.write(
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`
+    );
+  }
+  
+  if (v.level === 'DEBUG' && maxIndex < 2) {
+    process.stdout.write(
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`
+    );
+  }
+  
+  if (v.level === 'TRACE' && maxIndex < 1) {
+    process.stdout.write(
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`
+    );
+  }
+  
+  if ((allMatches.length > 0 || filterKeys.length > 0) && filteredCount > 0 && opts.no_show_match_count !== true) {
+    process.stdout.write(
+      getMatchCountLine(matchCount, filteredCount)
+    );
+  }
   
 };
 
-process.stdin.resume()
-  .once('data', startReading)
-  .pipe(fs.createWriteStream(logfile));
+const startReading = (d: number) => {
+  
+  // const k = container.k = cp.spawn(`tail`, ['-n', String(d), '-f', logfile]);
+  
+  const k = container.k = cp.spawn(`bash`, [], {detached: false});
+  
+  // k.stdin.end(`on_sigkill(){ exit 0; }; export -f on_sigkill; trap KILL SIGKILL SIGINT INT on_sigkill ; tail -n ${d} -f ${logfile}`);
+  
+  k.stdin.end(`tail -n ${d} -f ${logfile}`);
+  
+  const p = k.stderr.pipe(process.stderr);
+  
+  k.once('exit', code => {
+    p.destroy();
+    p.removeAllListeners();
+    consumer.warn('tail process exiting with:', code);
+  });
+  
+  const jsonParser = createParser({
+    onlyParseableOutput: Boolean(opts.only_parseable),
+    clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
+  });
+  
+  const piper = container.piper = k.stdout.pipe(jsonParser);
+  
+  piper.on('bunion-json', function (v: BunionJSON) {
+    onJSON(v);
+  });
+  
+};
+
 
 // const inputStream = fs.createReadStream(logfile, {encoding: 'utf8'});
-//
 // inputStream.on('data', d => {
 //   console.log({d});
 // });
 
+const t = new Transform();
+t._transform = (c, e, cb) => cb(null, c);
 
-const fd = fs.openSync('/dev/tty','r+');
-
-fs.createReadStream(null,{fd}).on('data', d => {
-  console.log({d: String(d)});
+const jsonParser = createParser({
+  onlyParseableOutput: Boolean(opts.only_parseable),
+  clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
 });
 
+t.pipe(jsonParser).on('bunion-json', d => {
+  onJSON(d);
+});
+
+const fd = fs.openSync('/dev/tty', 'r+');
+
+console.log({fd});
+
+const strm = new ReadStream(<any>fd);
+
+strm.setRawMode(true);
+
+strm.on('data', (d: any) => {
+  
+  console.log({d: String(d)});
+  
+  if (String(d) === 's' && container.mode === BunionMode.READING) {
+    container.mode = BunionMode.SEARCHING;
+    const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+    container.k.kill('SIGKILL');
+    container.piper.end();
+    container.piper.removeAllListeners();
+    const b = Buffer.alloc(1001);
+    const ps = container.prevStart = Math.max(0, stdinStream.bytesWritten - 1000);
+    const raw = fs.readSync(logfilefd, b, 0, 1000, ps);
+    // console.log(String(b));
+    for(let s of String(b).split('\n')){
+      t.write(s + '\n');
+    }
+    return;
+  }
+  
+  if (String(d) === '\r' && container.mode === BunionMode.SEARCHING) {
+    // container.mode = BunionMode.SCROLLING;
+    const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+    container.k.kill('SIGKILL');
+    container.piper.end();
+    container.piper.removeAllListeners();
+    const b = Buffer.alloc(1001);
+    const ps = container.prevStart += 100;
+    const raw = fs.readSync(logfilefd, b, 0, 1000, ps);
+    // console.log(String(b));
+    for(let s of String(b).split('\n')){
+      t.write(s + '\n');
+    }
+    return;
+  }
+  
+  if (String(d).trim() === 'p' && container.mode === BunionMode.READING) {
+    container.mode = BunionMode.PAUSED;
+    container.k.kill('SIGKILL');
+    container.piper.end();
+    container.piper.removeAllListeners();
+    // container.k.kill('SIGKILL');
+    if (container.k) {
+      killProc(container.k.pid)
+    }
+    container.k.stdout.removeAllListeners();
+    container.k.stderr.removeAllListeners();
+    container.k.removeAllListeners();
+    // process.exit(1);
+    return;
+  }
+  
+  // up arrow: \u001b[A
+  // down arrow: \u001b[B
+  
+  if (String(d).trim() === '\u0010' && container.mode === BunionMode.PAUSED) {
+    container.mode = BunionMode.READING;
+    if (container.k) {
+      killProc(container.k.pid)
+    }
+    startReading(container.currentLines);
+    return;
+  }
+  
+  if (String(d).trim() === '\u0004') {
+    consumer.warn('User hit control-D');
+    process.exit(1);
+    return;
+  }
+  
+  if (String(d).trim() === '\u0003') {
+    consumer.warn('User hit control-C');
+    // process.exit(1);
+    return;
+  }
+  
+});
+
+
+//
+// fs.createReadStream(null,{fd}).setRawMode(true).on('data', d => {
+//   console.log({d: String(d)});
+// });
+
+
+// killall: unknown signal f; valid signals:
+// HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP
+// TSTP CONT CHLD TTIN TTOU IO XCPU XFSZ VTALRM PROF WINCH INFO USR1 USR2
 
 
 

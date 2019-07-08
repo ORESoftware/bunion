@@ -18,16 +18,16 @@ import {
 } from "./bunion";
 
 
-process.on('SIGINT', function () {
-  producer.warn('SIGINT received.');
+process.on('SIGINT', s => {
+  producer.warn('SIGINT received.', s);
 });
 
-process.on('SIGHUP', function () {
-  producer.warn('SIGHUP received.');
+process.on('SIGHUP', s => {
+  producer.warn('SIGHUP received.', s);
 });
 
-process.on('SIGTERM', function () {
-  producer.warn('SIGTERM received.');
+process.on('SIGTERM',  s => {
+  producer.warn('SIGTERM received.', s);
 });
 
 const bunionConf = getConf();

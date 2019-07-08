@@ -16,6 +16,13 @@ export enum BunionLevelInternal {
   TRACE = 'TRACE'
 }
 
+export enum BunionMode {
+  SCROLLING = 'SCROLLING',
+  READING = 'READING',
+  PAUSED = 'PAUSED',
+  SEARCHING = 'SEARCHING'
+}
+
 export interface BunionJSON {
   '@bunion': true,
   level: BunionLevelInternal
