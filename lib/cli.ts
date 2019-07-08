@@ -7,17 +7,17 @@ import {getConf} from "./utils";
 import {consumer} from './logger';
 import {BunionFields, BunionJSON, Level, ordered} from "./bunion";
 import {BunionMode} from "./bunion";
+import {BunionLevelInternal} from "./bunion";
 import * as uuid from 'uuid';
 import * as fs from 'fs';
 import * as cp from 'child_process';
 import {ChildProcess} from "child_process";
 import * as path from "path";
 import {ReadStream} from "tty";
+import {Transform} from "stream";
 
 const dashdash = require('dashdash');
 import readline = require('readline');
-import {Transform} from "stream";
-import JSONParser from "@oresoftware/json-stream-parser";
 
 process.on('SIGINT', function () {
   consumer.warn('SIGINT received.');
@@ -40,7 +40,7 @@ const options = [
   {
     names: ['help'],
     type: 'bool',
-    help: 'Print this help and exit.'
+    help: 'Print help and exit.'
   },
   {
     names: ['verbose', 'v'],
@@ -310,7 +310,8 @@ const container = {
   mode: BunionMode.READING,
   piper: null as any,
   prevStart: null as number,
-  searchTerm: '.*'
+  searchTerm: '.*',
+  logLevel: BunionLevelInternal.TRACE
 };
 
 const killProc = (pid: number) => {
@@ -323,7 +324,7 @@ const stdinStream = process.stdin.resume()
   .once('data', d => startReading(200))
   .pipe(fs.createWriteStream(logfile));
 
-const onJSON  = (v: BunionJSON) => {
+const onJSON = (v: BunionJSON) => {
   
   
   if ((filterKeys.length > 0 || allMatches.length > 0) && filteredCount > 0 && opts.no_show_match_count !== true) {
@@ -440,6 +441,15 @@ const startReading = (d: number) => {
   
 };
 
+const levelMap = new Map([
+  ['6', BunionLevelInternal.FATAL],
+  ['5', BunionLevelInternal.ERROR],
+  ['4', BunionLevelInternal.WARN],
+  ['3', BunionLevelInternal.INFO],
+  ['2', BunionLevelInternal.DEBUG],
+  ['1', BunionLevelInternal.TRACE],
+]);
+
 
 // const inputStream = fs.createReadStream(logfile, {encoding: 'utf8'});
 // inputStream.on('data', d => {
@@ -470,7 +480,13 @@ strm.on('data', (d: any) => {
   
   console.log({d: String(d)});
   
+  if (container.mode !== BunionMode.PAUSED && levelMap.has(String(d))) {
+    container.logLevel = levelMap.get(String(d));
+    return;
+  }
+  
   if (String(d) === 's' && container.mode === BunionMode.READING) {
+   
     container.mode = BunionMode.SEARCHING;
     console.log(chalk.bgBlack.whiteBright(' (search mode) '));
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
@@ -482,11 +498,12 @@ strm.on('data', (d: any) => {
     const raw = fs.readSync(logfilefd, b, 0, 1000, ps);
     // console.log(String(b));
     process.stdout.write('\x1Bc'); // clear screen
-    for(let s of String(b).split('\n')){
+    console.log('SEARCH 111');
+    for (let s of String(b).split('\n')) {
       t.write(s + '\n');
     }
     console.log();
-    console.log(chalk.bgBlack.whiteBright(' Current search term: ' + container.searchTerm));
+    console.log(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, current search term: ${container.searchTerm} `));
     return;
   }
   
@@ -496,16 +513,45 @@ strm.on('data', (d: any) => {
     container.k.kill('SIGKILL');
     container.piper.end();
     container.piper.removeAllListeners();
-    const b = Buffer.alloc(1001);
-    const ps = container.prevStart += 100;
-    const raw = fs.readSync(logfilefd, b, 0, 1000, ps);
-    // console.log(String(b));
-    process.stdout.write('\x1Bc'); // clear screen
-    for(let s of String(b).split('\n')){
-      t.write(s + '\n');
+    const b = Buffer.alloc(1501);
+    let eof = false;
+    let ps = container.prevStart + 200;
+    
+    if (ps >= stdinStream.bytesWritten) {
+      ps = container.prevStart = stdinStream.bytesWritten - 200;
+      eof = true;
     }
+    
+    const raw = fs.readSync(logfilefd, b, 0, 1500, ps);
+    // console.log(String(b));
+    
+    process.stdout.write('\x1Bc'); // clear screen
+  
+    console.log('SEARCH 222');
+    
+    let lenToAdd = 0;
+    
+    for (let s of String(b).split('\n')) {
+      
+      lenToAdd += Buffer.from(s + '\n').length;
+      t.write(s + '\n');
+      
+      if(!eof){
+        break;
+      }
+    }
+    
+    if(!eof){
+      container.prevStart += lenToAdd;
+    }
+    
+    if(eof){
+      console.log();
+      console.log(chalk.bgBlack.whiteBright(' (current end of file) '));
+    }
+    
     console.log();
-    console.log(chalk.bgBlack.whiteBright('Current search term: ' +  container.searchTerm));
+    console.log(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, current search term: ${container.searchTerm} `));
     return;
   }
   
@@ -566,7 +612,8 @@ strm.on('data', (d: any) => {
 // HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP
 // TSTP CONT CHLD TTIN TTOU IO XCPU XFSZ VTALRM PROF WINCH INFO USR1 USR2
 
-
+console.log('rows:', process.stdout.rows);
+console.log('columns:',process.stdout.columns);
 
 
 
