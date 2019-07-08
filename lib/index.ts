@@ -103,7 +103,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
   
   return safe.stringify({
     '@bunion': true,
-    date: Date.now(),
+    date: new Date(),
     value: clean.join(' '),
     appName: appName,
     level: level,
@@ -140,6 +140,10 @@ export class BunionLogger {
         chalk.red('Option "level" is not set to a valid value, must be one of: ' + Object.keys(BunionLevelInternal))
       );
     }
+  }
+  
+  getJSON(logLevel: BunionLevelInternal | string, ...args: any[]){
+    return getJSON(logLevel, args, this.appName, this.fields, this.hostname)
   }
   
   getFields() {
