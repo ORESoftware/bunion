@@ -481,6 +481,7 @@ strm.on('data', (d: any) => {
     const ps = container.prevStart = Math.max(0, stdinStream.bytesWritten - 1000);
     const raw = fs.readSync(logfilefd, b, 0, 1000, ps);
     // console.log(String(b));
+    process.stdout.write('\x1Bc'); // clear screen
     for(let s of String(b).split('\n')){
       t.write(s + '\n');
     }
@@ -499,6 +500,7 @@ strm.on('data', (d: any) => {
     const ps = container.prevStart += 100;
     const raw = fs.readSync(logfilefd, b, 0, 1000, ps);
     // console.log(String(b));
+    process.stdout.write('\x1Bc'); // clear screen
     for(let s of String(b).split('\n')){
       t.write(s + '\n');
     }
