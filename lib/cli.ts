@@ -519,8 +519,12 @@ strm.on('data', (d: any) => {
     container.mode = BunionMode.SEARCHING;
     console.log(chalk.bgBlack.whiteBright(' (search mode) '));
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
-    container.piper.end();
-    container.piper.removeAllListeners();
+    
+    if(container.piper){
+      container.piper.end();
+      container.piper.removeAllListeners();
+    }
+ 
     const b = Buffer.alloc(1001);
     const ps = container.prevStart = Math.max(0, stdinStream.bytesWritten - 1000);
     const raw = fs.readSync(logfilefd, b, 0, 1000, ps);
@@ -603,6 +607,10 @@ strm.on('data', (d: any) => {
   
   if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) {
     container.mode = BunionMode.READING;
+    if(container.piper){
+      container.piper.end();
+      container.piper.removeAllListeners();
+    }
     console.log(chalk.bgBlack.whiteBright(' (reading/tailing mode) '));
     startReading();
     return;
