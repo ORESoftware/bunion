@@ -7,10 +7,9 @@ import {getConf} from "./utils";
 import {consumer} from './logger';
 import {BunionFields, BunionJSON, Level, ordered} from "./bunion";
 import {BunionMode} from "./bunion";
-import {BunionLevelInternal} from "./bunion";
+import {BunionLevelToNum} from "./bunion";
 import * as uuid from 'uuid';
 import * as fs from 'fs';
-import * as cp from 'child_process';
 import {ChildProcess} from "child_process";
 import * as path from "path";
 import {ReadStream} from "tty";
@@ -18,7 +17,6 @@ import {Transform} from "stream";
 
 const dashdash = require('dashdash');
 import readline = require('readline');
-import {BunionLevelToNum} from "./bunion";
 
 process.on('SIGINT', function () {
   consumer.warn('SIGINT received.');
@@ -317,15 +315,16 @@ const container = {
   mode: BunionMode.READING,
   piper: null as any,
   prevStart: null as number,
-  searchTerm: '.*',
+  searchTerm: '',
   logLevel: maxIndex,
+  stopOnNextMatch: false
 };
 
 
 const onJSON = (v: BunionJSON) => {
   
   
-  if ((filterKeys.length > 0 || allMatches.length > 0) && filteredCount > 0 && opts.no_show_match_count !== true) {
+  if ((filterKeys.length > 0 || allMatches.length > 0 || container.searchTerm != '') && filteredCount > 0 && opts.no_show_match_count !== true) {
     readline.clearLine(process.stdout, 0);  // clear current text
     readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
   }
@@ -336,7 +335,15 @@ const onJSON = (v: BunionJSON) => {
     if (opts.no_show_match_count !== true) {
       process.stdout.write(getMatchCountLine(matchCount, filteredCount));
     }
-    return;
+    return true;
+  }
+  
+  if (container.searchTerm !== '' && !new RegExp(container.searchTerm).test(v.value)) {
+    filteredCount++;
+    if (opts.no_show_match_count !== true) {
+      process.stdout.write(getMatchCountLine(matchCount, filteredCount));
+    }
+    return true;
   }
   
   
@@ -406,6 +413,13 @@ const onJSON = (v: BunionJSON) => {
     );
   }
   
+  if (container.stopOnNextMatch && container.searchTerm != '') {
+    if (container.piper) {
+      container.piper.end();
+      container.piper.removeAllListeners();
+    }
+  }
+  
 };
 
 const startReading = () => {
@@ -451,11 +465,6 @@ const levelMap = new Map([
 ]);
 
 
-// const inputStream = fs.createReadStream(logfile, {encoding: 'utf8'});
-// inputStream.on('data', d => {
-//   console.log({d});
-// });
-
 const t = new Transform();
 t._transform = (c, e, cb) => cb(null, c);
 
@@ -480,6 +489,22 @@ strm.on('data', (d: any) => {
   
   console.log({d: String(d)});
   
+  if (String(d) === '\u0012') {  // ctrl-r
+    container.searchTerm = '';
+    console.log('Search term cleared.');
+    return;
+  }
+  
+  if (String(d) === '\u0013') {  // ctrl-s
+    container.stopOnNextMatch = true;
+    return;
+  }
+  
+  if (String(d) === '\u0013') {  // ctrl-x
+    container.stopOnNextMatch = false;
+    return;
+  }
+  
   if (container.mode !== BunionMode.PAUSED && levelMap.has(String(d))) {
     container.logLevel = levelMap.get(String(d));
     consumer.info('Log level changed to:', container.logLevel);
@@ -487,8 +512,6 @@ strm.on('data', (d: any) => {
   }
   
   if (String(d) === '\u0014' && container.mode !== BunionMode.TAILING) {
-    
-    console.log('we are tailing now:');
     
     container.mode = BunionMode.TAILING;
     
@@ -506,7 +529,7 @@ strm.on('data', (d: any) => {
       onJSON(d);
     });
     
-    const fst = fs.createReadStream(logfile);
+    const fst = fs.createReadStream(logfile, {start: Math.max(stdinStream.bytesWritten - 300, 0)});
     container.piper = fst.pipe(jsonParser, {end: false});
     fst.once('end', () => {
       container.piper = process.stdin.pipe(jsonParser);
@@ -520,11 +543,11 @@ strm.on('data', (d: any) => {
     console.log(chalk.bgBlack.whiteBright(' (search mode) '));
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
     
-    if(container.piper){
+    if (container.piper) {
       container.piper.end();
       container.piper.removeAllListeners();
     }
- 
+    
     const b = Buffer.alloc(1001);
     const ps = container.prevStart = Math.max(0, stdinStream.bytesWritten - 1000);
     const raw = fs.readSync(logfilefd, b, 0, 1000, ps);
@@ -537,6 +560,7 @@ strm.on('data', (d: any) => {
     console.log(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, current search term: ${container.searchTerm} `));
     return;
   }
+  
   
   if (String(d) === '\r' && container.mode === BunionMode.SEARCHING) {
     // container.mode = BunionMode.SCROLLING;
@@ -586,7 +610,7 @@ strm.on('data', (d: any) => {
     return;
   }
   
-  if (String(d).trim() === 'p' && container.mode === BunionMode.READING) {
+  if (String(d).trim() === 'p' && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.PAUSED;
     console.log();
     console.log(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
@@ -607,13 +631,24 @@ strm.on('data', (d: any) => {
   
   if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) {
     container.mode = BunionMode.READING;
-    if(container.piper){
+    if (container.piper) {
       container.piper.end();
       container.piper.removeAllListeners();
     }
     console.log(chalk.bgBlack.whiteBright(' (reading/tailing mode) '));
     startReading();
     return;
+  }
+  
+  
+  if(container.mode === BunionMode.PAUSED && String(d) === '\u0002'){ // ctrl-b
+    container.searchTerm = '';
+    return;
+  }
+  
+  if(container.mode === BunionMode.PAUSED){
+    container.searchTerm += String(d);
+    console.log('Search term:', container.searchTerm);
   }
   
   if (String(d).trim() === '\u0004') {
@@ -629,12 +664,6 @@ strm.on('data', (d: any) => {
   }
   
 });
-
-
-//
-// fs.createReadStream(null,{fd}).setRawMode(true).on('data', d => {
-//   console.log({d: String(d)});
-// });
 
 
 // killall: unknown signal f; valid signals:
