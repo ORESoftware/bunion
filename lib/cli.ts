@@ -300,12 +300,7 @@ const logfile = path.resolve(bunionHomeFiles + '/' + fileId);
 const stdinStream = process.stdin.resume()
   .pipe(fs.createWriteStream(logfile));
 
-process.once('exit', code => {
-  fs.unlinkSync(logfile);
-  // process.stdin.end();
-  // stdinStream.close();
-  consumer.info('exiting with code:', code);
-});
+
 
 
 const container = {
@@ -317,9 +312,22 @@ const container = {
   prevStart: null as number,
   searchTerm: '',
   logLevel: maxIndex,
-  stopOnNextMatch: false
+  stopOnNextMatch: true
 };
 
+
+process.once('exit', code => {
+  fs.unlinkSync(logfile);
+  if(container.piper){
+    container.piper.unpipe();
+    container.piper.removeAllListeners();
+  }
+  
+  // process.stdin.cork();
+  // process.stdin.end();
+  // stdinStream.close();
+  consumer.info('exiting with code:', code);
+});
 
 const onJSON = (v: BunionJSON) => {
   
@@ -415,8 +423,11 @@ const onJSON = (v: BunionJSON) => {
   
   if (container.stopOnNextMatch && container.searchTerm != '') {
     if (container.piper) {
-      container.piper.end();
+      consumer.info('piper id:', container.piper.bunion_id);
+      container.piper.unpipe();
       container.piper.removeAllListeners();
+      console.log();
+      console.log(chalk.bgBlack.whiteBright('Stopped on match.'));
     }
   }
   
@@ -445,7 +456,9 @@ const startReading = () => {
     clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
   });
   
-  const piper = container.piper = process.stdin.pipe(jsonParser);
+  const piper = container.piper = process.stdin.pipe(jsonParser, {end: true});
+  
+  container.piper.bunion_id = 3;
   
   piper.on('bunion-json', function (v: BunionJSON) {
     onJSON(v);
@@ -516,7 +529,8 @@ strm.on('data', (d: any) => {
     container.mode = BunionMode.TAILING;
     
     if (container.piper) {
-      container.piper.end();
+      // container.piper.end();
+      container.piper.unpipe();
       container.piper.removeAllListeners();
     }
     
@@ -544,7 +558,8 @@ strm.on('data', (d: any) => {
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
     
     if (container.piper) {
-      container.piper.end();
+      // container.piper.end();
+      container.piper.unpipe();
       container.piper.removeAllListeners();
     }
     
@@ -567,7 +582,7 @@ strm.on('data', (d: any) => {
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
     
     if (container.piper) {
-      container.piper.end();
+      container.piper.unpipe();
       container.piper.removeAllListeners();
     }
     
@@ -617,7 +632,8 @@ strm.on('data', (d: any) => {
     console.log();
     
     if (container.piper) {
-      container.piper.end();
+      // container.piper.end();
+      container.piper.unpipe();
       container.piper.removeAllListeners();
     }
     
@@ -632,7 +648,8 @@ strm.on('data', (d: any) => {
   if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) {
     container.mode = BunionMode.READING;
     if (container.piper) {
-      container.piper.end();
+      // container.piper.end();
+      container.piper.unpipe();
       container.piper.removeAllListeners();
     }
     console.log(chalk.bgBlack.whiteBright(' (reading/tailing mode) '));
@@ -641,14 +658,21 @@ strm.on('data', (d: any) => {
   }
   
   
-  if(container.mode === BunionMode.PAUSED && String(d) === '\u0002'){ // ctrl-b
+  if (container.mode === BunionMode.PAUSED && String(d) === '\u0002') { // ctrl-b
     container.searchTerm = '';
     return;
   }
   
-  if(container.mode === BunionMode.PAUSED){
+  if (container.mode === BunionMode.PAUSED && String(d) === '') { // backspace!
+    container.searchTerm = container.searchTerm.slice(0, -1);
+    console.log('Search term:', container.searchTerm);
+    return;
+  }
+  
+  if (container.mode === BunionMode.PAUSED) {
     container.searchTerm += String(d);
     console.log('Search term:', container.searchTerm);
+    return;
   }
   
   if (String(d).trim() === '\u0004') {
