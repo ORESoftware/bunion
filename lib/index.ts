@@ -26,7 +26,7 @@ process.on('SIGHUP', s => {
   producer.warn('SIGHUP received.', s);
 });
 
-process.on('SIGTERM',  s => {
+process.on('SIGTERM', s => {
   producer.warn('SIGTERM received.', s);
 });
 
@@ -127,6 +127,7 @@ export class BunionLogger {
   private level: BunionLevel;
   private maxIndex: number;
   private readonly hostname: string;
+  private host: string;
   
   constructor(opts?: BunionOpts) {
     this.appName = String((opts && (opts.appName || opts.name)) || getDefaultAppName());
@@ -134,6 +135,11 @@ export class BunionLogger {
     this.level = <BunionLevelInternal>String((opts && (opts.level || opts.maxlevel) || maxLevel || '')).toUpperCase();
     this.maxIndex = ordered.indexOf(this.level);
     this.hostname = os.hostname();
+    this.host = process.env.HOSTNAME || 'no HOSTNAME env var';
+    
+    if (this.host !== this.hostname) {
+      producer.error('Host and Hostname are not the same.', this.host, this.hostname);
+    }
     
     if (this.maxIndex < 0) {
       throw new Error(
@@ -142,7 +148,7 @@ export class BunionLogger {
     }
   }
   
-  getJSON(logLevel: BunionLevelInternal | string, ...args: any[]){
+  getJSON(logLevel: BunionLevelInternal | string, ...args: any[]) {
     return getJSON(logLevel, args, this.appName, this.fields, this.hostname)
   }
   

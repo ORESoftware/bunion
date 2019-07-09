@@ -321,7 +321,6 @@ const killProc = (pid: number) => {
 
 
 const stdinStream = process.stdin.resume()
-  .once('data', d => startReading(200))
   .pipe(fs.createWriteStream(logfile));
 
 const onJSON = (v: BunionJSON) => {
@@ -410,36 +409,38 @@ const onJSON = (v: BunionJSON) => {
   
 };
 
-const startReading = (d: number) => {
+const startReading = () => {
   
   // const k = container.k = cp.spawn(`tail`, ['-n', String(d), '-f', logfile]);
   
-  const k = container.k = cp.spawn(`bash`, [], {detached: false});
+  // const k = container.k = cp.spawn(`bash`, [], {detached: false});
   
   // k.stdin.end(`on_sigkill(){ exit 0; }; export -f on_sigkill; trap KILL SIGKILL SIGINT INT on_sigkill ; tail -n ${d} -f ${logfile}`);
   
-  k.stdin.end(`tail -n ${d} -f ${logfile}`);
+  // k.stdin.end(`tail -n ${d} -f ${logfile}`);
   
-  const p = k.stderr.pipe(process.stderr);
+  // const p = k.stderr.pipe(process.stderr);
   
-  k.once('exit', code => {
-    p.destroy();
-    p.removeAllListeners();
-    consumer.warn('tail process exiting with:', code);
-  });
+  // k.once('exit', code => {
+  //   p.destroy();
+  //   p.removeAllListeners();
+  //   consumer.warn('tail process exiting with:', code);
+  // });
   
   const jsonParser = createParser({
     onlyParseableOutput: Boolean(opts.only_parseable),
     clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
   });
   
-  const piper = container.piper = k.stdout.pipe(jsonParser);
+  const piper = container.piper = process.stdin.pipe(jsonParser);
   
   piper.on('bunion-json', function (v: BunionJSON) {
     onJSON(v);
   });
   
 };
+
+startReading();  // start tailing
 
 const levelMap = new Map([
   ['6', BunionLevelInternal.FATAL],
@@ -485,12 +486,11 @@ strm.on('data', (d: any) => {
     return;
   }
   
+  
   if (String(d) === 's' && container.mode === BunionMode.READING) {
-   
     container.mode = BunionMode.SEARCHING;
     console.log(chalk.bgBlack.whiteBright(' (search mode) '));
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
-    container.k.kill('SIGKILL');
     container.piper.end();
     container.piper.removeAllListeners();
     const b = Buffer.alloc(1001);
@@ -498,7 +498,6 @@ strm.on('data', (d: any) => {
     const raw = fs.readSync(logfilefd, b, 0, 1000, ps);
     // console.log(String(b));
     process.stdout.write('\x1Bc'); // clear screen
-    console.log('SEARCH 111');
     for (let s of String(b).split('\n')) {
       t.write(s + '\n');
     }
@@ -510,7 +509,6 @@ strm.on('data', (d: any) => {
   if (String(d) === '\r' && container.mode === BunionMode.SEARCHING) {
     // container.mode = BunionMode.SCROLLING;
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
-    container.k.kill('SIGKILL');
     container.piper.end();
     container.piper.removeAllListeners();
     const b = Buffer.alloc(1501);
@@ -523,11 +521,8 @@ strm.on('data', (d: any) => {
     }
     
     const raw = fs.readSync(logfilefd, b, 0, 1500, ps);
-    // console.log(String(b));
     
     process.stdout.write('\x1Bc'); // clear screen
-  
-    console.log('SEARCH 222');
     
     let lenToAdd = 0;
     
@@ -560,16 +555,10 @@ strm.on('data', (d: any) => {
     console.log();
     console.log(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
     console.log();
-    container.k.kill('SIGKILL');
+
     container.piper.end();
     container.piper.removeAllListeners();
     // container.k.kill('SIGKILL');
-    if (container.k) {
-      killProc(container.k.pid)
-    }
-    container.k.stdout.removeAllListeners();
-    container.k.stderr.removeAllListeners();
-    container.k.removeAllListeners();
     // process.exit(1);
     return;
   }
@@ -577,13 +566,10 @@ strm.on('data', (d: any) => {
   // up arrow: \u001b[A
   // down arrow: \u001b[B
   
-  if (String(d).trim() === '\u0010' && container.mode === BunionMode.PAUSED) {
+  if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) {
     container.mode = BunionMode.READING;
     console.log(chalk.bgBlack.whiteBright(' (reading/tailing mode) '));
-    if (container.k) {
-      killProc(container.k.pid)
-    }
-    startReading(container.currentLines);
+    startReading();
     return;
   }
   
