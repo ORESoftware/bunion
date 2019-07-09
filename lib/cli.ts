@@ -301,8 +301,6 @@ const stdinStream = process.stdin.resume()
   .pipe(fs.createWriteStream(logfile));
 
 
-
-
 const container = {
   k: null as ChildProcess,
   currentBytes: 0,
@@ -312,13 +310,13 @@ const container = {
   prevStart: null as number,
   searchTerm: '',
   logLevel: maxIndex,
-  stopOnNextMatch: true
+  stopOnNextMatch: true,
 };
 
 
 process.once('exit', code => {
   fs.unlinkSync(logfile);
-  if(container.piper){
+  if (container.piper) {
     container.piper.unpipe();
     container.piper.removeAllListeners();
   }
@@ -502,11 +500,17 @@ strm.on('data', (d: any) => {
   
   console.log({d: String(d)});
   
-  if (String(d) === '\u0012') {  // ctrl-r
+  if (String(d) === '\u0002') { // ctrl-b
     container.searchTerm = '';
-    console.log('Search term cleared.');
+    consumer.info('Cleared search term.');
     return;
   }
+  
+  // if (String(d) === '\u0012') {  // ctrl-r
+  //   container.searchTerm = '';
+  //   console.log('Search term cleared.');
+  //   return;
+  // }
   
   if (String(d) === '\u0013') {  // ctrl-s
     container.stopOnNextMatch = true;
@@ -524,7 +528,7 @@ strm.on('data', (d: any) => {
     return;
   }
   
-  if (String(d) === '\u0014' && container.mode !== BunionMode.TAILING) {
+  if (String(d) === '\u0014' && container.mode !== BunionMode.TAILING) {  // ctrl-t
     
     container.mode = BunionMode.TAILING;
     
@@ -631,14 +635,14 @@ strm.on('data', (d: any) => {
     console.log(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
     console.log();
     
+    container.currentBytes = Math.max(0, stdinStream.bytesWritten - 1000);
+    
     if (container.piper) {
       // container.piper.end();
       container.piper.unpipe();
       container.piper.removeAllListeners();
     }
     
-    // container.k.kill('SIGKILL');
-    // process.exit(1);
     return;
   }
   
@@ -657,11 +661,6 @@ strm.on('data', (d: any) => {
     return;
   }
   
-  
-  if (container.mode === BunionMode.PAUSED && String(d) === '\u0002') { // ctrl-b
-    container.searchTerm = '';
-    return;
-  }
   
   if (container.mode === BunionMode.PAUSED && String(d) === '') { // backspace!
     container.searchTerm = container.searchTerm.slice(0, -1);
