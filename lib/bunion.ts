@@ -16,12 +16,22 @@ export enum BunionLevelInternal {
   TRACE = 'TRACE'
 }
 
+export enum BunionLevelToNum {
+  FATAL = 6,
+  ERROR = 5,
+  WARN = 4,
+  INFO = 3,
+  DEBUG = 2,
+  TRACE = 1
+}
+
 export enum BunionMode {
   SCROLLING = 'SCROLLING',
   READING = 'READING',
   PAUSED = 'PAUSED',
   SEARCHING = 'SEARCHING',
-  NORMAL = 'NORMAL'
+  NORMAL = 'NORMAL',
+  TAILING = 'TAILING'
 }
 
 export interface BunionJSON {

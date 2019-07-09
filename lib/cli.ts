@@ -18,6 +18,7 @@ import {Transform} from "stream";
 
 const dashdash = require('dashdash');
 import readline = require('readline');
+import {BunionLevelToNum} from "./bunion";
 
 process.on('SIGINT', function () {
   consumer.warn('SIGINT received.');
@@ -297,8 +298,14 @@ try {
 
 const logfile = path.resolve(bunionHomeFiles + '/' + fileId);
 
+
+const stdinStream = process.stdin.resume()
+  .pipe(fs.createWriteStream(logfile));
+
 process.once('exit', code => {
   fs.unlinkSync(logfile);
+  // process.stdin.end();
+  // stdinStream.close();
   consumer.info('exiting with code:', code);
 });
 
@@ -311,17 +318,9 @@ const container = {
   piper: null as any,
   prevStart: null as number,
   searchTerm: '.*',
-  logLevel: BunionLevelInternal.TRACE
+  logLevel: maxIndex,
 };
 
-const killProc = (pid: number) => {
-  const k = cp.spawn('bash');
-  k.stdin.end(`kill -9 ${pid}`);
-};
-
-
-const stdinStream = process.stdin.resume()
-  .pipe(fs.createWriteStream(logfile));
 
 const onJSON = (v: BunionJSON) => {
   
@@ -371,31 +370,31 @@ const onJSON = (v: BunionJSON) => {
     );
   }
   
-  if (v.level === 'ERROR' && maxIndex < 5) {
+  if (v.level === 'ERROR' && container.logLevel < 6) {
     process.stdout.write(
       `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
     );
   }
   
-  if (v.level === 'WARN' && maxIndex < 4) {
+  if (v.level === 'WARN' && container.logLevel < 5) {
     process.stdout.write(
       `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.magentaBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
     );
   }
   
-  if (v.level === 'INFO' && maxIndex < 3) {
+  if (v.level === 'INFO' && container.logLevel < 4) {
     process.stdout.write(
       `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`
     );
   }
   
-  if (v.level === 'DEBUG' && maxIndex < 2) {
+  if (v.level === 'DEBUG' && container.logLevel < 3) {
     process.stdout.write(
       `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`
     );
   }
   
-  if (v.level === 'TRACE' && maxIndex < 1) {
+  if (v.level === 'TRACE' && container.logLevel < 2) {
     process.stdout.write(
       `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`
     );
@@ -443,12 +442,12 @@ const startReading = () => {
 startReading();  // start tailing
 
 const levelMap = new Map([
-  ['6', BunionLevelInternal.FATAL],
-  ['5', BunionLevelInternal.ERROR],
-  ['4', BunionLevelInternal.WARN],
-  ['3', BunionLevelInternal.INFO],
-  ['2', BunionLevelInternal.DEBUG],
-  ['1', BunionLevelInternal.TRACE],
+  ['6', BunionLevelToNum.FATAL],
+  ['5', BunionLevelToNum.ERROR],
+  ['4', BunionLevelToNum.WARN],
+  ['3', BunionLevelToNum.INFO],
+  ['2', BunionLevelToNum.DEBUG],
+  ['1', BunionLevelToNum.TRACE],
 ]);
 
 
@@ -483,11 +482,40 @@ strm.on('data', (d: any) => {
   
   if (container.mode !== BunionMode.PAUSED && levelMap.has(String(d))) {
     container.logLevel = levelMap.get(String(d));
+    consumer.info('Log level changed to:', container.logLevel);
     return;
   }
   
+  if (String(d) === '\u0014' && container.mode !== BunionMode.TAILING) {
+    
+    console.log('we are tailing now:');
+    
+    container.mode = BunionMode.TAILING;
+    
+    if(container.piper){
+      container.piper.end();
+      container.piper.removeAllListeners();
+    }
+    
+    const jsonParser = createParser({
+      onlyParseableOutput: Boolean(opts.only_parseable),
+      clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
+    });
+    
+    jsonParser.on('bunion-json', d => {
+      onJSON(d);
+    });
+    
+    const fst = fs.createReadStream(logfile);
+    container.piper = fst.pipe(jsonParser, {end: false});
+    fst.once('end', () => {
+      container.piper =  process.stdin.pipe(jsonParser);
+    });
+    
+    return;
+  }
   
-  if (String(d) === 's' && container.mode === BunionMode.READING) {
+  if (String(d) === 's' && container.mode !== BunionMode.SEARCHING) {
     container.mode = BunionMode.SEARCHING;
     console.log(chalk.bgBlack.whiteBright(' (search mode) '));
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
@@ -531,16 +559,16 @@ strm.on('data', (d: any) => {
       lenToAdd += Buffer.from(s + '\n').length;
       t.write(s + '\n');
       
-      if(!eof){
+      if (!eof) {
         break;
       }
     }
     
-    if(!eof){
+    if (!eof) {
       container.prevStart += lenToAdd;
     }
     
-    if(eof){
+    if (eof) {
       console.log();
       console.log(chalk.bgBlack.whiteBright(' (current end of file) '));
     }
@@ -555,7 +583,7 @@ strm.on('data', (d: any) => {
     console.log();
     console.log(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
     console.log();
-
+    
     container.piper.end();
     container.piper.removeAllListeners();
     // container.k.kill('SIGKILL');
@@ -599,7 +627,7 @@ strm.on('data', (d: any) => {
 // TSTP CONT CHLD TTIN TTOU IO XCPU XFSZ VTALRM PROF WINCH INFO USR1 USR2
 
 console.log('rows:', process.stdout.rows);
-console.log('columns:',process.stdout.columns);
+console.log('columns:', process.stdout.columns);
 
 
 
