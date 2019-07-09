@@ -492,7 +492,7 @@ strm.on('data', (d: any) => {
     
     container.mode = BunionMode.TAILING;
     
-    if(container.piper){
+    if (container.piper) {
       container.piper.end();
       container.piper.removeAllListeners();
     }
@@ -509,7 +509,7 @@ strm.on('data', (d: any) => {
     const fst = fs.createReadStream(logfile);
     container.piper = fst.pipe(jsonParser, {end: false});
     fst.once('end', () => {
-      container.piper =  process.stdin.pipe(jsonParser);
+      container.piper = process.stdin.pipe(jsonParser);
     });
     
     return;
@@ -537,8 +537,12 @@ strm.on('data', (d: any) => {
   if (String(d) === '\r' && container.mode === BunionMode.SEARCHING) {
     // container.mode = BunionMode.SCROLLING;
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
-    container.piper.end();
-    container.piper.removeAllListeners();
+    
+    if (container.piper) {
+      container.piper.end();
+      container.piper.removeAllListeners();
+    }
+    
     const b = Buffer.alloc(1501);
     let eof = false;
     let ps = container.prevStart + 200;
@@ -584,8 +588,11 @@ strm.on('data', (d: any) => {
     console.log(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
     console.log();
     
-    container.piper.end();
-    container.piper.removeAllListeners();
+    if (container.piper) {
+      container.piper.end();
+      container.piper.removeAllListeners();
+    }
+    
     // container.k.kill('SIGKILL');
     // process.exit(1);
     return;
