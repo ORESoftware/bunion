@@ -710,7 +710,7 @@ strm.on('data', (d: any) => {
     unpipePiper();
     console.log();
     const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
-    console.log(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
+    writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
     return;
   }
   
