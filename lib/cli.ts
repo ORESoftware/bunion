@@ -178,10 +178,10 @@ try {
 
 const level = opts.level;
 const output = String(opts.output || 'medium').toLowerCase();
-const maxLevel = String(level || (bunionConf.consumer && bunionConf.consumer.level) || 'trace').toUpperCase();
-const maxIndex = ordered.indexOf(maxLevel);
+const maxLevel = String(level || (bunionConf.consumer && bunionConf.consumer.level) || 'TRACE').toUpperCase();
+const maxIndex = ordered.indexOf(maxLevel) + 1;
 
-if (maxIndex < 0) {
+if (maxIndex < 1) {
   throw new Error(
     chalk.red('Your value for env var "bunion_max_level" is not set to a valid value, must be one of: ' + Object.keys(Level))
   );
@@ -582,7 +582,8 @@ const scrollUp = () => {
   
   container.prevStart -= lenToAdd;
   // console.log();
-  writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, current search term: ${container.searchTerm} `));
+  const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
+  writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
   
 };
 
@@ -605,26 +606,12 @@ const scrollDown = () => {
   const raw = fs.readSync(logfilefd, b, 0, 3500, ps);
   
   // process.stdout.write('\x1Bc'); // clear screen
-  
   const firstLine = String(b).split('\n')[0];
   const lenToAdd = Buffer.from(firstLine + '\n').length;
   t.write(firstLine + '\n');
-  
-  
-  // for (let s of String(b).split('\n')) {
-  //
-  //   lenToAdd += Buffer.from(s + '\n').length;
-  //   t.write(s + '\n');
-  //
-  //   if (!eof) {
-  //     break;
-  //   }
-  // }
-  
-  
   container.prevStart += lenToAdd;
-  // console.log();
-  writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, current search term: ${container.searchTerm} `));
+  const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
+  writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
   
 };
 
@@ -693,12 +680,11 @@ strm.on('data', (d: any) => {
   
   if (container.mode !== BunionMode.PAUSED && levelMap.has(String(d))) {
     container.logLevel = levelMap.get(String(d));
-    consumer.info('Log level changed to:', container.logLevel);
+    // consumer.info('Log level changed to:', container.logLevel);
     return;
   }
   
   if (String(d) === '\u0014' && container.mode !== BunionMode.TAILING) {  // ctrl-t
-    
     container.mode = BunionMode.TAILING;
     doTailing();
     return;
