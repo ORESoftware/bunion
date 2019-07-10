@@ -1,10 +1,20 @@
 'use strict';
 
+
 const {log} = require('bunion');
 
 process.on('SIGINT', s => {
   process.exit(1);
 });
+
+process.on('uncaughtException', (e) => {
+  console.error('Uncaught exception:', e.message || e);
+});
+
+process.on('unhandledRejection', (e) => {
+  console.error('Unhandled rejection:', e.message || e);
+});
+
 
 (function run(){
   

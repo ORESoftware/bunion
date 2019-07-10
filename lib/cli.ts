@@ -18,6 +18,14 @@ import {Transform} from "stream";
 const dashdash = require('dashdash');
 import readline = require('readline');
 
+process.on('uncaughtException', (e: any) => {
+  consumer.error('Uncaught exception:', e.message || e);
+});
+
+process.on('unhandledRejection', (e: any) => {
+  consumer.error('Unhandled rejection:', e.message || e);
+});
+
 process.on('SIGINT', function () {
   consumer.warn('SIGINT received.');
 });
@@ -311,11 +319,15 @@ const container = {
   searchTerm: '',
   logLevel: maxIndex,
   stopOnNextMatch: true,
+  sigCount: 0,
+  logChars: false
 };
 
 
 process.once('exit', code => {
+  
   fs.unlinkSync(logfile);
+  
   if (container.piper) {
     container.piper.unpipe();
     container.piper.removeAllListeners();
@@ -324,17 +336,21 @@ process.once('exit', code => {
   // process.stdin.cork();
   // process.stdin.end();
   // stdinStream.close();
+  
   consumer.info('exiting with code:', code);
 });
+
+const clearLine = () => {
+  readline.clearLine(process.stdout, 0);  // clear current text
+  readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
+};
 
 const onJSON = (v: BunionJSON) => {
   
   
   if ((filterKeys.length > 0 || allMatches.length > 0 || container.searchTerm != '') && filteredCount > 0 && opts.no_show_match_count !== true) {
-    readline.clearLine(process.stdout, 0);  // clear current text
-    readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
+    clearLine();
   }
-  
   
   if (!(matches(v.value) && mustMatches(v.value) && matchFilterObject(v.fields))) {
     filteredCount++;
@@ -421,7 +437,6 @@ const onJSON = (v: BunionJSON) => {
   
   if (container.stopOnNextMatch && container.searchTerm != '') {
     if (container.piper) {
-      consumer.info('piper id:', container.piper.bunion_id);
       container.piper.unpipe();
       container.piper.removeAllListeners();
       console.log();
@@ -429,6 +444,12 @@ const onJSON = (v: BunionJSON) => {
     }
   }
   
+};
+
+const writeToStdout = (...args: string[]) => {
+  for (let v of args) {
+    process.stdout.write(v + ' ');
+  }
 };
 
 const startReading = () => {
@@ -456,8 +477,6 @@ const startReading = () => {
   
   const piper = container.piper = process.stdin.pipe(jsonParser, {end: true});
   
-  container.piper.bunion_id = 3;
-  
   piper.on('bunion-json', function (v: BunionJSON) {
     onJSON(v);
   });
@@ -476,6 +495,13 @@ const levelMap = new Map([
 ]);
 
 
+const unpipePiper = () => {
+  if (container.piper) {
+    container.piper.unpipe();
+    container.piper.removeAllListeners();
+  }
+};
+
 const t = new Transform();
 t._transform = (c, e, cb) => cb(null, c);
 
@@ -488,17 +514,83 @@ t.pipe(jsonParser).on('bunion-json', d => {
   onJSON(d);
 });
 
-const fd = fs.openSync('/dev/tty', 'r+');
+// const fd = fs.openSync('/dev/tty', 'r+');
 
-console.log({fd});
+// console.log({fd});
 
-const strm = new ReadStream(<any>fd);
+const ctrlChars = new Set([
+  '\u0003', //
+  '\r',  // m
+  '\u000e' // n
+]);
 
+
+const doTailing = () => {
+  
+  container.mode = BunionMode.TAILING;
+  
+  if (container.piper) {
+    // container.piper.end();
+    container.piper.unpipe();
+    container.piper.removeAllListeners();
+  }
+  
+  const jsonParser = createParser({
+    onlyParseableOutput: Boolean(opts.only_parseable),
+    clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
+  });
+  
+  jsonParser.on('bunion-json', d => {
+    onJSON(d);
+  });
+  
+  const fst = fs.createReadStream(logfile, {start: Math.max(stdinStream.bytesWritten - 300, 0)});
+  container.piper = fst.pipe(jsonParser, {end: false});
+  fst.once('end', () => {
+    // paused
+    container.piper = process.stdin.pipe(jsonParser);
+  });
+  
+};
+
+
+const strm = new ReadStream(<any>1);
 strm.setRawMode(true);
 
 strm.on('data', (d: any) => {
   
-  console.log({d: String(d)});
+  if (container.logChars) {
+    console.log({d: String(d)});
+  }
+  
+  if (String(d) === '\u000e') {
+    container.logChars = true;
+    return;
+  }
+  
+  if (String(d).trim() === '\u0004') {
+    unpipePiper();
+    consumer.warn('User hit ctrl-d');
+    if (container.sigCount++ === 1) {
+      process.exit(1);
+      return;
+    }
+    consumer.warn('Hit ctrl-d/ctrl-c again to exit.');
+    return;
+  }
+  
+  if (String(d).trim() === '\u0003') {
+    unpipePiper();
+    consumer.warn('User hit ctrl-c');
+    if (container.sigCount++ === 1) {
+      process.exit(1);
+      return;
+    }
+    consumer.warn('Hit ctrl-c/ctrl-d again to exit.');
+    return;
+  }
+  
+  container.sigCount = 0;
   
   if (String(d) === '\u0002') { // ctrl-b
     container.searchTerm = '';
@@ -531,32 +623,11 @@ strm.on('data', (d: any) => {
   if (String(d) === '\u0014' && container.mode !== BunionMode.TAILING) {  // ctrl-t
     
     container.mode = BunionMode.TAILING;
-    
-    if (container.piper) {
-      // container.piper.end();
-      container.piper.unpipe();
-      container.piper.removeAllListeners();
-    }
-    
-    const jsonParser = createParser({
-      onlyParseableOutput: Boolean(opts.only_parseable),
-      clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
-    });
-    
-    jsonParser.on('bunion-json', d => {
-      onJSON(d);
-    });
-    
-    const fst = fs.createReadStream(logfile, {start: Math.max(stdinStream.bytesWritten - 300, 0)});
-    container.piper = fst.pipe(jsonParser, {end: false});
-    fst.once('end', () => {
-      container.piper = process.stdin.pipe(jsonParser);
-    });
-    
+    doTailing();
     return;
   }
   
-  if (String(d) === 's' && container.mode !== BunionMode.SEARCHING) {
+  if (String(d) === 's' && container.mode !== BunionMode.SEARCHING && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.SEARCHING;
     console.log(chalk.bgBlack.whiteBright(' (search mode) '));
     const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
@@ -664,27 +735,28 @@ strm.on('data', (d: any) => {
   
   if (container.mode === BunionMode.PAUSED && String(d) === '') { // backspace!
     container.searchTerm = container.searchTerm.slice(0, -1);
-    console.log('Search term:', container.searchTerm);
+    clearLine();
+    writeToStdout('Search term:', container.searchTerm);
+    return;
+  }
+  
+  if (String(d) === '\r' && container.mode === BunionMode.PAUSED) {
+    container.stopOnNextMatch = true;
+    doTailing();
     return;
   }
   
   if (container.mode === BunionMode.PAUSED) {
+    if (ctrlChars.has(String(d))) {
+      consumer.warn('ctrl command ignored.');
+      return;
+    }
     container.searchTerm += String(d);
-    console.log('Search term:', container.searchTerm);
+    clearLine();
+    writeToStdout('Search term:', container.searchTerm);
     return;
   }
   
-  if (String(d).trim() === '\u0004') {
-    consumer.warn('User hit control-D');
-    process.exit(1);
-    return;
-  }
-  
-  if (String(d).trim() === '\u0003') {
-    consumer.warn('User hit control-C');
-    // process.exit(1);
-    return;
-  }
   
 });
 
