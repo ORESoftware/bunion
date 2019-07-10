@@ -554,6 +554,49 @@ const doTailing = () => {
 };
 
 
+const scrollDown = () => {
+  
+  const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+  unpipePiper();
+  
+  clearLine();
+  
+  const b = Buffer.alloc(3501);
+  const ps = container.prevStart;
+  
+  if (ps >= stdinStream.bytesWritten) {
+    container.prevStart = stdinStream.bytesWritten;
+    writeToStdout(chalk.bgBlack.whiteBright(' (current end of file) '));
+    return;
+  }
+  
+  const raw = fs.readSync(logfilefd, b, 0, 3500, ps);
+  
+  // process.stdout.write('\x1Bc'); // clear screen
+  
+  const firstLine = String(b).split('\n')[0];
+  const lenToAdd = Buffer.from(firstLine + '\n').length;
+  t.write(firstLine + '\n');
+  
+  
+  // for (let s of String(b).split('\n')) {
+  //
+  //   lenToAdd += Buffer.from(s + '\n').length;
+  //   t.write(s + '\n');
+  //
+  //   if (!eof) {
+  //     break;
+  //   }
+  // }
+  
+  
+  container.prevStart += lenToAdd;
+  // console.log();
+  writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, current search term: ${container.searchTerm} `));
+  
+};
+
+
 const strm = new ReadStream(<any>1);
 strm.setRawMode(true);
 
@@ -629,104 +672,39 @@ strm.on('data', (d: any) => {
   
   if (String(d) === 's' && container.mode !== BunionMode.SEARCHING && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.SEARCHING;
-    console.log(chalk.bgBlack.whiteBright(' (search mode) '));
-    const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
-    
-    if (container.piper) {
-      // container.piper.end();
-      container.piper.unpipe();
-      container.piper.removeAllListeners();
-    }
-    
-    const b = Buffer.alloc(1001);
-    const ps = container.prevStart = Math.max(0, stdinStream.bytesWritten - 1000);
-    const raw = fs.readSync(logfilefd, b, 0, 1000, ps);
-    // console.log(String(b));
-    process.stdout.write('\x1Bc'); // clear screen
-    for (let s of String(b).split('\n')) {
-      t.write(s + '\n');
-    }
+    unpipePiper();
     console.log();
-    console.log(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, current search term: ${container.searchTerm} `));
+    const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
+    console.log(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
     return;
   }
   
   
   if (String(d) === '\r' && container.mode === BunionMode.SEARCHING) {
     // container.mode = BunionMode.SCROLLING;
-    const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
-    
-    if (container.piper) {
-      container.piper.unpipe();
-      container.piper.removeAllListeners();
-    }
-    
-    const b = Buffer.alloc(1501);
-    let eof = false;
-    let ps = container.prevStart + 200;
-    
-    if (ps >= stdinStream.bytesWritten) {
-      ps = container.prevStart = stdinStream.bytesWritten - 200;
-      eof = true;
-    }
-    
-    const raw = fs.readSync(logfilefd, b, 0, 1500, ps);
-    
-    process.stdout.write('\x1Bc'); // clear screen
-    
-    let lenToAdd = 0;
-    
-    for (let s of String(b).split('\n')) {
-      
-      lenToAdd += Buffer.from(s + '\n').length;
-      t.write(s + '\n');
-      
-      if (!eof) {
-        break;
-      }
-    }
-    
-    if (!eof) {
-      container.prevStart += lenToAdd;
-    }
-    
-    if (eof) {
-      console.log();
-      console.log(chalk.bgBlack.whiteBright(' (current end of file) '));
-    }
-    
-    console.log();
-    console.log(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, current search term: ${container.searchTerm} `));
+    scrollDown();
     return;
   }
   
   if (String(d).trim() === 'p' && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.PAUSED;
-    console.log();
+    console.log('\n');
     console.log(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
     console.log();
     
     container.currentBytes = Math.max(0, stdinStream.bytesWritten - 1000);
-    
-    if (container.piper) {
-      // container.piper.end();
-      container.piper.unpipe();
-      container.piper.removeAllListeners();
-    }
-    
+    unpipePiper();
     return;
   }
   
   // up arrow: \u001b[A
   // down arrow: \u001b[B
+  // shift up: \u001b[2A
+  // shift down: \u001b[2B
   
-  if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) {
+  if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) { // ctrl-p
     container.mode = BunionMode.READING;
-    if (container.piper) {
-      // container.piper.end();
-      container.piper.unpipe();
-      container.piper.removeAllListeners();
-    }
+    unpipePiper();
     console.log(chalk.bgBlack.whiteBright(' (reading/tailing mode) '));
     startReading();
     return;
@@ -741,7 +719,7 @@ strm.on('data', (d: any) => {
   }
   
   if (String(d) === '\r' && container.mode === BunionMode.PAUSED) {
-    container.stopOnNextMatch = true;
+    // container.stopOnNextMatch = true;
     doTailing();
     return;
   }

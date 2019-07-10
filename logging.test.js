@@ -22,7 +22,7 @@ process.on('unhandledRejection', (e) => {
   log.warn('shit hit the fan');
   log.error(new Error('foo'));
   
-  setTimeout(run,200);
+  setTimeout(run, 200);
   
 })();
 
