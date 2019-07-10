@@ -9,3 +9,5 @@ in regular mode, when user hits these keys, it changes the log level
 have to remove first line from file, after file grows bigger than 5 million bytes or what not
 
 shift + up/down = find next match
+
+

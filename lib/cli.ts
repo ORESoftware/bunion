@@ -320,7 +320,9 @@ const container = {
   logLevel: maxIndex,
   stopOnNextMatch: true,
   sigCount: 0,
-  logChars: false
+  logChars: false,
+  stopped: false,
+  matched: false
 };
 
 
@@ -436,11 +438,13 @@ const onJSON = (v: BunionJSON) => {
   }
   
   if (container.stopOnNextMatch && container.searchTerm != '') {
+     container.matched = true;
+     container.stopped = true;
     if (container.piper) {
       container.piper.unpipe();
       container.piper.removeAllListeners();
-      console.log();
-      console.log(chalk.bgBlack.whiteBright('Stopped on match.'));
+      clearLine();
+      writeToStdout(chalk.bgBlack.whiteBright('Stopped on match.'));
     }
   }
   
@@ -575,17 +579,17 @@ const scrollUp = () => {
   const lines = String(b).split('\n');
   let lenToAdd = 0;
   
-  for(let l of lines){
+  for (let l of lines) {
     lenToAdd = Buffer.from(l + '\n').length;
     t.write(l + '\n');
   }
   
   container.prevStart -= lenToAdd;
-  // console.log();
   const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
   writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
   
 };
+
 
 const scrollDown = () => {
   
@@ -623,6 +627,13 @@ strm.on('data', (d: any) => {
   
   if (container.logChars) {
     console.log({d: String(d)});
+  }
+  
+  if (String(d) === '\r' && container.stopped) {
+    container.stopped = false;
+    container.matched = false;
+    startReading();
+    return;
   }
   
   if (String(d) === '\u000e') {
@@ -705,6 +716,17 @@ strm.on('data', (d: any) => {
     return;
   }
   
+  if (String(d) === '\u001b[2B' && container.mode === BunionMode.SEARCHING) {
+    // container.mode = BunionMode.SCROLLING;
+    if(container.matched && container.stopped){
+      clearLine();
+      writeToStdout('Matched found.');
+      return;
+    }
+    scrollDown();
+    return;
+  }
+  
   if ((String(d) === '\r' || String(d) === '\u001b[B') && container.mode === BunionMode.SEARCHING) {
     // container.mode = BunionMode.SCROLLING;
     scrollDown();
@@ -713,10 +735,8 @@ strm.on('data', (d: any) => {
   
   if (String(d).trim() === 'p' && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.PAUSED;
-    console.log('\n');
-    console.log(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
-    console.log();
-    
+    clearLine();
+    writeToStdout(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
     container.currentBytes = Math.max(0, stdinStream.bytesWritten - 1000);
     unpipePiper();
     return;
@@ -726,6 +746,7 @@ strm.on('data', (d: any) => {
   // down arrow: \u001b[B
   // shift up: \u001b[2A
   // shift down: \u001b[2B
+  
   
   if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) { // ctrl-p
     container.mode = BunionMode.READING;
