@@ -596,6 +596,7 @@ const scrollUp = () => {
   
   container.prevStart -= lenToAdd;
   const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
+  clearLine();
   writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
   
 };
@@ -625,6 +626,7 @@ const scrollDown = () => {
   t.write(firstLine + '\n');
   container.prevStart += lenToAdd;
   const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
+  clearLine();
   writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
   
 };
@@ -718,6 +720,7 @@ strm.on('data', (d: any) => {
     unpipePiper();
     console.log();
     const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
+    clearLine();
     writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
     return;
   }
