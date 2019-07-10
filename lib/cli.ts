@@ -554,6 +554,38 @@ const doTailing = () => {
 };
 
 
+const scrollUp = () => {
+  
+  const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+  unpipePiper();
+  clearLine();
+  
+  const b = Buffer.alloc(9501);
+  const ps = container.prevStart;
+  
+  if (ps <= 0) {
+    container.prevStart = 0;
+    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file) '));
+    return;
+  }
+  
+  const raw = fs.readSync(logfilefd, b, 0, 9500, ps);
+  // process.stdout.write('\x1Bc'); // clear screen
+  
+  const lines = String(b).split('\n');
+  let lenToAdd = 0;
+  
+  for(let l of lines){
+    lenToAdd = Buffer.from(l + '\n').length;
+    t.write(l + '\n');
+  }
+  
+  container.prevStart -= lenToAdd;
+  // console.log();
+  writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, current search term: ${container.searchTerm} `));
+  
+};
+
 const scrollDown = () => {
   
   const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
@@ -613,6 +645,7 @@ strm.on('data', (d: any) => {
   
   if (String(d).trim() === '\u0004') {
     unpipePiper();
+    console.log();
     consumer.warn('User hit ctrl-d');
     if (container.sigCount++ === 1) {
       process.exit(1);
@@ -624,6 +657,7 @@ strm.on('data', (d: any) => {
   
   if (String(d).trim() === '\u0003') {
     unpipePiper();
+    console.log();
     consumer.warn('User hit ctrl-c');
     if (container.sigCount++ === 1) {
       process.exit(1);
@@ -672,6 +706,7 @@ strm.on('data', (d: any) => {
   
   if (String(d) === 's' && container.mode !== BunionMode.SEARCHING && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.SEARCHING;
+    container.prevStart = container.prevStart || stdinStream.bytesWritten;
     unpipePiper();
     console.log();
     const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
@@ -679,8 +714,12 @@ strm.on('data', (d: any) => {
     return;
   }
   
+  if (String(d) === '\u001b[A' && container.mode === BunionMode.SEARCHING) {
+    scrollUp();
+    return;
+  }
   
-  if (String(d) === '\r' && container.mode === BunionMode.SEARCHING) {
+  if ((String(d) === '\r' || String(d) === '\u001b[B') && container.mode === BunionMode.SEARCHING) {
     // container.mode = BunionMode.SCROLLING;
     scrollDown();
     return;
