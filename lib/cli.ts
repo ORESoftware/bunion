@@ -189,7 +189,7 @@ if (maxIndex < 1) {
 
 const andMatches = flattenDeep([opts.must_match]).filter(v => v).map(v => new RegExp(v, 'g'));
 const orMatches = flattenDeep([opts.match]).filter(v => v).map(v => new RegExp(v, 'g'));
-const highlight = opts.highlight && opts.no_highlight !== true || false;
+const highlight = true || opts.highlight && opts.no_highlight !== true || false;
 const bg = String(opts.background || '').toLowerCase();
 
 if (bg && !['dark', 'light'].includes(bg)) {
@@ -254,13 +254,23 @@ const matchFilterObject = (fields: BunionFields) => {
 
 const allMatches = andMatches.concat(orMatches);
 
+const replacer = function (match: any) {
+  // p1 is nondigits, p2 digits, and p3 non-alphanumerics
+  return chalk.magentaBright.bold(match);
+};
+
 const getHighlightedString = (str: string) => {
-  return allMatches.reduce((s, r) => {
-    return s.replace(r, function replacer(match, p1, p2, p3, offset, string) {
-      // p1 is nondigits, p2 digits, and p3 non-alphanumerics
-      return chalk.magentaBright.bold(match);
-    });
+  let match = allMatches.reduce((s, r) => {
+    return s.replace(r, replacer);
   }, str);
+  
+  
+  if (container.searchTerm !== '') {
+    match = match.replace(new RegExp(container.searchTerm, 'g'), replacer);
+  }
+  
+  return match;
+  
 };
 
 const getFields = (fields: any) => {
@@ -438,13 +448,13 @@ const onJSON = (v: BunionJSON) => {
   }
   
   if (container.stopOnNextMatch && container.searchTerm != '') {
-     container.matched = true;
-     container.stopped = true;
+    container.matched = true;
+    container.stopped = true;
     if (container.piper) {
       container.piper.unpipe();
       container.piper.removeAllListeners();
       clearLine();
-      writeToStdout(chalk.bgBlack.whiteBright('Stopped on match.'));
+      writeToStdout(chalk.bgBlack.whiteBright(`Stopped on match. (Search term is ${container.searchTerm})`));
     }
   }
   
@@ -669,7 +679,8 @@ strm.on('data', (d: any) => {
   
   if (String(d) === '\u0002') { // ctrl-b
     container.searchTerm = '';
-    consumer.info('Cleared search term.');
+    clearLine();
+    writeToStdout('Cleared search term.');
     return;
   }
   
@@ -684,7 +695,7 @@ strm.on('data', (d: any) => {
     return;
   }
   
-  if (String(d) === '\u0013') {  // ctrl-x
+  if (String(d) === '\u0018') {  // ctrl-x
     container.stopOnNextMatch = false;
     return;
   }
@@ -718,7 +729,7 @@ strm.on('data', (d: any) => {
   
   if (String(d) === '\u001b[2B' && container.mode === BunionMode.SEARCHING) {
     // container.mode = BunionMode.SCROLLING;
-    if(container.matched && container.stopped){
+    if (container.matched && container.stopped) {
       clearLine();
       writeToStdout('Matched found.');
       return;
@@ -751,7 +762,7 @@ strm.on('data', (d: any) => {
   if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) { // ctrl-p
     container.mode = BunionMode.READING;
     unpipePiper();
-    console.log(chalk.bgBlack.whiteBright(' (reading/tailing mode) '));
+    writeToStdout(chalk.bgBlack.whiteBright(' (reading/tailing mode) '));
     startReading();
     return;
   }
