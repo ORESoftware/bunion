@@ -315,6 +315,8 @@ try {
 const logfile = path.resolve(bunionHomeFiles + '/' + fileId);
 
 
+process.stdin.setMaxListeners(300);
+
 const stdinStream = process.stdin.resume()
   .pipe(fs.createWriteStream(logfile));
 
@@ -332,7 +334,8 @@ const container = {
   sigCount: 0,
   logChars: false,
   stopped: false,
-  matched: false
+  matched: false,
+  showUnmatched: true
 };
 
 
@@ -467,22 +470,6 @@ const writeToStdout = (...args: string[]) => {
 };
 
 const startReading = () => {
-  
-  // const k = container.k = cp.spawn(`tail`, ['-n', String(d), '-f', logfile]);
-  
-  // const k = container.k = cp.spawn(`bash`, [], {detached: false});
-  
-  // k.stdin.end(`on_sigkill(){ exit 0; }; export -f on_sigkill; trap KILL SIGKILL SIGINT INT on_sigkill ; tail -n ${d} -f ${logfile}`);
-  
-  // k.stdin.end(`tail -n ${d} -f ${logfile}`);
-  
-  // const p = k.stderr.pipe(process.stderr);
-  
-  // k.once('exit', code => {
-  //   p.destroy();
-  //   p.removeAllListeners();
-  //   consumer.warn('tail process exiting with:', code);
-  // });
   
   const jsonParser = createParser({
     onlyParseableOutput: Boolean(opts.only_parseable),
@@ -751,7 +738,7 @@ strm.on('data', (d: any) => {
     container.mode = BunionMode.PAUSED;
     clearLine();
     writeToStdout(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
-    container.currentBytes = Math.max(0, stdinStream.bytesWritten - 1000);
+    container.currentBytes = Math.max(0, stdinStream.bytesWritten - 100);
     unpipePiper();
     return;
   }
