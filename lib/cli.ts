@@ -357,6 +357,8 @@ const clearLine = () => {
   readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
 };
 
+const showUnmatched = false;
+
 const onJSON = (v: BunionJSON) => {
   
   if (container.mode === BunionMode.PAUSED) {
@@ -365,21 +367,24 @@ const onJSON = (v: BunionJSON) => {
   
   clearLine();
   
-  if (!(matches(v.value) && mustMatches(v.value) && matchFilterObject(v.fields))) {
-    filteredCount++;
-    if (opts.no_show_match_count !== true) {
-      process.stdout.write(getMatchCountLine(matchCount, filteredCount));
+  if(showUnmatched){
+    if (!(matches(v.value) && mustMatches(v.value) && matchFilterObject(v.fields))) {
+      filteredCount++;
+      if (opts.no_show_match_count !== true) {
+        process.stdout.write(getMatchCountLine(matchCount, filteredCount));
+      }
+      return true;
     }
-    return true;
-  }
   
-  if (container.searchTerm !== '' && !new RegExp(container.searchTerm).test(v.value)) {
-    filteredCount++;
-    if (opts.no_show_match_count !== true) {
-      process.stdout.write(getMatchCountLine(matchCount, filteredCount));
+    if (container.searchTerm !== '' && !new RegExp(container.searchTerm).test(v.value)) {
+      filteredCount++;
+      if (opts.no_show_match_count !== true) {
+        process.stdout.write(getMatchCountLine(matchCount, filteredCount));
+      }
+      return true;
     }
-    return true;
   }
+
   
   matchCount++;
   let fields = '';
@@ -449,16 +454,18 @@ const onJSON = (v: BunionJSON) => {
     );
   }
   
+  
+  let searchTermStr = '';
+  
   if (container.stopOnNextMatch && container.searchTerm != '') {
     container.matched = true;
     container.stopped = true;
     unpipePiper();
-    writeToStdout(chalk.bgBlack.whiteBright(`Stopped on match. (Search term is ${container.searchTerm})`));
-    return;
+    searchTermStr = `Stopped on match.`;
   }
   
   const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
-  writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${container.mode}, Log level: ${container.logLevel}, ${currentSearchTerm} `));
+  writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${container.mode}, ${searchTermStr}Log level: ${container.logLevel}, ${currentSearchTerm} `));
   
 };
 
@@ -725,10 +732,10 @@ strm.on('data', (d: any) => {
   
   if (String(d).trim() === 'p' && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.PAUSED;
-    clearLine();
-    writeToStdout(chalk.bgBlack.whiteBright(' (paused mode - use ctrl+p to return to reading mode.) '));
-    container.currentBytes = Math.max(0, stdinStream.bytesWritten - 100);
     unpipePiper();
+    clearLine();
+    writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${container.mode} - use ctrl+p to return to reading mode. `));
+    container.currentBytes = Math.max(0, stdinStream.bytesWritten - 100);
     return;
   }
   
