@@ -593,7 +593,6 @@ const scrollDown = () => {
   
   const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
   unpipePiper();
-  
   clearLine();
   
   const b = Buffer.alloc(3501);
