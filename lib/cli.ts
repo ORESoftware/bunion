@@ -5,9 +5,7 @@ import chalk from 'chalk';
 import {createParser} from "./json-parser";
 import {getConf} from "./utils";
 import {consumer} from './logger';
-import {BunionFields, BunionJSON, Level, ordered} from "./bunion";
-import {BunionMode} from "./bunion";
-import {BunionLevelToNum} from "./bunion";
+import {BunionFields, BunionJSON, BunionLevelToNum, BunionMode, Level, ordered} from "./bunion";
 import * as uuid from 'uuid';
 import * as fs from 'fs';
 import {ChildProcess} from "child_process";
@@ -139,7 +137,8 @@ let opts: any, parser = dashdash.createParser({options: options});
 
 try {
   opts = parser.parse(process.argv);
-} catch (e) {
+}
+catch (e) {
   consumer.error('bunion: error: %s', e.message);
   process.exit(1);
 }
@@ -162,7 +161,8 @@ try {
   if (opts.filter) {
     filter = JSON.parse(opts.filter);
   }
-} catch (err) {
+}
+catch (err) {
   consumer.error('Bunion could not parse your filter option (JSON) at the command line.');
   throw err;
 }
@@ -171,7 +171,8 @@ try {
   Object.keys(filter).forEach(function (k) {
     filter[k] = new RegExp(filter[k]);
   });
-} catch (err) {
+}
+catch (err) {
   consumer.error('Bunion could not convert your filter option values to RegExp.');
   throw err;
 }
@@ -264,7 +265,6 @@ const getHighlightedString = (str: string) => {
     return s.replace(r, replacer);
   }, str);
   
-  
   if (container.searchTerm !== '') {
     match = match.replace(new RegExp(container.searchTerm, 'g'), replacer);
   }
@@ -294,7 +294,6 @@ const getMatchCountLine = (matchCount: number, filteredCount: number) => {
 
 let filteredCount = 0, matchCount = 0;
 
-
 const fileId = uuid.v4();
 
 const bunionHome = process.env.HOME + '/.bunion';
@@ -302,27 +301,26 @@ const bunionHomeFiles = path.resolve(bunionHome + '/files');
 
 try {
   fs.mkdirSync(bunionHome);
-} catch (err) {
+}
+catch (err) {
 
 }
 
 try {
   fs.mkdirSync(bunionHomeFiles);
-} catch (e) {
+}
+catch (e) {
 
 }
 
 const logfile = path.resolve(bunionHomeFiles + '/' + fileId);
-
 
 process.stdin.setMaxListeners(300);
 
 const stdinStream = process.stdin.resume()
   .pipe(fs.createWriteStream(logfile));
 
-
 const container = {
-  k: null as ChildProcess,
   currentBytes: 0,
   currentLines: 0,
   mode: BunionMode.READING,
@@ -337,7 +335,6 @@ const container = {
   matched: false,
   showUnmatched: true
 };
-
 
 process.once('exit', code => {
   
@@ -362,10 +359,11 @@ const clearLine = () => {
 
 const onJSON = (v: BunionJSON) => {
   
-  
-  if ((filterKeys.length > 0 || allMatches.length > 0 || container.searchTerm != '') && filteredCount > 0 && opts.no_show_match_count !== true) {
-    clearLine();
+  if (container.mode === BunionMode.PAUSED) {
+    return;
   }
+  
+  clearLine();
   
   if (!(matches(v.value) && mustMatches(v.value) && matchFilterObject(v.fields))) {
     filteredCount++;
@@ -383,18 +381,19 @@ const onJSON = (v: BunionJSON) => {
     return true;
   }
   
-  
   matchCount++;
   let fields = '';
   
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  } else if (output === 'medium') {
+  }
+  else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  } else {
+  }
+  else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -453,13 +452,13 @@ const onJSON = (v: BunionJSON) => {
   if (container.stopOnNextMatch && container.searchTerm != '') {
     container.matched = true;
     container.stopped = true;
-    if (container.piper) {
-      container.piper.unpipe();
-      container.piper.removeAllListeners();
-      clearLine();
-      writeToStdout(chalk.bgBlack.whiteBright(`Stopped on match. (Search term is ${container.searchTerm})`));
-    }
+    unpipePiper();
+    writeToStdout(chalk.bgBlack.whiteBright(`Stopped on match. (Search term is ${container.searchTerm})`));
+    return;
   }
+  
+  const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
+  writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${container.mode}, Log level: ${container.logLevel}, ${currentSearchTerm} `));
   
 };
 
@@ -495,7 +494,6 @@ const levelMap = new Map([
   ['1', BunionLevelToNum.TRACE],
 ]);
 
-
 const unpipePiper = () => {
   if (container.piper) {
     container.piper.unpipe();
@@ -525,7 +523,6 @@ const ctrlChars = new Set([
   '\u000e' // n
 ]);
 
-
 const doTailing = () => {
   
   container.mode = BunionMode.TAILING;
@@ -535,6 +532,8 @@ const doTailing = () => {
     container.piper.unpipe();
     container.piper.removeAllListeners();
   }
+  
+  clearLine();
   
   const jsonParser = createParser({
     onlyParseableOutput: Boolean(opts.only_parseable),
@@ -554,7 +553,6 @@ const doTailing = () => {
   
 };
 
-
 const scrollUp = () => {
   
   const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
@@ -572,7 +570,7 @@ const scrollUp = () => {
   
   const raw = fs.readSync(logfilefd, b, 0, 9500, ps);
   // process.stdout.write('\x1Bc'); // clear screen
-  
+  fs.closeSync(logfilefd);
   const lines = String(b).split('\n');
   let lenToAdd = 0;
   
@@ -582,16 +580,11 @@ const scrollUp = () => {
   }
   
   container.prevStart -= lenToAdd;
-  const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
-  clearLine();
-  writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
   
 };
 
-
 const scrollDown = () => {
   
-  const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
   unpipePiper();
   clearLine();
   
@@ -604,19 +597,16 @@ const scrollDown = () => {
     return;
   }
   
+  const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
   const raw = fs.readSync(logfilefd, b, 0, 3500, ps);
-  
+  fs.closeSync(logfilefd);
   // process.stdout.write('\x1Bc'); // clear screen
   const firstLine = String(b).split('\n')[0];
   const lenToAdd = Buffer.from(firstLine + '\n').length;
   t.write(firstLine + '\n');
   container.prevStart += lenToAdd;
-  const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
-  clearLine();
-  writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
   
 };
-
 
 const strm = new ReadStream(<any>1);
 strm.setRawMode(true);
@@ -630,6 +620,7 @@ strm.on('data', (d: any) => {
   if (String(d) === '\r' && container.stopped) {
     container.stopped = false;
     container.matched = false;
+    clearLine();
     startReading();
     return;
   }
@@ -704,10 +695,9 @@ strm.on('data', (d: any) => {
     container.mode = BunionMode.SEARCHING;
     container.prevStart = container.prevStart || stdinStream.bytesWritten;
     unpipePiper();
-    console.log();
-    const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
     clearLine();
-    writeToStdout(chalk.bgBlack.whiteBright(` Log level: ${container.logLevel}, ${currentSearchTerm} `));
+    const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: ${container.searchTerm} `;
+    writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${container.mode}, Log level: ${container.logLevel}, ${currentSearchTerm} `));
     return;
   }
   
@@ -747,15 +737,13 @@ strm.on('data', (d: any) => {
   // shift up: \u001b[2A
   // shift down: \u001b[2B
   
-  
   if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) { // ctrl-p
     container.mode = BunionMode.READING;
     unpipePiper();
-    writeToStdout(chalk.bgBlack.whiteBright(' (reading/tailing mode) '));
+    clearLine();
     startReading();
     return;
   }
-  
   
   if (container.mode === BunionMode.PAUSED && String(d) === '') { // backspace!
     container.searchTerm = container.searchTerm.slice(0, -1);
@@ -781,9 +769,7 @@ strm.on('data', (d: any) => {
     return;
   }
   
-  
 });
-
 
 // killall: unknown signal f; valid signals:
 // HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP
