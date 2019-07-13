@@ -1,6 +1,6 @@
 {
   "producer": {
     "appName": "foobar",
-    "level": "info"
+    "level": "trace"
   }
 }

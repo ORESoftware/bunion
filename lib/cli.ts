@@ -180,6 +180,8 @@ const level = opts.level;
 const output = String(opts.output || 'medium').toLowerCase();
 const maxLevel = String(level || (bunionConf.consumer && bunionConf.consumer.level) || 'TRACE').toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel) + 1;
+// console.log({maxLevel,maxIndex});
+// process.exit(1);
 
 if (maxIndex < 1) {
   throw new Error(
@@ -328,7 +330,8 @@ const container = {
   logChars: false,
   stopped: false,
   matched: false,
-  showUnmatched: true
+  showUnmatched: true,
+  keepLogFile: false
 };
 
 const unpipePiper = () => {
@@ -338,7 +341,7 @@ const unpipePiper = () => {
     if (container.piper.bunionUnpiped) {
       return;
     }
-
+    
     container.piper.bunionUnpiped = true;
     
     // if (container.piper.bytesWritten) {
@@ -360,8 +363,14 @@ const unpipePiper = () => {
 
 process.once('exit', code => {
   
-  fs.unlinkSync(logfile);
   unpipePiper();
+  
+  if (container.keepLogFile) {
+    consumer.info('Log file path:', logfile);
+  }
+  else {
+    fs.unlinkSync(logfile);
+  }
   
   // process.stdin.cork();
   // process.stdin.end();
@@ -380,7 +389,7 @@ const writeStatusToStdout = (searchTermStr?: string) => {
   searchTermStr = searchTermStr || ' ';
   
   const stopMsg = (container.stopOnNextMatch && container.searchTerm !== '' && container.mode !== BunionMode.SEARCHING) ?
-    'Stopping on next match.' :
+    ' Stopping on next match.' :
     '';
   
   const currentSearchTerm = container.searchTerm === '' ?
@@ -411,14 +420,12 @@ const onJSON = (v: BunionJSON) => {
   
   // container.currentBytes = (container.piper && container.piper.bytesRead) || container.currentBytes;
   
-  
-  if(!(v && v['@bunion'] === true)){
+  if (!(v && v['@bunion'] === true)) {
     process.stderr.write(String(v));
     clearLine();
     writeStatusToStdout();
     return;
   }
-  
   
   clearLine();
   
@@ -442,14 +449,13 @@ const onJSON = (v: BunionJSON) => {
     }
   }
   
-  if(!(v as any)[RawJSONBytesSymbol]){
+  if (!(v as any)[RawJSONBytesSymbol]) {
     throw new Error('Bunion JSON should have raw json bytes property.');
   }
   
-  if(container.mode !== BunionMode.SEARCHING){
-    container.prevStart += (v as any)[RawJSONBytesSymbol];
+  if (container.mode !== BunionMode.SEARCHING) {
+    container.prevStart += (v as any)[RawJSONBytesSymbol] + 1;
   }
-  
   
   matchCount++;
   let fields = '';
@@ -529,6 +535,17 @@ const onJSON = (v: BunionJSON) => {
   }
   
   writeStatusToStdout(searchTermStr);
+  
+};
+
+const resume = () => {
+  switch (container.mode) {
+    case BunionMode.READING:
+      startReading();
+      return;
+    default:
+      writeStatusToStdout();
+  }
   
 };
 
@@ -676,7 +693,7 @@ const scrollDown = () => {
   
 };
 
-const handleSearchTermTyping = (d:string) => {
+const handleSearchTermTyping = (d: string) => {
   if (ctrlChars.has(String(d))) {
     consumer.warn('ctrl command ignored.');
     return;
@@ -691,10 +708,13 @@ const handleShutdown = (signal: string) => () => {
   console.log();
   consumer.warn(`User hit ${signal}.`);
   if (container.sigCount++ === 1) {
+    if (signal === 'ctrl-d') {
+      container.keepLogFile = true;
+    }
     process.exit(1);
     return;
   }
-  consumer.warn('Hit ctrl-d/ctrl-c again to exit.');
+  consumer.warn('Hit ctrl-d/ctrl-c again to exit. Use ctrl-d to keep the log file, ctrl-c will delete it.');
 };
 
 const handleCtrlC = handleShutdown('ctrl-c');
@@ -761,13 +781,13 @@ strm.on('data', (d: any) => {
   //   return;
   // }
   
-  if(container.mode === BunionMode.SEARCHING && String(d) === '\t'){
+  if (container.mode === BunionMode.SEARCHING && String(d) === '\t') {
     container.stopOnNextMatch = true;
     doTailing();
     return;
   }
   
-  if(container.mode === BunionMode.TAILING && String(d) === '\r'){
+  if (container.mode === BunionMode.TAILING && String(d) === '\r') {
     container.stopOnNextMatch = true;
     return;
   }
@@ -854,8 +874,12 @@ strm.on('data', (d: any) => {
   }
   
   if (container.mode === BunionMode.PAUSED) {
-     handleSearchTermTyping(d);
+    handleSearchTermTyping(d);
     return;
+  }
+  
+  if (String(d) === '\r') {
+    resume();
   }
   
 });

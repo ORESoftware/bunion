@@ -18,7 +18,7 @@ const getDefaultBunionConf = (): BunionConf => {
     producer: {
       name: null,
       appName: null,
-      level: BunionLevelInternal.INFO,
+      level: BunionLevelInternal.TRACE,
       inspect: {
         array: {
           length: 5
@@ -31,7 +31,7 @@ const getDefaultBunionConf = (): BunionConf => {
     consumer: {
       localeDateString: 'en-US',
       highlightMatches: true,
-      level: BunionLevelInternal.INFO,
+      level: BunionLevelInternal.TRACE,
       match: [],
       matchAny: [],
       matchAll: []

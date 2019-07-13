@@ -1,0 +1,668 @@
+starting to load ~/.bashrc
+finished loading ~/.bashrc
+[2K[1G[2K[1G9:04:01 PM.077 app:foobar INFO  0 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.077 app:foobar WARN  1 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.077 app:foobar ERROR  2  
+
+      Error: foo
+      at run (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at Object.<anonymous> (/home/oleg/codes/oresoftware/bunion/logging.test.js:39:3)
+      at Module._compile (internal/modules/cjs/loader.js:776:30)
+      at Object.Module._extensions..js (internal/modules/cjs/loader.js:787:10)
+      at Module.load (internal/modules/cjs/loader.js:643:32)
+      at Function.Module._load (internal/modules/cjs/loader.js:556:12)
+      at Function.Module.runMain (internal/modules/cjs/loader.js:839:10)
+      at internal/main/run_main_module.js:17:11
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.078 app:foobar ERROR  3 MYIHSBZIPRQP 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.279 app:foobar INFO  4 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.279 app:foobar WARN  5 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.279 app:foobar ERROR  6  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.280 app:foobar ERROR  7 LEVEXFBZSHTP 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.480 app:foobar INFO  8 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.481 app:foobar WARN  9 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.481 app:foobar ERROR  10  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.481 app:foobar ERROR  11 SEMHBUKSGMUN 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.682 app:foobar INFO  12 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.682 app:foobar WARN  13 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.682 app:foobar ERROR  14  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.682 app:foobar ERROR  15 PFZJBLOOHPZE 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.883 app:foobar INFO  16 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.883 app:foobar WARN  17 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.884 app:foobar ERROR  18  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:01 PM.884 app:foobar ERROR  19 OGTRAYWOUUSL 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.084 app:foobar INFO  20 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.085 app:foobar WARN  21 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.085 app:foobar ERROR  22  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.085 app:foobar ERROR  23 VYWOBJNVGTGI 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.286 app:foobar INFO  24 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.286 app:foobar WARN  25 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.286 app:foobar ERROR  26  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.286 app:foobar ERROR  27 EFUFFXDNJOVZ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.487 app:foobar INFO  28 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.487 app:foobar WARN  29 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.487 app:foobar ERROR  30  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.488 app:foobar ERROR  31 MRPQDFKTEVBC 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.688 app:foobar INFO  32 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.688 app:foobar WARN  33 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.689 app:foobar ERROR  34  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.689 app:foobar ERROR  35 TSGKJNQPRGPF 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.889 app:foobar INFO  36 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.890 app:foobar WARN  37 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.890 app:foobar ERROR  38  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:02 PM.890 app:foobar ERROR  39 SONRJUJELGUQ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.091 app:foobar INFO  40 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.091 app:foobar WARN  41 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.091 app:foobar ERROR  42  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.092 app:foobar ERROR  43 VMLQXWLZHUMJ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.292 app:foobar INFO  44 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.293 app:foobar WARN  45 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.293 app:foobar ERROR  46  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.293 app:foobar ERROR  47 TXGHPGQZSJZJ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.494 app:foobar INFO  48 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.494 app:foobar WARN  49 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.494 app:foobar ERROR  50  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.494 app:foobar ERROR  51 IEVMNBBSHKBT 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.695 app:foobar INFO  52 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.695 app:foobar WARN  53 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.695 app:foobar ERROR  54  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.695 app:foobar ERROR  55 XVZPTVQDPMKR 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.896 app:foobar INFO  56 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.896 app:foobar WARN  57 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.896 app:foobar ERROR  58  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:03 PM.897 app:foobar ERROR  59 XTZCNKHHKMKU 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.097 app:foobar INFO  60 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.098 app:foobar WARN  61 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.098 app:foobar ERROR  62  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.098 app:foobar ERROR  63 FUWDYNSSOUCX 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.299 app:foobar INFO  64 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.299 app:foobar WARN  65 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.299 app:foobar ERROR  66  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.300 app:foobar ERROR  67 SEAONQMGGAFV 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.500 app:foobar INFO  68 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.501 app:foobar WARN  69 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.501 app:foobar ERROR  70  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.501 app:foobar ERROR  71 OTVALPXNONNA 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.702 app:foobar INFO  72 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.702 app:foobar WARN  73 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.702 app:foobar ERROR  74  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.702 app:foobar ERROR  75 OGSRBPXYRILU 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.903 app:foobar INFO  76 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.903 app:foobar WARN  77 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.904 app:foobar ERROR  78  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:04 PM.904 app:foobar ERROR  79 XCKJSLHXZUZA 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.105 app:foobar INFO  80 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.105 app:foobar WARN  81 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.105 app:foobar ERROR  82  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.105 app:foobar ERROR  83 MLBDGXBIFYWD 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.306 app:foobar INFO  84 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.306 app:foobar WARN  85 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.306 app:foobar ERROR  86  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.307 app:foobar ERROR  87 XWVHQDBNVPIH 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.507 app:foobar INFO  88 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.508 app:foobar WARN  89 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.508 app:foobar ERROR  90  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.508 app:foobar ERROR  91 FKJTHDRZXYVR 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.709 app:foobar INFO  92 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.709 app:foobar WARN  93 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.709 app:foobar ERROR  94  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.710 app:foobar ERROR  95 HBYBTJETASBX 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.910 app:foobar INFO  96 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.910 app:foobar WARN  97 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.911 app:foobar ERROR  98  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:05 PM.911 app:foobar ERROR  99 ZJXMOLNSVCRV 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.111 app:foobar INFO  100 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.112 app:foobar WARN  101 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.112 app:foobar ERROR  102  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.112 app:foobar ERROR  103 ENPHVOECJJCA 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.313 app:foobar INFO  104 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.313 app:foobar WARN  105 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.313 app:foobar ERROR  106  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.314 app:foobar ERROR  107 MTMVJOVSKMQM 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.514 app:foobar INFO  108 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.515 app:foobar WARN  109 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.515 app:foobar ERROR  110  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.515 app:foobar ERROR  111 LDKQIDVWFXYX 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.716 app:foobar INFO  112 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.716 app:foobar WARN  113 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.716 app:foobar ERROR  114  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.716 app:foobar ERROR  115 DTIZETVOZWEQ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.917 app:foobar INFO  116 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.917 app:foobar WARN  117 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.918 app:foobar ERROR  118  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:06 PM.918 app:foobar ERROR  119 AGOFTBNRADXX 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.119 app:foobar INFO  120 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.119 app:foobar WARN  121 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.119 app:foobar ERROR  122  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.119 app:foobar ERROR  123 ZNRWYFLWAWFP 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.320 app:foobar INFO  124 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.320 app:foobar WARN  125 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.321 app:foobar ERROR  126  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.321 app:foobar ERROR  127 NOGKDZXCDCXH 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.521 app:foobar INFO  128 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.522 app:foobar WARN  129 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.522 app:foobar ERROR  130  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.522 app:foobar ERROR  131 NNUFXHRCQRQL 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.723 app:foobar INFO  132 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.723 app:foobar WARN  133 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.724 app:foobar ERROR  134  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.724 app:foobar ERROR  135 LUKDDTSHDEIN 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.924 app:foobar INFO  136 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.925 app:foobar WARN  137 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.925 app:foobar ERROR  138  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:07 PM.925 app:foobar ERROR  139 XZVJBPPHOUCU 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.126 app:foobar INFO  140 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.126 app:foobar WARN  141 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.126 app:foobar ERROR  142  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.126 app:foobar ERROR  143 UKNFJORVHNQK 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.327 app:foobar INFO  144 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.327 app:foobar WARN  145 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.328 app:foobar ERROR  146  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.328 app:foobar ERROR  147 UPXHVFHBRITT 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.529 app:foobar INFO  148 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.529 app:foobar WARN  149 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.529 app:foobar ERROR  150  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.529 app:foobar ERROR  151 COQOMEZWWWXB 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.730 app:foobar INFO  152 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.730 app:foobar WARN  153 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.731 app:foobar ERROR  154  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.731 app:foobar ERROR  155 WCRQQNOSALZU 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.932 app:foobar INFO  156 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.932 app:foobar WARN  157 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.932 app:foobar ERROR  158  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:08 PM.932 app:foobar ERROR  159 JRIYOMNRUVZX 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.133 app:foobar INFO  160 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.133 app:foobar WARN  161 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.134 app:foobar ERROR  162  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.134 app:foobar ERROR  163 PADKEXNPMEJA 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.334 app:foobar INFO  164 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.334 app:foobar WARN  165 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.335 app:foobar ERROR  166  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.335 app:foobar ERROR  167 JGKWUAYOFVIS 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.535 app:foobar INFO  168 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.536 app:foobar WARN  169 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.536 app:foobar ERROR  170  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.536 app:foobar ERROR  171 UNDMUPFLDITJ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.737 app:foobar INFO  172 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.737 app:foobar WARN  173 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.737 app:foobar ERROR  174  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.738 app:foobar ERROR  175 PXKXYGYZEIDK 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.938 app:foobar INFO  176 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.939 app:foobar WARN  177 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.939 app:foobar ERROR  178  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:09 PM.939 app:foobar ERROR  179 RXDWQXJVXYTV 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.140 app:foobar INFO  180 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.140 app:foobar WARN  181 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.140 app:foobar ERROR  182  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.141 app:foobar ERROR  183 HJJWHEPUGIXF 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.341 app:foobar INFO  184 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.341 app:foobar WARN  185 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.342 app:foobar ERROR  186  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.342 app:foobar ERROR  187 QHJUQJQKRTPA 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.542 app:foobar INFO  188 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.543 app:foobar WARN  189 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.543 app:foobar ERROR  190  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.543 app:foobar ERROR  191 NTLVDCDBPGUC 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.744 app:foobar INFO  192 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.744 app:foobar WARN  193 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.744 app:foobar ERROR  194  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.745 app:foobar ERROR  195 WSRCLTELKPYW 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.945 app:foobar INFO  196 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.945 app:foobar WARN  197 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.946 app:foobar ERROR  198  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:10 PM.946 app:foobar ERROR  199 BVYBIYKXUZSM 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.147 app:foobar INFO  200 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.147 app:foobar WARN  201 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.147 app:foobar ERROR  202  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.148 app:foobar ERROR  203 UHROBFJNRYYL 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.348 app:foobar INFO  204 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.348 app:foobar WARN  205 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.349 app:foobar ERROR  206  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.349 app:foobar ERROR  207 LFUYKQUHTGOL 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.550 app:foobar INFO  208 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.550 app:foobar WARN  209 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.550 app:foobar ERROR  210  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.550 app:foobar ERROR  211 EYKHBHZPBHGU 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.751 app:foobar INFO  212 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.751 app:foobar WARN  213 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.752 app:foobar ERROR  214  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.752 app:foobar ERROR  215 ONZPOBAWAQKJ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.953 app:foobar INFO  216 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.953 app:foobar WARN  217 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.953 app:foobar ERROR  218  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:11 PM.953 app:foobar ERROR  219 APUMMHNERCGK 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.154 app:foobar INFO  220 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.154 app:foobar WARN  221 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.155 app:foobar ERROR  222  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.155 app:foobar ERROR  223 FQAYUXBNGQHT 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.355 app:foobar INFO  224 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.356 app:foobar WARN  225 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.356 app:foobar ERROR  226  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.356 app:foobar ERROR  227 ILVFVEAGYTOO 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.557 app:foobar INFO  228 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.557 app:foobar WARN  229 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.557 app:foobar ERROR  230  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.558 app:foobar ERROR  231 MKKKXOZLSCUR 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.758 app:foobar INFO  232 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.758 app:foobar WARN  233 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.759 app:foobar ERROR  234  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.759 app:foobar ERROR  235 PBFGBFWWICOY 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.959 app:foobar INFO  236 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.960 app:foobar WARN  237 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.960 app:foobar ERROR  238  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:12 PM.960 app:foobar ERROR  239 JOSRDUBEYJZW 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.161 app:foobar INFO  240 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.161 app:foobar WARN  241 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.161 app:foobar ERROR  242  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.161 app:foobar ERROR  243 IEZOHHLHTDLV 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.362 app:foobar INFO  244 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.362 app:foobar WARN  245 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.363 app:foobar ERROR  246  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.363 app:foobar ERROR  247 MXMKTKAQWIZR 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.564 app:foobar INFO  248 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.564 app:foobar WARN  249 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.564 app:foobar ERROR  250  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.564 app:foobar ERROR  251 ONABRNOBFTLK 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.765 app:foobar INFO  252 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.765 app:foobar WARN  253 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.765 app:foobar ERROR  254  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.765 app:foobar ERROR  255 CFZNEARFLMTY 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.966 app:foobar INFO  256 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.966 app:foobar WARN  257 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.967 app:foobar ERROR  258  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:13 PM.967 app:foobar ERROR  259 QFVQXTJJYTLE 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:14 PM.167 app:foobar INFO  260 just saying hi. 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:14 PM.168 app:foobar WARN  261 shit hit the fan 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:14 PM.168 app:foobar ERROR  262  
+
+      Error: foo
+      at Timeout.run [as _onTimeout] (/home/oleg/codes/oresoftware/bunion/logging.test.js:34:18)
+      at listOnTimeout (internal/timers.js:531:17)
+      at processTimers (internal/timers.js:475:7)
+ 
+ # Mode: READING, Log level: 1,  no search term.   [2K[1G9:04:14 PM.168 app:foobar ERROR  263 EOTJJAGOZMIO 
+ # Mode: READING, Log level: 1,  no search term.   bunion consumer info: exiting with code: 0
