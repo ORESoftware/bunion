@@ -2,6 +2,7 @@
 'use strict';
 
 import chalk from 'chalk';
+import {RawJSONBytesSymbol} from "@oresoftware/json-stream-parser";
 import {createParser} from "./json-parser";
 import {getConf} from "./utils";
 import {consumer} from './logger';
@@ -10,7 +11,7 @@ import * as uuid from 'uuid';
 import * as fs from 'fs';
 import * as path from "path";
 import {ReadStream} from "tty";
-import {Transform} from "stream";
+import * as util from "util";
 
 const dashdash = require('dashdash');
 import readline = require('readline');
@@ -341,17 +342,17 @@ const unpipePiper = () => {
 
     container.piper.bunionUnpiped = true;
     
-    if (container.piper.bytesWritten) {
-      console.log('WRITTEN BYTES:', container.piper.bytesWritten);
-      throw 'truct';
-      container.prevStart = container.piper.bytesWritten;
-    }
-    
-    if (container.piper.bytesRead) {
-      console.log('READ BYTES:', container.piper.bytesRead);
-      throw 'fuck';
-      container.prevStart = container.piper.bytesRead;
-    }
+    // if (container.piper.bytesWritten) {
+    //   console.log('WRITTEN BYTES:', container.piper.bytesWritten);
+    //   throw 'truct';
+    //   container.prevStart = container.piper.bytesWritten;
+    // }
+    //
+    // if (container.piper.bytesRead) {
+    //   console.log('READ BYTES:', container.piper.bytesRead);
+    //   throw 'fuck';
+    //   container.prevStart = container.piper.bytesRead;
+    // }
     
     container.piper.unpipe();
     container.piper.removeAllListeners();
@@ -397,6 +398,15 @@ const onJSON = (v: BunionJSON) => {
   
   // container.currentBytes = (container.piper && container.piper.bytesRead) || container.currentBytes;
   
+  
+  if(!(v && v['@bunion'] === true)){
+    process.stderr.write(String(v));
+    clearLine();
+    writeStatusToStdout();
+    return;
+  }
+  
+  
   clearLine();
   
   let isMatched = container.searchTerm !== '' && !new RegExp(container.searchTerm).test(v.value);
@@ -418,6 +428,15 @@ const onJSON = (v: BunionJSON) => {
       return true;
     }
   }
+  
+  if(!(v as any)[RawJSONBytesSymbol]){
+    throw new Error('Bunion JSON should have raw json bytes property.');
+  }
+  
+  if(container.mode !== BunionMode.SEARCHING){
+    container.prevStart += (v as any)[RawJSONBytesSymbol];
+  }
+  
   
   matchCount++;
   let fields = '';
@@ -557,15 +576,19 @@ const levelMap = new Map([
   ['1', BunionLevelToNum.TRACE],
 ]);
 
-const t = new Transform();
-t._transform = (c, e, cb) => cb(null, c);
+// const t = new Transform();
+// t._transform = (c, e, cb) => cb(null, c);
 
-const jsonParser = createParser({
+const bJsonParser = createParser({
   onlyParseableOutput: Boolean(opts.only_parseable),
   clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
 });
 
-t.pipe(jsonParser).on('bunion-json', d => {
+// t.pipe(jsonParser).on('bunion-json', d => {
+//   onJSON(d);
+// });
+
+bJsonParser.on('bunion-json', d => {
   onJSON(d);
 });
 
@@ -607,7 +630,7 @@ const scrollUp = () => {
   
   for (let l of lines) {
     lenToAdd = Buffer.from(l + '\n').length;
-    t.write(l + '\n');
+    bJsonParser.write(l + '\n');
   }
   
   container.prevStart -= lenToAdd;
@@ -634,7 +657,7 @@ const scrollDown = () => {
   // process.stdout.write('\x1Bc'); // clear screen
   const firstLine = String(b).split('\n')[0];
   const lenToAdd = Buffer.from(firstLine + '\n').length;
-  t.write(firstLine + '\n');
+  bJsonParser.write(firstLine + '\n');
   container.prevStart += lenToAdd;
   
 };
@@ -724,8 +747,6 @@ strm.on('data', (d: any) => {
   
   if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.SEARCHING;
-    console.log('prev start:', container.prevStart);
-    console.log('bytes written:', stdinStream.bytesWritten);
     container.prevStart = container.prevStart || stdinStream.bytesWritten;
     unpipePiper();
     clearLine();
