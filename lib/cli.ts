@@ -335,16 +335,24 @@ const unpipePiper = () => {
   
   if (container.piper) {
     
-    if(container.piper.bunionUnpiped){
+    if (container.piper.bunionUnpiped) {
       return;
     }
-  
+
     container.piper.bunionUnpiped = true;
     
-    if(container.piper.bytesWritten){
+    if (container.piper.bytesWritten) {
+      console.log('WRITTEN BYTES:', container.piper.bytesWritten);
+      throw 'truct';
       container.prevStart = container.piper.bytesWritten;
     }
-   
+    
+    if (container.piper.bytesRead) {
+      console.log('READ BYTES:', container.piper.bytesRead);
+      throw 'fuck';
+      container.prevStart = container.piper.bytesRead;
+    }
+    
     container.piper.unpipe();
     container.piper.removeAllListeners();
   }
@@ -353,11 +361,7 @@ const unpipePiper = () => {
 process.once('exit', code => {
   
   fs.unlinkSync(logfile);
-  
-  if (container.piper) {
-    container.piper.unpipe();
-    container.piper.removeAllListeners();
-  }
+  unpipePiper();
   
   // process.stdin.cork();
   // process.stdin.end();
@@ -495,7 +499,6 @@ const onJSON = (v: BunionJSON) => {
   
 };
 
-
 const doTailing = () => {
   
   container.mode = BunionMode.TAILING;
@@ -514,7 +517,7 @@ const doTailing = () => {
   
   // const fst = fs.createReadStream(logfile, {start: Math.max(stdinStream.bytesWritten - 300, 0)});
   
-  const fst = fs.createReadStream(logfile, {start: Math.max(container.prevStart - 300, 0)});
+  const fst = fs.createReadStream(logfile, {start: Math.max(container.prevStart - 5, 0)});
   container.piper = fst.pipe(jsonParser, {end: false});
   fst.once('end', () => {
     // paused
@@ -524,6 +527,8 @@ const doTailing = () => {
 };
 
 const startReading = () => {
+  
+  container.mode = BunionMode.READING;
   
   unpipePiper();
   clearLine();
@@ -578,8 +583,6 @@ const ctrlChars = new Set([
   '\u0012',  // r
   '\u001b\r'  // alt-return (might need to be \u001b\\r with escaped slash
 ]);
-
-
 
 const scrollUp = () => {
   
@@ -721,6 +724,8 @@ strm.on('data', (d: any) => {
   
   if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.SEARCHING;
+    console.log('prev start:', container.prevStart);
+    console.log('bytes written:', stdinStream.bytesWritten);
     container.prevStart = container.prevStart || stdinStream.bytesWritten;
     unpipePiper();
     clearLine();
