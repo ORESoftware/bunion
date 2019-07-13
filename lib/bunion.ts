@@ -26,6 +26,7 @@ export enum BunionLevelToNum {
 }
 
 export enum BunionMode {
+  STOPPED = 'STOPPED',
   SCROLLING = 'SCROLLING',
   READING = 'READING',
   PAUSED = 'PAUSED',

@@ -11,7 +11,6 @@ import * as uuid from 'uuid';
 import * as fs from 'fs';
 import * as path from "path";
 import {ReadStream} from "tty";
-import * as util from "util";
 
 const dashdash = require('dashdash');
 import readline = require('readline');
@@ -409,7 +408,7 @@ const onJSON = (v: BunionJSON) => {
   
   clearLine();
   
-  let isMatched = container.searchTerm !== '' && !new RegExp(container.searchTerm).test(v.value);
+  const isMatched = container.searchTerm !== '' && new RegExp(container.searchTerm).test(v.value);
   
   if (showUnmatched) {
     if (!(matches(v.value) && mustMatches(v.value) && matchFilterObject(v.fields))) {
@@ -508,9 +507,10 @@ const onJSON = (v: BunionJSON) => {
   
   let searchTermStr = ' ';
   
-  if (container.stopOnNextMatch && isMatched && container.mode === BunionMode.SEARCHING) {
+  if (container.stopOnNextMatch && isMatched) {
     unpipePiper();
     // clearLine();
+    container.mode = BunionMode.STOPPED;
     searchTermStr = ` Stopped on match. `;
   }
   
@@ -729,6 +729,17 @@ strm.on('data', (d: any) => {
   
   if (String(d) === '\u0018') {  // ctrl-x
     container.stopOnNextMatch = false;
+    return;
+  }
+  
+  if(container.mode === BunionMode.STOPPED && String(d) === '\r'){
+    doTailing();
+    return;
+  }
+  
+  if(container.mode === BunionMode.STOPPED && String(d) === '\t'){
+    container.stopOnNextMatch = false;
+    doTailing();
     return;
   }
   
