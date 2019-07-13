@@ -16,11 +16,13 @@ process.on('unhandledRejection', (e) => {
 });
 
 
-(function run(){
+let i = 0;
+
+(function run() {
   
-  log.info('just saying hi.');
-  log.warn('shit hit the fan');
-  log.error(new Error('foo'));
+  log.info(i++, 'just saying hi.');
+  log.warn(i++, 'shit hit the fan');
+  log.error(i++, new Error('foo'));
   
   setTimeout(run, 200);
   

@@ -291,9 +291,7 @@ const getMatchCountLine = (matchCount: number, filteredCount: number) => {
 };
 
 let filteredCount = 0, matchCount = 0;
-
 const fileId = uuid.v4();
-
 const bunionHome = process.env.HOME + '/.bunion';
 const bunionHomeFiles = path.resolve(bunionHome + '/files');
 
@@ -320,10 +318,9 @@ const stdinStream = process.stdin.resume()
 
 const container = {
   currentBytes: 0,
-  currentLines: 0,
   mode: BunionMode.READING,
   piper: null as any,
-  prevStart: null as number,
+  prevStart: 0,
   searchTerm: '',
   logLevel: maxIndex,
   stopOnNextMatch: true,
@@ -335,7 +332,19 @@ const container = {
 };
 
 const unpipePiper = () => {
+  
   if (container.piper) {
+    
+    if(container.piper.bunionUnpiped){
+      return;
+    }
+  
+    container.piper.bunionUnpiped = true;
+    
+    if(container.piper.bytesWritten){
+      container.prevStart = container.piper.bytesWritten;
+    }
+   
     container.piper.unpipe();
     container.piper.removeAllListeners();
   }
@@ -486,6 +495,34 @@ const onJSON = (v: BunionJSON) => {
   
 };
 
+
+const doTailing = () => {
+  
+  container.mode = BunionMode.TAILING;
+  
+  unpipePiper();
+  clearLine();
+  
+  const jsonParser = createParser({
+    onlyParseableOutput: Boolean(opts.only_parseable),
+    clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
+  });
+  
+  jsonParser.on('bunion-json', d => {
+    onJSON(d);
+  });
+  
+  // const fst = fs.createReadStream(logfile, {start: Math.max(stdinStream.bytesWritten - 300, 0)});
+  
+  const fst = fs.createReadStream(logfile, {start: Math.max(container.prevStart - 300, 0)});
+  container.piper = fst.pipe(jsonParser, {end: false});
+  fst.once('end', () => {
+    // paused
+    container.piper = process.stdin.pipe(jsonParser);
+  });
+  
+};
+
 const startReading = () => {
   
   unpipePiper();
@@ -542,30 +579,7 @@ const ctrlChars = new Set([
   '\u001b\r'  // alt-return (might need to be \u001b\\r with escaped slash
 ]);
 
-const doTailing = () => {
-  
-  container.mode = BunionMode.TAILING;
-  
-  unpipePiper();
-  clearLine();
-  
-  const jsonParser = createParser({
-    onlyParseableOutput: Boolean(opts.only_parseable),
-    clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
-  });
-  
-  jsonParser.on('bunion-json', d => {
-    onJSON(d);
-  });
-  
-  const fst = fs.createReadStream(logfile, {start: Math.max(stdinStream.bytesWritten - 300, 0)});
-  container.piper = fst.pipe(jsonParser, {end: false});
-  fst.once('end', () => {
-    // paused
-    container.piper = process.stdin.pipe(jsonParser);
-  });
-  
-};
+
 
 const scrollUp = () => {
   
@@ -636,7 +650,7 @@ const handleShutdown = (signal: string) => () => {
 const handleCtrlC = handleShutdown('ctrl-c');
 const handleCtrlD = handleShutdown('ctrl-d');
 
-const strm = new ReadStream(<any>1);
+const strm = new ReadStream(<any>1);   // previously fd =  fs.open('/dev/tty','r+')
 strm.setRawMode(true);
 
 strm.on('data', (d: any) => {
@@ -705,7 +719,7 @@ strm.on('data', (d: any) => {
     return;
   }
   
-  if (String(d) === 's' && container.mode !== BunionMode.SEARCHING && container.mode !== BunionMode.PAUSED) {
+  if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.SEARCHING;
     container.prevStart = container.prevStart || stdinStream.bytesWritten;
     unpipePiper();
@@ -740,7 +754,8 @@ strm.on('data', (d: any) => {
     container.mode = BunionMode.PAUSED;
     unpipePiper();
     clearLine();
-    writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${container.mode} - use ctrl+p to return to reading mode. `));
+    // writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${container.mode} - use ctrl+p to return to reading mode. `));
+    writeStatusToStdout();
     container.currentBytes = Math.max(0, stdinStream.bytesWritten - 100);
     return;
   }
