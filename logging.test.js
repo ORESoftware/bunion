@@ -18,11 +18,21 @@ process.on('unhandledRejection', (e) => {
 
 let i = 0;
 
+const getRandomStr = () => {
+  let i = 0, res ='';
+  while(i++ < 12){
+    res+=String.fromCharCode(65 + Math.floor(Math.random()*26));
+  }
+  return res;
+  
+};
+
 (function run() {
   
   log.info(i++, 'just saying hi.');
   log.warn(i++, 'shit hit the fan');
   log.error(i++, new Error('foo'));
+  log.error(i++, getRandomStr());
   
   setTimeout(run, 200);
   

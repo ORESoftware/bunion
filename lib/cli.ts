@@ -264,7 +264,7 @@ const getHighlightedString = (str: string) => {
   let match = allMatches.reduce((s, r) => s.replace(r, replacer), str);
   
   if (container.searchTerm !== '') {
-    match = match.replace(new RegExp(container.searchTerm, 'g'), replacer);
+    match = match.replace(new RegExp(container.searchTerm, 'ig'), replacer);
   }
   
   return match;
@@ -376,9 +376,23 @@ const clearLine = () => {
 };
 
 const writeStatusToStdout = (searchTermStr?: string) => {
+  
   searchTermStr = searchTermStr || ' ';
-  const currentSearchTerm = container.searchTerm === '' ? ` no search term. ` : `current search term: '${container.searchTerm}' `;
-  writeToStdout(chalk.bgBlack.whiteBright(` # Mode: ${container.mode},${searchTermStr}Log level: ${container.logLevel}, ${currentSearchTerm} `));
+  
+  const stopMsg = (container.stopOnNextMatch && container.searchTerm !== '' && container.mode !== BunionMode.SEARCHING) ?
+    'Stopping on next match.' :
+    '';
+  
+  const currentSearchTerm = container.searchTerm === '' ?
+    ` no search term. ` :
+    `current search term: '${container.searchTerm}' `;
+  
+  writeToStdout(
+    chalk.bgBlack.whiteBright(
+      ` # Mode: ${container.mode},${searchTermStr}Log level: ${container.logLevel},${stopMsg} ${currentSearchTerm} `
+    )
+  );
+  
 };
 
 const writeToStdout = (...args: string[]) => {
@@ -408,7 +422,7 @@ const onJSON = (v: BunionJSON) => {
   
   clearLine();
   
-  const isMatched = container.searchTerm !== '' && new RegExp(container.searchTerm).test(v.value);
+  const isMatched = container.searchTerm !== '' && new RegExp(container.searchTerm, 'i').test(v.value);
   
   if (showUnmatched) {
     if (!(matches(v.value) && mustMatches(v.value) && matchFilterObject(v.fields))) {
@@ -510,7 +524,7 @@ const onJSON = (v: BunionJSON) => {
   if (container.stopOnNextMatch && isMatched) {
     unpipePiper();
     // clearLine();
-    container.mode = BunionMode.STOPPED;
+    container.mode = BunionMode.SEARCHING;
     searchTermStr = ` Stopped on match. `;
   }
   
@@ -614,7 +628,7 @@ const scrollUp = () => {
   clearLine();
   
   const b = Buffer.alloc(9501);
-  const ps = container.prevStart;
+  const ps = container.prevStart - 9500;
   
   if (ps <= 0) {
     container.prevStart = 0;
@@ -660,6 +674,16 @@ const scrollDown = () => {
   bJsonParser.write(firstLine + '\n');
   container.prevStart += lenToAdd;
   
+};
+
+const handleSearchTermTyping = (d:string) => {
+  if (ctrlChars.has(String(d))) {
+    consumer.warn('ctrl command ignored.');
+    return;
+  }
+  container.searchTerm += String(d);
+  clearLine();
+  writeToStdout('Search term:', container.searchTerm);
 };
 
 const handleShutdown = (signal: string) => () => {
@@ -732,14 +756,19 @@ strm.on('data', (d: any) => {
     return;
   }
   
-  if(container.mode === BunionMode.STOPPED && String(d) === '\r'){
+  // if(container.mode === BunionMode.SEARCHING && String(d) === '\r'){
+  //   doTailing();
+  //   return;
+  // }
+  
+  if(container.mode === BunionMode.SEARCHING && String(d) === '\t'){
+    container.stopOnNextMatch = true;
     doTailing();
     return;
   }
   
-  if(container.mode === BunionMode.STOPPED && String(d) === '\t'){
-    container.stopOnNextMatch = false;
-    doTailing();
+  if(container.mode === BunionMode.TAILING && String(d) === '\r'){
+    container.stopOnNextMatch = true;
     return;
   }
   
@@ -752,6 +781,7 @@ strm.on('data', (d: any) => {
   
   if (String(d) === '\u0014' && container.mode !== BunionMode.TAILING) {  // ctrl-t
     container.mode = BunionMode.TAILING;
+    container.stopOnNextMatch = false;
     doTailing();
     return;
   }
@@ -824,13 +854,7 @@ strm.on('data', (d: any) => {
   }
   
   if (container.mode === BunionMode.PAUSED) {
-    if (ctrlChars.has(String(d))) {
-      consumer.warn('ctrl command ignored.');
-      return;
-    }
-    container.searchTerm += String(d);
-    clearLine();
-    writeToStdout('Search term:', container.searchTerm);
+     handleSearchTermTyping(d);
     return;
   }
   

@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/ORESoftware/bunion#readme",
   "dependencies": {
-    "@oresoftware/json-stream-parser": "latest",
+    "@oresoftware/json-stream-parser": "0.0.114",
     "@oresoftware/safe-stringify": "0.0.1001",
     "ajv": "^6.4.0",
     "chalk": "^2.4.0",
