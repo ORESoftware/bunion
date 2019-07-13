@@ -315,8 +315,17 @@ const logfile = path.resolve(bunionHomeFiles + '/' + fileId);
 
 process.stdin.setMaxListeners(300);
 
+// const stdinStream = {
+//   bytesWritten: 0
+// };
+
 const stdinStream = process.stdin.resume()
   .pipe(fs.createWriteStream(logfile));
+
+// process.stdin.resume().on('data', d => {
+//   fs.appendFileSync(logfile, d);
+//   stdinStream.bytesWritten += d.length;
+// });
 
 const container = {
   currentBytes: 0,
@@ -416,52 +425,74 @@ const writeToStdout = (...args: string[]) => {
 const showUnmatched = false;
 
 const handleFileExcess = () => {
+  
   if (stdinStream.bytesWritten >= container.prevCap) {
     
-    const fd = fs.openSync(logfile, fs.constants.O_RDWR);
+    const r = fs.readFileSync(logfile, {encoding:'utf8'});
     
-    const {size} = fs.statSync(logfile);
-    const b = Buffer.alloc(size);
+    if(r.length > container.capAmount){
+      const diff = r.length - container.capAmount;
+      const b = r.slice(diff, r.length);
+      console.log('buff len:', b.length);
+      console.log('r len:', r.length);
+      container.prevCap += container.capAmount;
+      container.prevStart = Math.max(container.prevStart - diff, 0);
+      // fs.truncateSync(logfile);
+      fs.writeFileSync(logfile, b, {encoding:'utf8'});
+    }
     
-    const diff = size - container.capAmount;
-    const rawd = fs.readSync(fd, b, 0, size, diff);
-    
-    // const r = fs.readFileSync(logfile, {encoding:'utf8'});
-    
-    fs.ftruncateSync(fd);
-    
-    container.prevCap += container.capAmount;
-    container.prevStart = Math.max(container.prevStart - diff, 0);
-    // fs.truncateSync(logfile);
-    fs.writeSync(fd, b, 0, b.length, 0);
-    
-    // if(r.length > container.capAmount){
-    //   const diff = r.length - container.capAmount;
-    //   const b = r.slice(diff, r.length);
-    //   console.log('buff len:', b.length);
-    //   console.log('r len:', r.length);
-    //   container.prevCap += container.capAmount;
-    //   container.prevStart = Math.max(container.prevStart - diff, 0);
-    //   // fs.truncateSync(logfile);
-    //   fs.writeFileSync(logfile, b, {encoding:'utf8'});
-    // }
-    
-    fs.closeSync(fd);
-    
-    // container.prevCap += container.capAmount;
-    // console.log({rawd});
-    // container.prevStart = Math.max(container.prevStart - rawd, 0);
-    // // fs.closeSync(fd);
-    //
-    // // fs.writeSync(fd, b, 0, b.length, 0);
-    // fs.writeFileSync(logfile, b);
   }
 };
+
+// const handleFileExcess = () => {
+//
+//   if (stdinStream.bytesWritten >= container.prevCap) {
+//
+//     const fd = fs.openSync(logfile, fs.constants.O_RDWR);
+//
+//     const {size} = fs.statSync(logfile);
+//     const diff = size - container.capAmount;
+//     const b = Buffer.alloc(diff);
+//
+//     const rawd = fs.readSync(fd, b, 0, diff, diff);
+//
+//     // const r = fs.readFileSync(logfile, {encoding:'utf8'});
+//
+//     fs.ftruncateSync(fd);
+//
+//     container.prevCap += container.capAmount;
+//     container.prevStart = Math.max(container.prevStart - diff, 0);
+//     // fs.truncateSync(logfile);
+//     fs.writeSync(fd, b, 0, b.length, 0);
+//
+//     // if(r.length > container.capAmount){
+//     //   const diff = r.length - container.capAmount;
+//     //   const b = r.slice(diff, r.length);
+//     //   console.log('buff len:', b.length);
+//     //   console.log('r len:', r.length);
+//     //   container.prevCap += container.capAmount;
+//     //   container.prevStart = Math.max(container.prevStart - diff, 0);
+//     //   // fs.truncateSync(logfile);
+//     //   fs.writeFileSync(logfile, b, {encoding:'utf8'});
+//     // }
+//
+//     fs.closeSync(fd);
+//
+//     // container.prevCap += container.capAmount;
+//     // console.log({rawd});
+//     // container.prevStart = Math.max(container.prevStart - rawd, 0);
+//     // // fs.closeSync(fd);
+//     //
+//     // // fs.writeSync(fd, b, 0, b.length, 0);
+//     // fs.writeFileSync(logfile, b);
+//
+//   }
+// };
 
 const onJSON = (v: BunionJSON) => {
   
   if (++container.onJSONCount % 5 === 0) {
-    handleFileExcess();
+    // handleFileExcess();
   }
   
   if (container.mode === BunionMode.PAUSED) {
@@ -605,6 +636,8 @@ const doTailing = () => {
   
   unpipePiper();
   clearLine();
+  
+  console.log('---------------------------[ctrl-t]----------------------------------');
   
   const jsonParser = createParser({
     onlyParseableOutput: Boolean(opts.only_parseable),
@@ -906,6 +939,7 @@ strm.on('data', (d: any) => {
     container.mode = BunionMode.READING;
     unpipePiper();
     clearLine();
+    console.log('---------------------------[ctrl-p]----------------------------------');
     startReading();
     return;
   }

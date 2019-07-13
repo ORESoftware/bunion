@@ -11,3 +11,9 @@ have to remove first line from file, after file grows bigger than 5 million byte
 shift + up/down = find next match
 
 
+
+\u001b[Z  => shift+tab will find the most recent match, not the next match
+
+it can find the most recent match by reading the file backwards
+
+
