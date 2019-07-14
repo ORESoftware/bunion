@@ -14,6 +14,7 @@ import {ReadStream} from "tty";
 
 const dashdash = require('dashdash');
 import readline = require('readline');
+import Timer = NodeJS.Timer;
 
 process.on('uncaughtException', (e: any) => {
   consumer.error('Uncaught exception:', e || e);
@@ -344,7 +345,8 @@ const container = {
   keepLogFile: false,
   onJSONCount: 0,
   capAmount: 10000,
-  prevCap: 10000
+  prevCap: 10000,
+  to: null as Timer
 };
 
 const unpipePiper = () => {
@@ -429,9 +431,9 @@ const handleFileExcess = () => {
   
   if (stdinStream.bytesWritten >= container.prevCap) {
     
-    const r = fs.readFileSync(logfile, {encoding:'utf8'});
+    const r = fs.readFileSync(logfile, {encoding: 'utf8'});
     
-    if(r.length > container.capAmount){
+    if (r.length > container.capAmount) {
       const diff = r.length - container.capAmount;
       const b = r.slice(diff, r.length);
       console.log('buff len:', b.length);
@@ -439,7 +441,7 @@ const handleFileExcess = () => {
       container.prevCap += container.capAmount;
       container.prevStart = Math.max(container.prevStart - diff, 0);
       // fs.truncateSync(logfile);
-      fs.writeFileSync(logfile, b, {encoding:'utf8'});
+      fs.writeFileSync(logfile, b, {encoding: 'utf8'});
     }
     
   }
@@ -490,29 +492,33 @@ const handleFileExcess = () => {
 //   }
 // };
 
+
+const closeStdin = () => {
+  container.mode = BunionMode.CLOSED;
+  unpipePiper();
+  // process.stdin.pause();
+  stdinStream.destroy();
+  stdinStream = process.stdin.pipe(fs.createWriteStream('/home/oleg/codes/oresoftware/bunion/foo.log'));
+  clearLine();
+  writeStatusToStdout();
+};
+
 const onJSON = (v: BunionJSON) => {
   
   if (++container.onJSONCount % 5 === 0) {
     // handleFileExcess();
   }
   
-  if(container.mode === BunionMode.CLOSED){
+  if (container.mode === BunionMode.CLOSED) {
     return;
   }
   
-  if(Date.now() - container.lastUserEvent > 3000){
-    if(stdinStream.bytesWritten > 3000){
-      container.mode = BunionMode.CLOSED;
-      unpipePiper();
-      // process.stdin.pause();
-      stdinStream.destroy();
-      stdinStream = process.stdin.pipe(fs.createWriteStream('/home/oleg/codes/oresoftware/bunion/foo.log'));
-      clearLine();
-      writeStatusToStdout();
+  if (Date.now() - container.lastUserEvent > 3000) {
+    if (stdinStream.bytesWritten > 3000) {
+      closeStdin();
       return;
     }
   }
-  
   
   if (container.mode === BunionMode.PAUSED) {
     return;
@@ -627,10 +633,13 @@ const onJSON = (v: BunionJSON) => {
   
   let searchTermStr = ' ';
   
+  
   if (container.stopOnNextMatch && isMatched) {
     unpipePiper();
     // clearLine();
     container.mode = BunionMode.SEARCHING;
+    clearTimeout(container.to);
+    container.to = setTimeout(closeStdin, 2000);
     searchTermStr = ` Stopped on match. `;
   }
   
@@ -638,12 +647,11 @@ const onJSON = (v: BunionJSON) => {
   
 };
 
-const  uncloseStdin = () => {
+const uncloseStdin = () => {
   stdinStream.destroy();
   stdinStream = process.stdin.resume()
-    .pipe(fs.createWriteStream(logfile,{flags:'a'}));
+    .pipe(fs.createWriteStream(logfile, {flags: 'a'}));
 };
-
 
 const resume = () => {
   
@@ -655,7 +663,9 @@ const resume = () => {
       return;
     case BunionMode.CLOSED:
       uncloseStdin();
-      doTailing();
+      // doTailing();
+      container.mode = BunionMode.SEARCHING;
+      container.to = setTimeout(closeStdin, 2000);
       return;
     default:
       writeStatusToStdout();
@@ -671,7 +681,7 @@ const doTailing = () => {
   clearLine();
   
   const col = process.stdout.columns - 8;
-  const line = new Array(Math.floor(col/2)).fill('-').join('');
+  const line = new Array(Math.floor(col / 2)).fill('-').join('');
   
   console.log();
   console.log(`${line}[ctrl-t]${line}`);
@@ -705,7 +715,7 @@ const startReading = () => {
   clearLine();
   
   const col = process.stdout.columns - 8;
-  const line = new Array(Math.floor(col/2)).fill('-').join('');
+  const line = new Array(Math.floor(col / 2)).fill('-').join('');
   
   console.log();
   console.log(`${line}[ctrl-p]${line}`);
@@ -853,6 +863,7 @@ strm.setRawMode(true);
 
 strm.on('data', (d: any) => {
   
+  clearTimeout(container.to);
   container.lastUserEvent = Date.now();
   
   if (container.logChars) {
@@ -938,6 +949,7 @@ strm.on('data', (d: any) => {
   
   if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.SEARCHING;
+    container.to = setTimeout(closeStdin, 2000);
     container.prevStart = container.prevStart || stdinStream.bytesWritten;
     unpipePiper();
     clearLine();
