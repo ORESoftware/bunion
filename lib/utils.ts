@@ -16,7 +16,7 @@ const schema = require('../assets/schema/bunion.conf.json');
 const getDefaultBunionConf = (): BunionConf => {
   return {
     producer: {
-      name: null,
+      name: 'default',
       appName: null,
       level: BunionLevelInternal.TRACE,
       inspect: {

@@ -1,6 +1,11 @@
 {
   "producer": {
+    "name": "bob",
     "appName": "foobar",
-    "level": "trace"
+    "level": "TRACE"
+  },
+  "consumer": {
+    "highlightMatches": false,
+    "level": "TRACE"
   }
 }

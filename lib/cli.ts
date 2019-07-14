@@ -155,9 +155,8 @@ const flattenDeep = function (a: Array<string>): Array<string> {
 
 const bunionConf = getConf();
 
-console.log(bunionConf);
-
-process.exit(1);
+// console.log(bunionConf);
+// process.exit(1);
 
 let filter: { [key: string]: RegExp } = {};
 
