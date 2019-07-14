@@ -16,11 +16,11 @@ const dashdash = require('dashdash');
 import readline = require('readline');
 
 process.on('uncaughtException', (e: any) => {
-  consumer.error('Uncaught exception:', e.message || e);
+  consumer.error('Uncaught exception:', e || e);
 });
 
 process.on('unhandledRejection', (e: any) => {
-  consumer.error('Unhandled rejection:', e.message || e);
+  consumer.error('Unhandled rejection:', e || e);
 });
 
 process.on('SIGINT', function () {
@@ -319,7 +319,7 @@ process.stdin.setMaxListeners(300);
 //   bytesWritten: 0
 // };
 
-const stdinStream = process.stdin.resume()
+let stdinStream = process.stdin.resume()
   .pipe(fs.createWriteStream(logfile));
 
 // process.stdin.resume().on('data', d => {
@@ -328,6 +328,7 @@ const stdinStream = process.stdin.resume()
 // });
 
 const container = {
+  lastUserEvent: Date.now(),
   currentBytes: 0,
   mode: BunionMode.READING,
   piper: null as any,
@@ -495,6 +496,24 @@ const onJSON = (v: BunionJSON) => {
     // handleFileExcess();
   }
   
+  if(container.mode === BunionMode.CLOSED){
+    return;
+  }
+  
+  if(Date.now() - container.lastUserEvent > 3000){
+    if(stdinStream.bytesWritten > 3000){
+      container.mode = BunionMode.CLOSED;
+      unpipePiper();
+      // process.stdin.pause();
+      stdinStream.destroy();
+      stdinStream = process.stdin.pipe(fs.createWriteStream('/home/oleg/codes/oresoftware/bunion/foo.log'));
+      clearLine();
+      writeStatusToStdout();
+      return;
+    }
+  }
+  
+  
   if (container.mode === BunionMode.PAUSED) {
     return;
   }
@@ -619,10 +638,24 @@ const onJSON = (v: BunionJSON) => {
   
 };
 
+const  uncloseStdin = () => {
+  stdinStream.destroy();
+  stdinStream = process.stdin.resume()
+    .pipe(fs.createWriteStream(logfile,{flags:'a'}));
+};
+
+
 const resume = () => {
+  
+  clearLine();
+  
   switch (container.mode) {
     case BunionMode.READING:
       startReading();
+      return;
+    case BunionMode.CLOSED:
+      uncloseStdin();
+      doTailing();
       return;
     default:
       writeStatusToStdout();
@@ -637,7 +670,12 @@ const doTailing = () => {
   unpipePiper();
   clearLine();
   
-  console.log('---------------------------[ctrl-t]----------------------------------');
+  const col = process.stdout.columns - 8;
+  const line = new Array(Math.floor(col/2)).fill('-').join('');
+  
+  console.log();
+  console.log(`${line}[ctrl-t]${line}`);
+  console.log();
   
   const jsonParser = createParser({
     onlyParseableOutput: Boolean(opts.only_parseable),
@@ -665,6 +703,13 @@ const startReading = () => {
   
   unpipePiper();
   clearLine();
+  
+  const col = process.stdout.columns - 8;
+  const line = new Array(Math.floor(col/2)).fill('-').join('');
+  
+  console.log();
+  console.log(`${line}[ctrl-p]${line}`);
+  console.log();
   
   const jsonParser = createParser({
     onlyParseableOutput: Boolean(opts.only_parseable),
@@ -808,6 +853,8 @@ strm.setRawMode(true);
 
 strm.on('data', (d: any) => {
   
+  container.lastUserEvent = Date.now();
+  
   if (container.logChars) {
     console.log({d: String(d)});
   }
@@ -936,10 +983,6 @@ strm.on('data', (d: any) => {
   // shift down: \u001b[2B
   
   if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) { // ctrl-p
-    container.mode = BunionMode.READING;
-    unpipePiper();
-    clearLine();
-    console.log('---------------------------[ctrl-p]----------------------------------');
     startReading();
     return;
   }
