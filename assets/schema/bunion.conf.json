@@ -23,6 +23,9 @@
     "consumer": {
       "additionalProperties": false,
       "properties": {
+        "localeDateString": {
+          "type": "string"
+        },
         "highlightMatches": {
           "type": "boolean"
         },

@@ -7,7 +7,7 @@ import AJV = require('ajv');
 import * as util from "util";
 import {producer} from "./logger";
 import chalk from "chalk";
-
+import deepMixin from '@oresoftware/deep.mixin';
 const ajv = new AJV();
 const schema = require('../assets/schema/bunion.conf.json');
 
@@ -51,16 +51,18 @@ export const getConf = (): BunionConf => {
     throw err;
   }
 
-  let confPath, conf;
+  let confPath, conftemp;
 
   try {
     confPath = path.resolve(projectRoot + '/' + '.bunion.json');
-    conf = require(confPath);
+    conftemp = require(confPath);
   }
   catch (err) {
-    return getDefaultBunionConf();
+    console.error('Missing ".bunion.json" file:',err.message);
   }
-
+  
+  
+  const conf = <BunionConf>deepMixin(getDefaultBunionConf(), conftemp);
   const valid = ajv.validate(schema, conf);
 
   if (!valid) {
@@ -71,6 +73,6 @@ export const getConf = (): BunionConf => {
     throw chalk.red('Bunion configuration error - your config is invalid, see above errors.')
   }
 
-  return Object.assign({}, getDefaultBunionConf(), conf);
-
+  return conf;
+  
 };

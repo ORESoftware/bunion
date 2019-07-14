@@ -155,6 +155,10 @@ const flattenDeep = function (a: Array<string>): Array<string> {
 
 const bunionConf = getConf();
 
+console.log(bunionConf);
+
+process.exit(1);
+
 let filter: { [key: string]: RegExp } = {};
 
 try {
@@ -498,7 +502,7 @@ const closeStdin = () => {
   unpipePiper();
   // process.stdin.pause();
   stdinStream.destroy();
-  stdinStream = process.stdin.pipe(fs.createWriteStream('/home/oleg/codes/oresoftware/bunion/foo.log'));
+  stdinStream = process.stdin.pipe(fs.createWriteStream('/dev/null'));
   clearLine();
   writeStatusToStdout();
 };
