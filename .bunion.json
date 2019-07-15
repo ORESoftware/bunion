@@ -5,7 +5,7 @@
     "level": "TRACE"
   },
   "consumer": {
-    "highlightMatches": false,
-    "level": "TRACE"
+    "highlightMatches": true,
+    "level": "INFO"
   }
 }

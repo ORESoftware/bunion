@@ -349,7 +349,8 @@ const container = {
   onJSONCount: 0,
   capAmount: 10000,
   prevCap: 10000,
-  to: null as Timer
+  to: null as Timer,
+  timeout: 50000
 };
 
 const unpipePiper = () => {
@@ -506,6 +507,7 @@ const closeStdin = () => {
   writeStatusToStdout();
 };
 
+
 const onJSON = (v: BunionJSON) => {
   
   if (++container.onJSONCount % 5 === 0) {
@@ -517,7 +519,7 @@ const onJSON = (v: BunionJSON) => {
   }
   
   if (Date.now() - container.lastUserEvent > 3000) {
-    if (stdinStream.bytesWritten > 3000) {
+    if (stdinStream.bytesWritten > 300000) {
       closeStdin();
       return;
     }
@@ -642,7 +644,7 @@ const onJSON = (v: BunionJSON) => {
     // clearLine();
     container.mode = BunionMode.SEARCHING;
     clearTimeout(container.to);
-    container.to = setTimeout(closeStdin, 2000);
+    createTimeout();
     searchTermStr = ` Stopped on match. `;
   }
   
@@ -668,7 +670,7 @@ const resume = () => {
       uncloseStdin();
       // doTailing();
       container.mode = BunionMode.SEARCHING;
-      container.to = setTimeout(closeStdin, 2000);
+      createTimeout();
       return;
     default:
       writeStatusToStdout();
@@ -834,6 +836,11 @@ const scrollDown = () => {
   
 };
 
+const createTimeout = () =>{
+  clearTimeout(container.to);
+  container.to = setTimeout(closeStdin, container.timeout);
+};
+
 const handleSearchTermTyping = (d: string) => {
   if (ctrlChars.has(String(d))) {
     consumer.warn('ctrl command ignored.');
@@ -866,7 +873,7 @@ strm.setRawMode(true);
 
 strm.on('data', (d: any) => {
   
-  clearTimeout(container.to);
+  createTimeout();
   container.lastUserEvent = Date.now();
   
   if (container.logChars) {
@@ -952,7 +959,6 @@ strm.on('data', (d: any) => {
   
   if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
     container.mode = BunionMode.SEARCHING;
-    container.to = setTimeout(closeStdin, 2000);
     container.prevStart = container.prevStart || stdinStream.bytesWritten;
     unpipePiper();
     clearLine();
@@ -1019,6 +1025,8 @@ strm.on('data', (d: any) => {
     handleSearchTermTyping(d);
     return;
   }
+  
+
   
   if (String(d) === '\r') {
     resume();
