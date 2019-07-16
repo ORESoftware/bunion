@@ -345,7 +345,7 @@ const container = {
   capAmount: 10000,
   prevCap: 10000,
   to: null as Timer,
-  timeout: 50000,
+  timeout: 500000,
   extra: '',
   cleanUp: [] as Array<Function>
 };
@@ -354,11 +354,11 @@ const unpipePiper = () => {
   
   if (container.piper) {
     
-    if (container.piper.bunionUnpiped) {
-      return;
-    }
-    
-    container.piper.bunionUnpiped = true;
+    // if (container.piper.bunionUnpiped) {
+    //   return;
+    // }
+    //
+    // container.piper.bunionUnpiped = true;
     
     // if (container.piper.bytesWritten) {
     //   console.log('WRITTEN BYTES:', container.piper.bytesWritten);
@@ -684,12 +684,7 @@ const doTailing = () => {
   unpipePiper();
   clearLine();
   
-  const col = process.stdout.columns - 8;
-  const line = new Array(Math.floor(col / 2)).fill('-').join('');
-  
-  console.log();
-  console.log(`${line}[ctrl-t]${line}`);
-  console.log();
+  createLoggedBreak('[ctrl-t]');
   
   const jsonParser = createParser({
     onlyParseableOutput: Boolean(opts.only_parseable),
@@ -700,30 +695,57 @@ const doTailing = () => {
     onJSON(d);
   });
   
-  // const fst = fs.createReadStream(logfile, {start: Math.max(stdinStream.bytesWritten - 300, 0)});
   
   const fst = fs.createReadStream(logfile, {start: Math.max(container.prevStart - 5, 0)});
+  
   container.piper = fst.pipe(jsonParser, {end: false});
+  
+  // container.piper = fst.pipe(jsonParser, {end: true});
   
   // container.piper = process.stdin.pipe(jsonParser);
   
   const corked = process.stdin.pipe(jsonParser);
   corked.cork();
   
-  container.cleanUp.push(() => {
+  const cleaup = () => {
+    
+    fst.destroy();
+    // corked.unpipe();
+    // jsonParser.destroy();
+    
+    jsonParser.removeAllListeners();
     fst.removeAllListeners();
-    corked.unpipe();
+    
     // corked.destroy();
-  });
+  };
+  
+  container.cleanUp.push(cleaup);
   
   fst.once('end', () => {
+    
     // paused
-    console.log('BEFORE BEFORE BEFORE BEFORE');
+    
+    // const i = container.cleanUp.indexOf(cleaup);
+    // if(i > -1){
+    //   container.cleanUp.splice(i,1);
+    // }
+    //
+    // cleaup();
+    
     corked.uncork();
     container.piper = corked;
-    console.log('AFTER AFTER AFTER AFTER AFTER')
   });
   
+  
+};
+
+const createLoggedBreak = (m: string) => {
+  const col = process.stdout.columns - 8;
+  const line = new Array(Math.floor(col / 2)).fill('-').join('');
+  
+  console.log();
+  console.log(`${line}${m}${line}`);
+  console.log();
 };
 
 const startReading = () => {
@@ -733,12 +755,7 @@ const startReading = () => {
   unpipePiper();
   clearLine();
   
-  const col = process.stdout.columns - 8;
-  const line = new Array(Math.floor(col / 2)).fill('-').join('');
-  
-  console.log();
-  console.log(`${line}[ctrl-p]${line}`);
-  console.log();
+  createLoggedBreak('[ctrl-p]');
   
   const jsonParser = createParser({
     onlyParseableOutput: Boolean(opts.only_parseable),
@@ -829,8 +846,6 @@ const findLast = (logfilefd: number) => {
     return;
   }
   
-  console.log({ps});
-  
   const raw = fs.readSync(logfilefd, b, 0, 9500, ps);
   // process.stdout.write('\x1Bc'); // clear screen
   const lines = String(b).split('\n');
@@ -873,11 +888,19 @@ const findLast = (logfilefd: number) => {
 };
 
 
+const getMinBytes = () => {
+  const rows = process.stdout.rows;
+  const columns = process.stdout.columns;
+  return rows * columns * 4;
+};
+
 const scrollUp = () => {
   
   const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
-  unpipePiper();
-  clearLine();
+  // unpipePiper();
+  // clearLine();
+  
+  // console.log(getMinBytes());
   
   const b = Buffer.alloc(9501);
   const ps = container.prevStart - 9500;
@@ -889,9 +912,12 @@ const scrollUp = () => {
     return;
   }
   
+  // createLoggedBreak('[scrolling up top]');
+  
   const raw = fs.readSync(logfilefd, b, 0, 9500, ps);
   // process.stdout.write('\x1Bc'); // clear screen
   fs.closeSync(logfilefd);
+  
   const lines = String(b).split('\n');
   let lenToAdd = 0;
   
@@ -904,16 +930,96 @@ const scrollUp = () => {
   
 };
 
+
+const scrollUpFive = (): boolean => {
+  
+  // unpipePiper();
+  
+  const b = Buffer.alloc(15001);
+  const ps = container.prevStart - 15000;
+  
+  if (ps <= 0) {
+    container.prevStart = 0;
+    clearLine();
+    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file 0) '));
+    return false;
+  }
+  
+  const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+  const raw = fs.readSync(logfilefd, b, 0, 15000, ps);
+  fs.closeSync(logfilefd);
+  
+  const lines = String(b).split('\n');
+  let lenToAdd = 0;
+  
+  let i = 0;
+  while (lines.length > 1) {
+    i++;
+    lenToAdd += Buffer.byteLength(lines.pop() + '\n');
+    if (i >= 5) {
+      break;
+    }
+  }
+  
+  for (let l of lines) {
+    l && bJsonParser.write(l + '\n');
+  }
+  
+  container.prevStart -= lenToAdd;
+  return true;
+  
+};
+
+const scrollDownFive = (): boolean => {
+  
+  // unpipePiper();
+  
+  
+  const b = Buffer.alloc(15001);
+  const ps = container.prevStart;
+  
+  if (ps >= stdinStream.bytesWritten) {
+    container.prevStart = stdinStream.bytesWritten;
+    clearLine();
+    writeToStdout(chalk.bgBlack.whiteBright(' (current end of file) '));
+    return false;
+  }
+  
+  const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+  const raw = fs.readSync(logfilefd, b, 0, 15000, ps);
+  fs.closeSync(logfilefd);
+  
+  const lines = String(b).split('\n');
+  let lenToAdd = 0;
+  
+  let i = 0;
+  for (let l of lines) {
+    i++;
+    lenToAdd += Buffer.byteLength(l + '\n');
+    l && bJsonParser.write(l + '\n');
+    if (i >= 5) {
+      break;
+    }
+  }
+  
+  
+  container.prevStart += lenToAdd;
+  return true;
+  
+};
+
+
 const scrollDown = (): boolean => {
   
-  unpipePiper();
-  clearLine();
+  // unpipePiper();
+  // clearLine();
   
   const b = Buffer.alloc(3501);
   const ps = container.prevStart;
   
   if (ps >= stdinStream.bytesWritten) {
     container.prevStart = stdinStream.bytesWritten;
+    clearLine();
     writeToStdout(chalk.bgBlack.whiteBright(' (current end of file) '));
     return false;
   }
@@ -1081,14 +1187,13 @@ strm.on('data', (d: any) => {
     return;
   }
   
-  if (String(d) === '\u001b[2B' && container.mode === BunionMode.SEARCHING) {
-    // container.mode = BunionMode.SCROLLING;
-    if (container.matched && container.stopped) {
-      clearLine();
-      writeToStdout('Matched found.');
-      return;
-    }
-    scrollDown();
+  if ((String(d) === '\u001b[2A' || String(d) === '\u001b[1;2A') && container.mode === BunionMode.SEARCHING) {
+    scrollUpFive();
+    return;
+  }
+  
+  if ((String(d) === '\u001b[2B' || String(d) === '\u001b[1;2B') && container.mode === BunionMode.SEARCHING) {
+    scrollDownFive();
     return;
   }
   

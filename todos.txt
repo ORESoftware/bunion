@@ -30,3 +30,9 @@ Buffer.byteLength('')
 instead of
 
 Buffer.from('').length
+
+
+tab \t should not starting tailing and then stop,
+instead it should using scrollDown style functionality?
+
+the reason for this is the line break -----[ctrl-t]------ is kinda ugly
