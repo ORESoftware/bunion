@@ -412,7 +412,7 @@ const writeStatusToStdout = (searchTermStr?: string) => {
   
   writeToStdout(
     chalk.bgBlack.whiteBright(
-      ` # Mode: ${container.mode},${searchTermStr}Log level: ${container.logLevel},${stopMsg} ${currentSearchTerm} ${container.extra}`
+      ` # Mode: ${container.mode},${searchTermStr}Log level: ${container.logLevel}, ${currentSearchTerm} ${stopMsg} ${container.extra}`
     )
   );
   
@@ -781,12 +781,14 @@ const findLast = (logfilefd: number) => {
   if (container.searchTerm === '') {
     container.mode = BunionMode.SEARCHING;
     unpipePiper();
+    fs.closeSync(logfilefd);
     clearLine();
     writeToStdout('No search term.');
     return;
   }
   
   if (container.mode !== BunionMode.FIND_LAST) {
+    consumer.warn('Wrong mode - should be mode:FIND_LAST but was not.');
     return;
   }
   
@@ -794,19 +796,19 @@ const findLast = (logfilefd: number) => {
   clearLine();
   
   const b = Buffer.alloc(9501);
-  const ps = container.prevStart - 9500;
+  container.prevStart -= 9500;
+  
+  const ps = container.prevStart;
   
   if (ps <= 0) {
     container.prevStart = 0;
     container.mode = BunionMode.SEARCHING;
-    unpipePiper();
-    clearLine();
     writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file 1) '));
     fs.closeSync(logfilefd);
     return;
   }
   
-  container.prevStart = ps;
+  console.log({ps});
   
   const raw = fs.readSync(logfilefd, b, 0, 9500, ps);
   // process.stdout.write('\x1Bc'); // clear screen
@@ -814,7 +816,6 @@ const findLast = (logfilefd: number) => {
   let lenToAdd = 0;
   
   const st = container.searchTerm;
-  
   let hoppedOut = false;
   
   for (let l of lines) {
@@ -841,11 +842,11 @@ const findLast = (logfilefd: number) => {
   if (hoppedOut) {
     fs.closeSync(logfilefd);
     container.mode = BunionMode.SEARCHING;
-    // container.prevStart -= 9500;
     scrollUp();
     return;
   }
   
+  container.prevStart -= 9500;
   findLast(logfilefd);
   
 };
@@ -1002,11 +1003,13 @@ strm.on('data', (d: any) => {
   }
   
   if (String(d) === '\u0001') {
-    container.mode = BunionMode.FIND_LAST;
-    container.prevStart = stdinStream.bytesWritten;
-    unpipePiper();
-    const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
-    findLast(logfilefd);
+    if(container.mode !== BunionMode.FIND_LAST){
+      container.mode = BunionMode.FIND_LAST;
+      container.prevStart = stdinStream.bytesWritten;
+      unpipePiper();
+      const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+      findLast(logfilefd);
+    }
     return;
   }
   
@@ -1102,7 +1105,7 @@ strm.on('data', (d: any) => {
   }
   
   if (String(d) === '\r' && container.mode === BunionMode.PAUSED) {
-    // container.stopOnNextMatch = true;
+    container.stopOnNextMatch = true;
     doTailing();
     return;
   }
