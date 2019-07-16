@@ -643,7 +643,6 @@ const onJSON = (v: BunionJSON) => {
     unpipePiper();
     // clearLine();
     container.mode = BunionMode.SEARCHING;
-    clearTimeout(container.to);
     createTimeout();
     searchTermStr = ` Stopped on match. `;
   }
@@ -708,14 +707,11 @@ const doTailing = () => {
   corked.cork();
   
   const cleaup = () => {
-    
     fst.destroy();
     // corked.unpipe();
     // jsonParser.destroy();
-    
     jsonParser.removeAllListeners();
     fst.removeAllListeners();
-    
     // corked.destroy();
   };
   
@@ -1088,9 +1084,8 @@ strm.on('data', (d: any) => {
   //   return;
   // }
   
-  
   if (String(d) === '\u000e') {
-    container.logChars = true;
+    container.logChars = !container.logChars;
     return;
   }
   
