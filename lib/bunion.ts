@@ -26,6 +26,7 @@ export enum BunionLevelToNum {
 }
 
 export enum BunionMode {
+  FIND_LAST = 'FIND_LAST',
   CLOSED = 'CLOSED',  // stdin stream is closed
   SIGNAL = 'SIGNAL',
   STOPPED = 'STOPPED',

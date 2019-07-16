@@ -137,8 +137,7 @@ let opts: any, parser = dashdash.createParser({options: options});
 
 try {
   opts = parser.parse(process.argv);
-}
-catch (e) {
+} catch (e) {
   consumer.error('bunion: error: %s', e.message);
   process.exit(1);
 }
@@ -164,8 +163,7 @@ try {
   if (opts.filter) {
     filter = JSON.parse(opts.filter);
   }
-}
-catch (err) {
+} catch (err) {
   consumer.error('Bunion could not parse your filter option (JSON) at the command line.');
   throw err;
 }
@@ -174,8 +172,7 @@ try {
   Object.keys(filter).forEach(function (k) {
     filter[k] = new RegExp(filter[k]);
   });
-}
-catch (err) {
+} catch (err) {
   consumer.error('Bunion could not convert your filter option values to RegExp.');
   throw err;
 }
@@ -303,15 +300,13 @@ const bunionHomeFiles = path.resolve(bunionHome + '/files');
 
 try {
   fs.mkdirSync(bunionHome);
-}
-catch (err) {
+} catch (err) {
 
 }
 
 try {
   fs.mkdirSync(bunionHomeFiles);
-}
-catch (e) {
+} catch (e) {
 
 }
 
@@ -350,7 +345,8 @@ const container = {
   capAmount: 10000,
   prevCap: 10000,
   to: null as Timer,
-  timeout: 50000
+  timeout: 50000,
+  extra: ''
 };
 
 const unpipePiper = () => {
@@ -386,8 +382,7 @@ process.once('exit', code => {
   
   if (container.keepLogFile) {
     consumer.info('Log file path:', logfile);
-  }
-  else {
+  } else {
     fs.unlinkSync(logfile);
   }
   
@@ -417,7 +412,7 @@ const writeStatusToStdout = (searchTermStr?: string) => {
   
   writeToStdout(
     chalk.bgBlack.whiteBright(
-      ` # Mode: ${container.mode},${searchTermStr}Log level: ${container.logLevel},${stopMsg} ${currentSearchTerm} `
+      ` # Mode: ${container.mode},${searchTermStr}Log level: ${container.logLevel},${stopMsg} ${currentSearchTerm} ${container.extra}`
     )
   );
   
@@ -574,13 +569,11 @@ const onJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  }
-  else if (output === 'medium') {
+  } else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  }
-  else {
+  } else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -771,6 +764,7 @@ bJsonParser.on('bunion-json', d => {
 // console.log({fd});
 
 const ctrlChars = new Set([
+  '\u0001', //a
   '\u0004', // d
   '\u0003', // c
   '\r',  // m
@@ -780,6 +774,82 @@ const ctrlChars = new Set([
   '\u0012',  // r
   '\u001b\r'  // alt-return (might need to be \u001b\\r with escaped slash
 ]);
+
+
+const findLast = (logfilefd: number) => {
+  
+  if (container.searchTerm === '') {
+    container.mode = BunionMode.SEARCHING;
+    unpipePiper();
+    clearLine();
+    writeToStdout('No search term.');
+    return;
+  }
+  
+  if (container.mode !== BunionMode.FIND_LAST) {
+    return;
+  }
+  
+  unpipePiper();
+  clearLine();
+  
+  const b = Buffer.alloc(9501);
+  const ps = container.prevStart - 9500;
+  
+  if (ps <= 0) {
+    container.prevStart = 0;
+    container.mode = BunionMode.SEARCHING;
+    unpipePiper();
+    clearLine();
+    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file 1) '));
+    fs.closeSync(logfilefd);
+    return;
+  }
+  
+  container.prevStart = ps;
+  
+  const raw = fs.readSync(logfilefd, b, 0, 9500, ps);
+  // process.stdout.write('\x1Bc'); // clear screen
+  const lines = String(b).split('\n');
+  let lenToAdd = 0;
+  
+  const st = container.searchTerm;
+  
+  let hoppedOut = false;
+  
+  for (let l of lines) {
+    
+    lenToAdd = Buffer.byteLength(l + '\n');
+    container.prevStart += lenToAdd;
+    
+    let val = null;
+    try {
+      val = JSON.parse(l).value;
+    } catch (err) {
+      continue;
+    }
+    
+    if (new RegExp(st, 'i').test(val)) {
+      container.extra = val.split(/\s+/)[0];
+      hoppedOut = true;
+      break;
+    }
+    
+  }
+  
+  
+  if (hoppedOut) {
+    fs.closeSync(logfilefd);
+    container.mode = BunionMode.SEARCHING;
+    // container.prevStart -= 9500;
+    scrollUp();
+    return;
+  }
+  
+  findLast(logfilefd);
+  
+};
+
 
 const scrollUp = () => {
   
@@ -792,7 +862,8 @@ const scrollUp = () => {
   
   if (ps <= 0) {
     container.prevStart = 0;
-    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file) '));
+    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file 2) '));
+    fs.closeSync(logfilefd);
     return;
   }
   
@@ -803,7 +874,7 @@ const scrollUp = () => {
   let lenToAdd = 0;
   
   for (let l of lines) {
-    lenToAdd = Buffer.from(l + '\n').length;
+    lenToAdd = Buffer.byteLength(l + '\n');
     bJsonParser.write(l + '\n');
   }
   
@@ -811,7 +882,7 @@ const scrollUp = () => {
   
 };
 
-const scrollDown = () => {
+const scrollDown = (): boolean => {
   
   unpipePiper();
   clearLine();
@@ -822,7 +893,7 @@ const scrollDown = () => {
   if (ps >= stdinStream.bytesWritten) {
     container.prevStart = stdinStream.bytesWritten;
     writeToStdout(chalk.bgBlack.whiteBright(' (current end of file) '));
-    return;
+    return false;
   }
   
   const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
@@ -830,13 +901,15 @@ const scrollDown = () => {
   fs.closeSync(logfilefd);
   // process.stdout.write('\x1Bc'); // clear screen
   const firstLine = String(b).split('\n')[0];
-  const lenToAdd = Buffer.from(firstLine + '\n').length;
+  const lenToAdd = Buffer.byteLength(firstLine + '\n');
   bJsonParser.write(firstLine + '\n');
   container.prevStart += lenToAdd;
+  return true;
   
 };
 
-const createTimeout = () =>{
+
+const createTimeout = () => {
   clearTimeout(container.to);
   container.to = setTimeout(closeStdin, container.timeout);
 };
@@ -887,6 +960,7 @@ strm.on('data', (d: any) => {
   //   return;
   // }
   
+  
   if (String(d) === '\u000e') {
     container.logChars = true;
     return;
@@ -927,6 +1001,15 @@ strm.on('data', (d: any) => {
     return;
   }
   
+  if (String(d) === '\u0001') {
+    container.mode = BunionMode.FIND_LAST;
+    container.prevStart = stdinStream.bytesWritten;
+    unpipePiper();
+    const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+    findLast(logfilefd);
+    return;
+  }
+  
   // if(container.mode === BunionMode.SEARCHING && String(d) === '\r'){
   //   doTailing();
   //   return;
@@ -958,6 +1041,9 @@ strm.on('data', (d: any) => {
   }
   
   if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
+    if(container.mode === BunionMode.READING){
+      container.prevStart = stdinStream.bytesWritten;
+    }
     container.mode = BunionMode.SEARCHING;
     container.prevStart = container.prevStart || stdinStream.bytesWritten;
     unpipePiper();
@@ -1026,7 +1112,6 @@ strm.on('data', (d: any) => {
     return;
   }
   
-
   
   if (String(d) === '\r') {
     resume();

@@ -24,3 +24,9 @@ it can find the most recent match by reading the file backwards
 ctrl-p  and then s (stop)
 you are reading from an older point than the latest
 
+
+Buffer.byteLength('')
+
+instead of
+
+Buffer.from('').length
