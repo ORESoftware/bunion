@@ -346,7 +346,8 @@ const container = {
   prevCap: 10000,
   to: null as Timer,
   timeout: 50000,
-  extra: ''
+  extra: '',
+  cleanUp: [] as Array<Function>
 };
 
 const unpipePiper = () => {
@@ -374,6 +375,12 @@ const unpipePiper = () => {
     container.piper.unpipe();
     container.piper.removeAllListeners();
   }
+  
+  let cleanupTask = null;
+  while (cleanupTask = container.cleanUp.pop()) {
+    cleanupTask();
+  }
+  
 };
 
 process.once('exit', code => {
@@ -657,7 +664,6 @@ const resume = () => {
   
   switch (container.mode) {
     case BunionMode.READING:
-      startReading();
       return;
     case BunionMode.CLOSED:
       uncloseStdin();
@@ -698,9 +704,24 @@ const doTailing = () => {
   
   const fst = fs.createReadStream(logfile, {start: Math.max(container.prevStart - 5, 0)});
   container.piper = fst.pipe(jsonParser, {end: false});
+  
+  // container.piper = process.stdin.pipe(jsonParser);
+  
+  const corked = process.stdin.pipe(jsonParser);
+  corked.cork();
+  
+  container.cleanUp.push(() => {
+    fst.removeAllListeners();
+    corked.unpipe();
+    // corked.destroy();
+  });
+  
   fst.once('end', () => {
     // paused
-    container.piper = process.stdin.pipe(jsonParser);
+    console.log('BEFORE BEFORE BEFORE BEFORE');
+    corked.uncork();
+    container.piper = corked;
+    console.log('AFTER AFTER AFTER AFTER AFTER')
   });
   
 };
@@ -1003,7 +1024,7 @@ strm.on('data', (d: any) => {
   }
   
   if (String(d) === '\u0001') {
-    if(container.mode !== BunionMode.FIND_LAST){
+    if (container.mode !== BunionMode.FIND_LAST) {
       container.mode = BunionMode.FIND_LAST;
       container.prevStart = stdinStream.bytesWritten;
       unpipePiper();
@@ -1044,7 +1065,7 @@ strm.on('data', (d: any) => {
   }
   
   if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
-    if(container.mode === BunionMode.READING){
+    if (container.mode === BunionMode.READING) {
       container.prevStart = stdinStream.bytesWritten;
     }
     container.mode = BunionMode.SEARCHING;
