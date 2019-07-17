@@ -529,7 +529,15 @@ const closeStdin = () => {
 const onBunionUnknownJSON = (v: any) => {
   
   if (container.mode !== BunionMode.SEARCHING) {
-    container.prevStart += Buffer.byteLength(v) + 1;  // newline is 1
+    
+    if(v && v[RawJSONBytesSymbol]){
+      container.prevStart += v[RawJSONBytesSymbol] + 1;  // newline is 1
+    }
+    else{
+      container.prevStart += Buffer.byteLength(v) + 1;  // newline is 1
+    }
+    
+   
   }
   
 };
