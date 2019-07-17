@@ -31,7 +31,7 @@
   "dependencies": {
     "@oresoftware/deep.mixin": "0.0.107",
     "@oresoftware/json-stream-parser": "0.0.117",
-    "@oresoftware/safe-stringify": "0.0.1001",
+    "@oresoftware/safe-stringify": "0.0.1006",
     "ajv": "^6.4.0",
     "chalk": "^2.4.0",
     "dashdash": "^1.14.1",
