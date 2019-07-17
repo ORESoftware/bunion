@@ -407,6 +407,10 @@ const clearLine = () => {
 
 const writeStatusToStdout = (searchTermStr?: string) => {
   
+  if (!process.stdout.isTTY) {
+    return;
+  }
+  
   searchTermStr = searchTermStr || ' ';
   
   const stopMsg = (container.stopOnNextMatch && container.searchTerm !== '' && container.mode !== BunionMode.SEARCHING) ?
@@ -426,6 +430,7 @@ const writeStatusToStdout = (searchTermStr?: string) => {
 };
 
 const writeToStdout = (...args: string[]) => {
+  clearLine();
   for (let v of args) {
     process.stdout.write(v + ' ');
   }
@@ -736,7 +741,10 @@ const doTailing = () => {
 };
 
 const createLoggedBreak = (m: string) => {
-  const col = process.stdout.columns - 8;
+  
+  let rawColumns = Number.isInteger(process.stdout.columns) ? process.stdout.columns : null;
+  const columns = rawColumns || 40;
+  const col = Math.max(columns - 8, 4);
   const line = new Array(Math.floor(col / 2)).fill('-').join('');
   
   console.log();
@@ -816,7 +824,6 @@ const findLast = (logfilefd: number) => {
     container.mode = BunionMode.SEARCHING;
     unpipePiper();
     fs.closeSync(logfilefd);
-    clearLine();
     writeToStdout('No search term.');
     return;
   }
@@ -1065,190 +1072,194 @@ const handleShutdown = (signal: string) => () => {
 const handleCtrlC = handleShutdown('ctrl-c');
 const handleCtrlD = handleShutdown('ctrl-d');
 
-const strm = new ReadStream(<any>1);   // previously fd =  fs.open('/dev/tty','r+')
-strm.setRawMode(true);
+if (process.stdout.isTTY) {
+  
+  {
+    
+    const strm = new ReadStream(<any>1);   // previously fd =  fs.open('/dev/tty','r+')
+    strm.setRawMode(true);
+    
+    strm.on('data', (d: any) => {
+      
+      createTimeout();
+      container.lastUserEvent = Date.now();
+      
+      if (container.logChars) {
+        console.log({d: String(d)});
+      }
+      
+      // if (String(d) === '\r' && container.mode === BunionMode.SEARCHING) {
+      //   unpipePiper();
+      //   clearLine();
+      //   startReading();
+      //   return;
+      // }
+      
+      if (String(d) === '\u000e') {
+        container.logChars = !container.logChars;
+        return;
+      }
+      
+      if (String(d).trim() === '\u0003') {
+        handleCtrlC();
+        return;
+      }
+      
+      if (String(d).trim() === '\u0004') {
+        handleCtrlD();
+        return;
+      }
+      
+      container.sigCount = 0;
+      
+      if (String(d) === '\u0002') { // ctrl-b
+        container.searchTerm = '';
+        clearLine();
+        writeToStdout('Cleared search term.');
+        return;
+      }
+      
+      // if (String(d) === '\u0012') {  // ctrl-r
+      //   container.searchTerm = '';
+      //   console.log('Search term cleared.');
+      //   return;
+      // }
+      
+      if (String(d) === '\u0013') {  // ctrl-s
+        container.stopOnNextMatch = true;
+        return;
+      }
+      
+      if (String(d) === '\u0018') {  // ctrl-x
+        container.stopOnNextMatch = false;
+        return;
+      }
+      
+      if (String(d) === '\u0001') {
+        if (container.mode !== BunionMode.FIND_LAST) {
+          container.mode = BunionMode.FIND_LAST;
+          container.prevStart = stdinStream.bytesWritten;
+          unpipePiper();
+          const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+          findLast(logfilefd);
+        }
+        return;
+      }
+      
+      // if(container.mode === BunionMode.SEARCHING && String(d) === '\r'){
+      //   doTailing();
+      //   return;
+      // }
+      
+      if (container.mode === BunionMode.SEARCHING && String(d) === '\t') {
+        container.stopOnNextMatch = true;
+        doTailing();
+        return;
+      }
+      
+      if (container.mode === BunionMode.TAILING && String(d) === '\r') {
+        container.stopOnNextMatch = true;
+        return;
+      }
+      
+      if (container.mode !== BunionMode.PAUSED && levelMap.has(String(d))) {
+        container.logLevel = levelMap.get(String(d));
+        writeStatusToStdout();
+        return;
+      }
+      
+      if (String(d) === '\u0014' && container.mode !== BunionMode.TAILING) {  // ctrl-t
+        container.mode = BunionMode.TAILING;
+        container.stopOnNextMatch = false;
+        doTailing();
+        return;
+      }
+      
+      if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
+        if (container.mode === BunionMode.READING) {
+          container.prevStart = stdinStream.bytesWritten;
+        }
+        container.mode = BunionMode.SEARCHING;
+        container.prevStart = container.prevStart || stdinStream.bytesWritten;
+        unpipePiper();
+        writeStatusToStdout();
+        return;
+      }
+      
+      if (String(d) === '\u001b[A' && container.mode === BunionMode.SEARCHING) {
+        scrollUp();
+        return;
+      }
+      
+      if ((String(d) === '\u001b[2A' || String(d) === '\u001b[1;2A') && container.mode === BunionMode.SEARCHING) {
+        scrollUpFive();
+        return;
+      }
+      
+      if ((String(d) === '\u001b[2B' || String(d) === '\u001b[1;2B') && container.mode === BunionMode.SEARCHING) {
+        scrollDownFive();
+        return;
+      }
+      
+      if ((String(d) === '\r' || String(d) === '\u001b[B') && container.mode === BunionMode.SEARCHING) {
+        // container.mode = BunionMode.SCROLLING;
+        scrollDown();
+        return;
+      }
+      
+      if (String(d).trim() === 'p' && container.mode !== BunionMode.PAUSED) {
+        container.mode = BunionMode.PAUSED;
+        unpipePiper();
+        clearLine();
+        // writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${container.mode} - use ctrl+p to return to reading mode. `));
+        writeStatusToStdout();
+        container.currentBytes = Math.max(0, stdinStream.bytesWritten - 100);
+        return;
+      }
+      
+      // up arrow: \u001b[A
+      // down arrow: \u001b[B
+      // shift up: \u001b[2A
+      // shift down: \u001b[2B
+      
+      if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) { // ctrl-p
+        startReading();
+        return;
+      }
+      
+      if (container.mode === BunionMode.PAUSED && String(d) === '') { // backspace!
+        container.searchTerm = container.searchTerm.slice(0, -1);
+        clearLine();
+        writeToStdout('Search term:', container.searchTerm);
+        return;
+      }
+      
+      if (String(d) === '\r' && container.mode === BunionMode.PAUSED) {
+        container.stopOnNextMatch = true;
+        doTailing();
+        return;
+      }
+      
+      if (container.mode === BunionMode.PAUSED) {
+        handleSearchTermTyping(d);
+        return;
+      }
+      
+      
+      if (String(d) === '\r') {
+        resume();
+      }
+      
+    });
+  }
+  
+}
 
-strm.on('data', (d: any) => {
-  
-  createTimeout();
-  container.lastUserEvent = Date.now();
-  
-  if (container.logChars) {
-    console.log({d: String(d)});
-  }
-  
-  // if (String(d) === '\r' && container.mode === BunionMode.SEARCHING) {
-  //   unpipePiper();
-  //   clearLine();
-  //   startReading();
-  //   return;
-  // }
-  
-  if (String(d) === '\u000e') {
-    container.logChars = !container.logChars;
-    return;
-  }
-  
-  if (String(d).trim() === '\u0003') {
-    handleCtrlC();
-    return;
-  }
-  
-  if (String(d).trim() === '\u0004') {
-    handleCtrlD();
-    return;
-  }
-  
-  container.sigCount = 0;
-  
-  if (String(d) === '\u0002') { // ctrl-b
-    container.searchTerm = '';
-    clearLine();
-    writeToStdout('Cleared search term.');
-    return;
-  }
-  
-  // if (String(d) === '\u0012') {  // ctrl-r
-  //   container.searchTerm = '';
-  //   console.log('Search term cleared.');
-  //   return;
-  // }
-  
-  if (String(d) === '\u0013') {  // ctrl-s
-    container.stopOnNextMatch = true;
-    return;
-  }
-  
-  if (String(d) === '\u0018') {  // ctrl-x
-    container.stopOnNextMatch = false;
-    return;
-  }
-  
-  if (String(d) === '\u0001') {
-    if (container.mode !== BunionMode.FIND_LAST) {
-      container.mode = BunionMode.FIND_LAST;
-      container.prevStart = stdinStream.bytesWritten;
-      unpipePiper();
-      const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
-      findLast(logfilefd);
-    }
-    return;
-  }
-  
-  // if(container.mode === BunionMode.SEARCHING && String(d) === '\r'){
-  //   doTailing();
-  //   return;
-  // }
-  
-  if (container.mode === BunionMode.SEARCHING && String(d) === '\t') {
-    container.stopOnNextMatch = true;
-    doTailing();
-    return;
-  }
-  
-  if (container.mode === BunionMode.TAILING && String(d) === '\r') {
-    container.stopOnNextMatch = true;
-    return;
-  }
-  
-  if (container.mode !== BunionMode.PAUSED && levelMap.has(String(d))) {
-    container.logLevel = levelMap.get(String(d));
-    clearLine();
-    writeStatusToStdout();
-    return;
-  }
-  
-  if (String(d) === '\u0014' && container.mode !== BunionMode.TAILING) {  // ctrl-t
-    container.mode = BunionMode.TAILING;
-    container.stopOnNextMatch = false;
-    doTailing();
-    return;
-  }
-  
-  if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
-    if (container.mode === BunionMode.READING) {
-      container.prevStart = stdinStream.bytesWritten;
-    }
-    container.mode = BunionMode.SEARCHING;
-    container.prevStart = container.prevStart || stdinStream.bytesWritten;
-    unpipePiper();
-    clearLine();
-    writeStatusToStdout();
-    return;
-  }
-  
-  if (String(d) === '\u001b[A' && container.mode === BunionMode.SEARCHING) {
-    scrollUp();
-    return;
-  }
-  
-  if ((String(d) === '\u001b[2A' || String(d) === '\u001b[1;2A') && container.mode === BunionMode.SEARCHING) {
-    scrollUpFive();
-    return;
-  }
-  
-  if ((String(d) === '\u001b[2B' || String(d) === '\u001b[1;2B') && container.mode === BunionMode.SEARCHING) {
-    scrollDownFive();
-    return;
-  }
-  
-  if ((String(d) === '\r' || String(d) === '\u001b[B') && container.mode === BunionMode.SEARCHING) {
-    // container.mode = BunionMode.SCROLLING;
-    scrollDown();
-    return;
-  }
-  
-  if (String(d).trim() === 'p' && container.mode !== BunionMode.PAUSED) {
-    container.mode = BunionMode.PAUSED;
-    unpipePiper();
-    clearLine();
-    // writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${container.mode} - use ctrl+p to return to reading mode. `));
-    writeStatusToStdout();
-    container.currentBytes = Math.max(0, stdinStream.bytesWritten - 100);
-    return;
-  }
-  
-  // up arrow: \u001b[A
-  // down arrow: \u001b[B
-  // shift up: \u001b[2A
-  // shift down: \u001b[2B
-  
-  if (String(d).trim() === '\u0010' && container.mode !== BunionMode.READING) { // ctrl-p
-    startReading();
-    return;
-  }
-  
-  if (container.mode === BunionMode.PAUSED && String(d) === '') { // backspace!
-    container.searchTerm = container.searchTerm.slice(0, -1);
-    clearLine();
-    writeToStdout('Search term:', container.searchTerm);
-    return;
-  }
-  
-  if (String(d) === '\r' && container.mode === BunionMode.PAUSED) {
-    container.stopOnNextMatch = true;
-    doTailing();
-    return;
-  }
-  
-  if (container.mode === BunionMode.PAUSED) {
-    handleSearchTermTyping(d);
-    return;
-  }
-  
-  
-  if (String(d) === '\r') {
-    resume();
-  }
-  
-});
 
 // killall: unknown signal f; valid signals:
 // HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP
 // TSTP CONT CHLD TTIN TTOU IO XCPU XFSZ VTALRM PROF WINCH INFO USR1 USR2
 
-console.log('rows:', process.stdout.rows);
-console.log('columns:', process.stdout.columns);
 
 
 

@@ -30,7 +30,7 @@ process.on('unhandledRejection', (reason, p) => {
 });
 
 
-// your test goes here
+// your test goes here∂
 // assert.strictEqual(true, false, 'whoops');
 
 const k = cp.spawn('bash');
@@ -45,14 +45,13 @@ k.stdin.end('node -e "' + `
 ` + '"');
 
 
-
-
-k.stdout
-  .pipe(process.stdout);
-
+k.stdout.pipe(process.stdout);
+k.stderr.pipe(process.stderr);
 
 // TODO: the following does not seem to log anything to stdout, whereas the above does?
 
-k.stdout
-  .pipe(cp.spawn('bunion').stdin)
-  .pipe(process.stdout);
+const z = cp.spawn('bunion');
+k.stdout.pipe(z.stdin);
+
+z.stderr.pipe(process.stderr);
+z.stdout.pipe(process.stdout);

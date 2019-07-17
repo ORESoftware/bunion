@@ -17,7 +17,7 @@ const getDefaultBunionConf = (): BunionConf => {
   return {
     producer: {
       name: 'default',
-      appName: null,
+      appName: 'default',
       level: BunionLevelInternal.TRACE,
       inspect: {
         array: {

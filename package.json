@@ -23,13 +23,13 @@
     "scaffold"
   ],
   "author": "Olegzandr VD",
-  "license": "SEE LICENSE IN LICENSE.md",
+  "license": "SEE LICENSE IN license.md",
   "bugs": {
     "url": "https://github.com/ORESoftware/bunion/issues"
   },
   "homepage": "https://github.com/ORESoftware/bunion#readme",
   "dependencies": {
-    "@oresoftware/deep.mixin": "0.0.106",
+    "@oresoftware/deep.mixin": "0.0.107",
     "@oresoftware/json-stream-parser": "0.0.114",
     "@oresoftware/safe-stringify": "0.0.1001",
     "ajv": "^6.4.0",
