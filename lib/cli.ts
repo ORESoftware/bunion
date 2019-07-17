@@ -312,7 +312,7 @@ try {
 
 const logfile = path.resolve(bunionHomeFiles + '/' + fileId);
 
-process.stdin.setMaxListeners(300);
+// process.stdin.setMaxListeners(300);
 
 // const stdinStream = {
 //   bytesWritten: 0
@@ -375,6 +375,16 @@ const unpipePiper = () => {
     container.piper.unpipe();
     container.piper.removeAllListeners();
   }
+  
+  for (let v of process.stdin.listeners('data').slice(1)) {
+    process.stdin.removeListener('data', <any>v);
+  }
+  
+  
+  for (let v of process.stdin.listeners('end').slice(1)) {
+    process.stdin.removeListener('end', <any>v);
+  }
+  
   
   let cleanupTask = null;
   while (cleanupTask = container.cleanUp.pop()) {
