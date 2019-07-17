@@ -36,3 +36,16 @@ tab \t should not starting tailing and then stop,
 instead it should using scrollDown style functionality?
 
 the reason for this is the line break -----[ctrl-t]------ is kinda ugly
+
+
+use array instead of object:
+
+
+
+['@bunion', appname, date, level, pid, fields, value]
+
+
+{"@bunion":true, "appName":"default", "date":"2019-07-17T06:39:37.504Z","level":"ERROR", "pid":4044, "host":"alexs-mac.local", "fields":null, "value":"burrito"}
+
+["@bunion", "app:default", "2019-07-17T06:39:37.504Z", "ERROR", 4044, "alexs-mac.local", null, "burrito"]
+

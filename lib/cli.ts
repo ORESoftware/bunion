@@ -717,6 +717,7 @@ const doTailing = () => {
     // jsonParser.destroy();
     jsonParser.removeAllListeners();
     fst.removeAllListeners();
+    corked.removeAllListeners();
     // corked.destroy();
   };
   

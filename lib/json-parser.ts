@@ -22,6 +22,12 @@ export const createParser = (opts: ParserOptions) => {
   
   const strm = new JSONParser({includeByteCount: true});
   
+  
+  strm.on('string', d => {
+  
+  
+  });
+  
   strm.on('data', function (d: string | IParsedObject) {
     
     // if (clearLine) {
@@ -30,24 +36,20 @@ export const createParser = (opts: ParserOptions) => {
     // }
     
     if (typeof d === 'string') {
-      if (onlyParseableOutput === false) {
-        process.stdout.write(d + '\n');
-      }
-      return;
+      throw 'This should not happen - json-parser should only emit JS objects from the data handler.';
     }
     
-    if (d && !d['@bunion'] && onlyParseableOutput === false) {
-      try {
-        process.stdout.write(safe.stringify(d) + '\n');
-      } catch (err) {
-        process.stdout.write(String(d) + '\n');
-      }
-    }
     
     if (d && d['@bunion'] === true) {
       strm.emit('bunion-json', d);
       return;
     }
+    
+    if(!(d && typeof d === 'object')){
+      throw 'value should be an object here.';
+    }
+    
+    strm.emit('json', d);
     
   });
   
