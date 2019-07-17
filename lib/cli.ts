@@ -525,13 +525,31 @@ const closeStdin = () => {
 };
 
 
+
+const onBunionUnknownJSON = (v: any) => {
+  
+  if (container.mode !== BunionMode.SEARCHING) {
+    container.prevStart += Buffer.byteLength(v) + 1;  // newline is 1
+  }
+  
+};
+
+
 const onBunionStr = (s: string) => {
-  unpipePiper();
-  process.stdout.write(s + '\n');
-  container.mode = BunionMode.SEARCHING;
-  createTimeout();
-  const searchTermStr = ` Stopped on raw string. `;
-  writeStatusToStdout(searchTermStr);
+  
+  // unpipePiper();
+  // clearLine();
+  // process.stdout.write(s + '\n');
+  
+  if (container.mode !== BunionMode.SEARCHING) {
+    container.prevStart += Buffer.byteLength(s + '\n');
+  }
+  
+  // container.mode = BunionMode.SEARCHING;
+  // createTimeout();
+  // const searchTermStr = ` Stopped on raw string. `;
+  // writeStatusToStdout(searchTermStr);
+  
 };
 
 
@@ -712,6 +730,7 @@ const doTailing = () => {
     clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
   });
   
+  jsonParser.on('json',onBunionUnknownJSON);
   jsonParser.on('bunion-json', onJSON);
   jsonParser.on('string', onBunionStr);
   
@@ -787,6 +806,8 @@ const startReading = () => {
   
   piper.on('bunion-json', onJSON);
   piper.on('string', onBunionStr);
+  piper.on('json',onBunionUnknownJSON);
+  
   
 };
 
@@ -809,6 +830,8 @@ const bJsonParser = createParser({
 
 bJsonParser.on('bunion-json', onJSON);
 bJsonParser.on('string', onBunionStr);
+bJsonParser.on('json',onBunionUnknownJSON);
+
 
 // const fd = fs.openSync('/dev/tty', 'r+');
 // console.log({fd});

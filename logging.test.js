@@ -35,6 +35,7 @@ const getRandomStr = () => {
   log.debug(i++, getRandomStr());
   log.trace(i++, getRandomStr());
   log.debug(i++, getRandomStr());
+  console.log('foo bar 133');
   
   setTimeout(run, 200);
   
