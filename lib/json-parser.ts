@@ -23,11 +23,6 @@ export const createParser = (opts: ParserOptions) => {
   const strm = new JSONParser({includeByteCount: true});
   
   
-  strm.on('string', d => {
-  
-  
-  });
-  
   strm.on('data', function (d: string | IParsedObject) {
     
     // if (clearLine) {

@@ -515,6 +515,16 @@ const closeStdin = () => {
 };
 
 
+const onBunionStr = (s: string) => {
+  unpipePiper();
+  process.stdout.write(s + '\n');
+  container.mode = BunionMode.SEARCHING;
+  createTimeout();
+  const searchTermStr = ` Stopped on raw string. `;
+  writeStatusToStdout(searchTermStr);
+};
+
+
 const onJSON = (v: BunionJSON) => {
   
   if (++container.onJSONCount % 5 === 0) {
@@ -539,10 +549,7 @@ const onJSON = (v: BunionJSON) => {
   // container.currentBytes = (container.piper && container.piper.bytesRead) || container.currentBytes;
   
   if (!(v && v['@bunion'] === true)) {
-    process.stderr.write(String(v));
-    clearLine();
-    writeStatusToStdout();
-    return;
+    throw 'we should not have non-bunion-json at this point in the program.'
   }
   
   clearLine();
@@ -695,9 +702,8 @@ const doTailing = () => {
     clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
   });
   
-  jsonParser.on('bunion-json', d => {
-    onJSON(d);
-  });
+  jsonParser.on('bunion-json', onJSON);
+  jsonParser.on('string', onBunionStr);
   
   
   const fst = fs.createReadStream(logfile, {start: Math.max(container.prevStart - 5, 0)});
@@ -769,9 +775,8 @@ const startReading = () => {
   
   const piper = container.piper = process.stdin.pipe(jsonParser, {end: true});
   
-  piper.on('bunion-json', function (v: BunionJSON) {
-    onJSON(v);
-  });
+  piper.on('bunion-json', onJSON);
+  piper.on('string', onBunionStr);
   
 };
 
@@ -786,24 +791,16 @@ const levelMap = new Map([
   ['1', BunionLevelToNum.TRACE],
 ]);
 
-// const t = new Transform();
-// t._transform = (c, e, cb) => cb(null, c);
 
 const bJsonParser = createParser({
   onlyParseableOutput: Boolean(opts.only_parseable),
   clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
 });
 
-// t.pipe(jsonParser).on('bunion-json', d => {
-//   onJSON(d);
-// });
-
-bJsonParser.on('bunion-json', d => {
-  onJSON(d);
-});
+bJsonParser.on('bunion-json', onJSON);
+bJsonParser.on('string', onBunionStr);
 
 // const fd = fs.openSync('/dev/tty', 'r+');
-
 // console.log({fd});
 
 const ctrlChars = new Set([
