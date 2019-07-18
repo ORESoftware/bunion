@@ -28,8 +28,11 @@ const getRandomStr = () => {
   
 };
 
+log.setFields({zebra: '5', car: 'choose'});
+
 (function run() {
   
+  log.infox({zebra: 'blues', dog: 'not cat'}, '');
   log.info(i++, 'just saying hi.');
   log.warn(i++, 'shit hit the fan');
   // log.error(i++, new Error('foo'));
@@ -38,8 +41,8 @@ const getRandomStr = () => {
   log.debug(i++, getRandomStr());
   console.log('foo bar 133');
   console.log(JSON.stringify({
-    id:'@truvia',
-    appName:'garbo',
+    id: '@truvia',
+    appName: 'garbo',
     message: getRandomStr(),
     host: os.hostname(),
     level: 'INFO',

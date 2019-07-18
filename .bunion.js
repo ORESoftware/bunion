@@ -23,7 +23,6 @@ const t = {
           fields: v.fields,
           host: v.host
         }
-        
       }
     }
   }
