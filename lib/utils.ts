@@ -13,6 +13,13 @@ const schema = require('../assets/schema/bunion.conf.json');
 
 ///////////////////////////////////////////////////////////////////////////////
 
+
+export const getFields = (fields: any) => {
+  return Object.keys(fields).reduce(function (s, k) {
+    return s += `(${k}=${String(fields[k])}) `;
+  }, '');
+};
+
 const getDefaultBunionConf = (): BunionConf => {
   return {
     producer: {
@@ -68,7 +75,7 @@ export const getConf = (): BunionConf => {
   const valid = true;
   // const valid = ajv.validate(schema, conf);
   
-  console.log({conf});
+  // console.log({conf});
 
   if (!valid) {
     producer.error('Your bunion configuation file has an invalid format, see the following error(s):');

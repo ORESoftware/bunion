@@ -17,6 +17,7 @@ import {
 } from "./bunion";
 
 import deepMixin from "@oresoftware/deep.mixin";
+import {logTTY} from "./log-tty";
 
 export {BunionConf} from './bunion';
 
@@ -72,7 +73,9 @@ const utilOpts = {
   maxArrayLength: 10
 };
 
-const getJSON = (level: string, args: any[], appName: string, fields: object, host: string) => {
+
+
+const getJSON = (level: string, args: any[], appName: string, fields: object, host: string, opt?: boolean): string => {
   
   fields = fields || null;
   
@@ -83,6 +86,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
   if (fields && Object.keys(fields).length > 8) {
     throw new Error(chalk.red('Fields object can have no more than 8 keys.'));
   }
+  
   
   const clean = args.map(function (a, i): string {
     
@@ -97,6 +101,19 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     
     return util.inspect(a, utilOpts); //+ '\n';
   });
+  
+  
+  if(process.stdout.isTTY && !opt){
+    return logTTY(3, 'short',{
+      appName,
+      level: level as BunionLevelInternal,
+      fields: fields as BunionFields,
+      pid: process.pid,
+      host: 'foo',
+      date: new Date().toUTCString(),
+      value: clean.join(' '),
+    });
+  }
   
   // return safe.stringify({
   //   '@bunion': true,
@@ -168,7 +185,7 @@ export class BunionLogger {
   }
   
   getJSON(logLevel: BunionLevelInternal | string, ...args: any[]) {
-    return getJSON(logLevel, args, this.appName, this.fields, this.hostname)
+    return getJSON(logLevel, args, this.appName, this.fields, this.hostname, true)
   }
   
   getFields() {

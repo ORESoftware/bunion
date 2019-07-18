@@ -11,6 +11,7 @@ import * as uuid from 'uuid';
 import * as fs from 'fs';
 import * as path from "path";
 import {ReadStream} from "tty";
+import {getFields} from './utils';
 
 const dashdash = require('dashdash');
 import readline = require('readline');
@@ -279,11 +280,7 @@ const getHighlightedString = (str: string) => {
   
 };
 
-const getFields = (fields: any) => {
-  return Object.keys(fields).reduce(function (s, k) {
-    return s += `(${k}=${String(fields[k])}) `;
-  }, '');
-};
+
 
 const getDarkOrlight = (str: string) => {
   return darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;

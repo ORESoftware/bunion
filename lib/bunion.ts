@@ -41,10 +41,10 @@ export enum BunionMode {
 }
 
 export interface BunionJSON {
-  '@bunion': true,
+  '@bunion'?: true,
   level: BunionLevelInternal
   value: string
-  date: number,
+  date: string,
   [RawJSONBytesSymbol]?: Symbol
   appName: string
   fields: BunionFields,
