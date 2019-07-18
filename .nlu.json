@@ -8,11 +8,11 @@
     "/.git/"
   ],
   "comments": [
-
   ],
   "list": [
     "residence",
     "@oresoftware/json-stream-parser",
-    "@oresoftware/safe-stringify"
+    "@oresoftware/safe-stringify",
+    "@oresoftware/deep.mixin"
   ]
 }

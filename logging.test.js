@@ -2,6 +2,7 @@
 
 
 const {log} = require('bunion');
+const os = require('os');
 
 process.on('SIGINT', s => {
   process.exit(1);
@@ -36,7 +37,16 @@ const getRandomStr = () => {
   log.trace(i++, getRandomStr());
   log.debug(i++, getRandomStr());
   console.log('foo bar 133');
-  
+  console.log(JSON.stringify({
+    id:'@truvia',
+    appName:'garbo',
+    message: getRandomStr(),
+    host: os.hostname(),
+    level: 'INFO',
+    pid: process.pid,
+    date: new Date().toUTCString(),
+    fields: {a: 'foo', b: 5}
+  }));
   setTimeout(run, 200);
   
 })();

@@ -7,7 +7,6 @@ import os = require('os');
 import chalk from "chalk";
 import * as safe from '@oresoftware/safe-stringify';
 
-
 import {
   BunionFields,
   BunionLevelInternal,
@@ -16,7 +15,7 @@ import {
   Level,
   BunionLevel, BunionLevelInternalUnion
 } from "./bunion";
-
+import deepMixin from "@oresoftware/deep.mixin";
 
 process.on('SIGINT', s => {
   producer.warn('SIGINT received.', s);
@@ -33,11 +32,11 @@ process.on('SIGTERM', s => {
 const bunionConf = getConf();
 
 const getDefaultAppName = () => {
-  return process.env.bunyan_app_name || bunionConf.producer.appName || bunionConf.producer.name || '';
+  return bunionConf.producer.appName || bunionConf.producer.name || '';
 };
 
 const getDefaultMaxLevel = () => {
-  return process.env.bunion_max_level || bunionConf.producer.level || 'info';
+  return bunionConf.producer.level || 'info';
 };
 
 const maxLevel = String(getDefaultMaxLevel()).toUpperCase();
@@ -63,11 +62,6 @@ export const setGlobalLogLevel = (v: BunionLevelInternal) => {
   }
   globalSettings.globalMaxLevel = v;
   globalSettings.globalMaxIndex = maxIndex;
-};
-
-const defaultLoggerValues = {
-  appName: process.env.bunion_app_name || '',
-  maxFieldKeys: 8
 };
 
 const utilOpts = {
@@ -101,20 +95,46 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     return util.inspect(a, utilOpts); //+ '\n';
   });
   
-  return safe.stringify({
-    '@bunion': true,
-    date: new Date(),
-    value: clean.join(' '),
-    appName: appName,
-    level: level,
-    pid: process.pid,
-    fields: fields,
-    host: host
-  }) + '\n';
+  // return safe.stringify({
+  //   '@bunion': true,
+  //   date: new Date(),
+  //   value: clean.join(' '),
+  //   appName: appName,
+  //   level: level,
+  //   pid: process.pid,
+  //   fields: fields,
+  //   host: host
+  // }) + '\n';
+  
+  return safe.stringify([
+    '@bunion',
+    appName,
+    level,
+    process.pid,
+    host,
+    new Date().toUTCString(),
+    fields,
+    clean.join(' ')
+  ]) + '\n';
 };
 
 const getCombinedFields = function (v: object, fields: object) {
-  return Object.assign({}, v, fields);
+  return deepMixin(fields, v);
+};
+
+const getHostName = () => {
+  
+  let v = '', f = bunionConf.producer.getHostNameSync;
+  
+  if (typeof f === 'function') {
+    v = f();
+  }
+  
+  if (v && typeof v !== 'string') {
+    throw `hostname should be a string, but was not => ${util.inspect(v)}`;
+  }
+  
+  return v || os.hostname() || process.env.HOSTNAME || 'unknown-host';
 };
 
 export {BunionLevel};
@@ -122,24 +142,20 @@ export {Level};
 
 export class BunionLogger {
   
+  public static HostName = getHostName();
   private readonly appName: string;
   private fields: BunionFields | null;
   private level: BunionLevel;
   private maxIndex: number;
-  private readonly hostname: string;
-  private host: string;
+  private hostname: string;
   
   constructor(opts?: BunionOpts) {
     this.appName = String((opts && (opts.appName || opts.name)) || getDefaultAppName());
     this.fields = opts && opts.fields || null;
     this.level = <BunionLevelInternal>String((opts && (opts.level || opts.maxlevel) || maxLevel || '')).toUpperCase();
     this.maxIndex = ordered.indexOf(this.level);
-    this.hostname = os.hostname();
-    this.host = process.env.HOSTNAME || 'no HOSTNAME env var';
     
-    if (this.host !== this.hostname) {
-      producer.error('Host and Hostname are not the same.', this.host, this.hostname);
-    }
+    this.hostname = BunionLogger.HostName;
     
     if (this.maxIndex < 0) {
       throw new Error(
@@ -308,7 +324,6 @@ export const getNewLogger = function (opts?: BunionOpts): BunionLogger {
 export const createLogger = getNewLogger;
 export const log = getNewLogger();
 export default log;
-
 
 export const r2gSmokeTest = () => {
   return true;

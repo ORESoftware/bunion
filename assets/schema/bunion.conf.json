@@ -23,6 +23,10 @@
     "consumer": {
       "additionalProperties": false,
       "properties": {
+        "transform": {
+          "type": "object",
+          "required": false
+        },
         "localeDateString": {
           "type": "string"
         },
@@ -56,6 +60,9 @@
     "producer": {
       "additionalProperties": false,
       "properties": {
+        "getHostNameSync": {
+          "required": false
+        },
         "appName": {
           "type": "string"
         },

@@ -54,16 +54,21 @@ export const getConf = (): BunionConf => {
   let confPath, conftemp;
 
   try {
-    confPath = path.resolve(projectRoot + '/' + '.bunion.json');
+    confPath = path.resolve(projectRoot + '/' + '.bunion.js');
     conftemp = require(confPath);
   }
   catch (err) {
     console.error('Missing ".bunion.json" file:',err.message);
+    conftemp = {};
   }
   
+  conftemp = conftemp.default || conftemp;
   
   const conf = <BunionConf>deepMixin(getDefaultBunionConf(), conftemp);
-  const valid = ajv.validate(schema, conf);
+  const valid = true;
+  // const valid = ajv.validate(schema, conf);
+  
+  console.log({conf});
 
   if (!valid) {
     producer.error('Your bunion configuation file has an invalid format, see the following error(s):');

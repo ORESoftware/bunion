@@ -25,11 +25,16 @@ export const createParser = (opts: ParserOptions) => {
     //   readline.clearLine(process.stdout, 0);  // clear current text
     //   readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
     // }
-    
-    if (d && d['@bunion'] === true) {
+  
+    if (d && d[0] && String(d[0]).startsWith('@bunion')) {
       strm.emit('bunion-json', d);
       return;
     }
+    
+    // if (d && d['@bunion'] === true) {
+    //   strm.emit('bunion-json', d);
+    //   return;
+    // }
     
     strm.emit('json', d);
     

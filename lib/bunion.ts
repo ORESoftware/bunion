@@ -1,5 +1,7 @@
 'use strict';
 
+import {RawJSONBytesSymbol} from "@oresoftware/json-stream-parser";
+
 export type BunionLevelStrings =
   'WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL' |
   'warn' | 'info' | 'debug' | 'error' | 'trace' | 'fatal'
@@ -42,7 +44,8 @@ export interface BunionJSON {
   '@bunion': true,
   level: BunionLevelInternal
   value: string
-  date: number
+  date: number,
+  [RawJSONBytesSymbol]?: Symbol
   appName: string
   fields: BunionFields,
   pid: number,
@@ -74,7 +77,8 @@ export interface BunionConf {
       object?: {
         depth?: number
       }
-    }
+    },
+    getHostNameSync?: () => string
   },
   consumer: {
     localeDateString?: string
@@ -82,10 +86,18 @@ export interface BunionConf {
     level?: BunionLevel
     match?: Array<string>
     matchAny?: Array<string>
-    matchAll?: Array<string>
+    matchAll?: Array<string>,
+    transform?: {
+      keys?: {
+        [key: string]: {
+          identifyViaRawStr?: (v: string) => boolean,
+          identifyViaJSObject: (v: object) => boolean;
+          transformToBunionFormat: (v: object) => BunionJSON;
+        }
+      }
+    }
   }
 }
-
 
 export type BunionLevelInternalUnion = BunionLevelInternal | BunionLevelStringsInternal;
 export type BunionLevel = BunionLevelInternal | BunionLevelStrings

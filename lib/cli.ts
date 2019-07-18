@@ -15,6 +15,8 @@ import {ReadStream} from "tty";
 const dashdash = require('dashdash');
 import readline = require('readline');
 import Timer = NodeJS.Timer;
+import * as safe from "@oresoftware/safe-stringify";
+import * as util from "util";
 
 process.on('uncaughtException', (e: any) => {
   consumer.error('Uncaught exception:', e || e);
@@ -137,7 +139,8 @@ let opts: any, parser = dashdash.createParser({options: options});
 
 try {
   opts = parser.parse(process.argv);
-} catch (e) {
+}
+catch (e) {
   consumer.error('bunion: error: %s', e.message);
   process.exit(1);
 }
@@ -163,7 +166,8 @@ try {
   if (opts.filter) {
     filter = JSON.parse(opts.filter);
   }
-} catch (err) {
+}
+catch (err) {
   consumer.error('Bunion could not parse your filter option (JSON) at the command line.');
   throw err;
 }
@@ -172,7 +176,8 @@ try {
   Object.keys(filter).forEach(function (k) {
     filter[k] = new RegExp(filter[k]);
   });
-} catch (err) {
+}
+catch (err) {
   consumer.error('Bunion could not convert your filter option values to RegExp.');
   throw err;
 }
@@ -300,13 +305,15 @@ const bunionHomeFiles = path.resolve(bunionHome + '/files');
 
 try {
   fs.mkdirSync(bunionHome);
-} catch (err) {
+}
+catch (err) {
 
 }
 
 try {
   fs.mkdirSync(bunionHomeFiles);
-} catch (e) {
+}
+catch (e) {
 
 }
 
@@ -380,11 +387,9 @@ const unpipePiper = () => {
     process.stdin.removeListener('data', <any>v);
   }
   
-  
   for (let v of process.stdin.listeners('end').slice(1)) {
     process.stdin.removeListener('end', <any>v);
   }
-  
   
   let cleanupTask = null;
   while (cleanupTask = container.cleanUp.pop()) {
@@ -399,7 +404,8 @@ process.once('exit', code => {
   
   if (container.keepLogFile) {
     consumer.info('Log file path:', logfile);
-  } else {
+  }
+  else {
     fs.unlinkSync(logfile);
   }
   
@@ -513,7 +519,6 @@ const handleFileExcess = () => {
 //   }
 // };
 
-
 const closeStdin = () => {
   container.mode = BunionMode.CLOSED;
   unpipePiper();
@@ -524,24 +529,42 @@ const closeStdin = () => {
   writeStatusToStdout();
 };
 
-
+const transformKeys = bunionConf.consumer.transform && bunionConf.consumer.transform.keys;
+const transformers = Object.keys(transformKeys || {});
 
 const onBunionUnknownJSON = (v: any) => {
   
   if (container.mode !== BunionMode.SEARCHING) {
     
-    if(v && v[RawJSONBytesSymbol]){
+    if (v && v[RawJSONBytesSymbol]) {
       container.prevStart += v[RawJSONBytesSymbol] + 1;  // newline is 1
     }
-    else{
-      container.prevStart += Buffer.byteLength(v) + 1;  // newline is 1
+    else {
+      // TODO: we need to put byte count here
+      container.prevStart += Buffer.byteLength(String(v)) + 1;  // newline is 1
     }
     
-   
   }
   
+  for (let k of transformers) {
+    
+    const t = transformKeys[k];
+    
+    if (t.identifyViaJSObject(v)) {
+      const c = t.transformToBunionFormat(v);
+      if (c) {
+        c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
+        onStandardizedJSON(c);
+        return;
+      }
+      
+    }
+    
+  }
+  
+  writeToStdout(util.inspect(v));
+  
 };
-
 
 const onBunionStr = (s: string) => {
   
@@ -560,8 +583,21 @@ const onBunionStr = (s: string) => {
   
 };
 
+const onJSON = (v: Array<any>) => {
+  return onStandardizedJSON({
+    '@bunion': true,
+    appName: v[1],
+    level: v[2],
+    pid: v[3],
+    host: v[4],
+    date: v[5],
+    fields: v[6],
+    value: v[7],
+    [RawJSONBytesSymbol]: v[<any>RawJSONBytesSymbol]
+  });
+};
 
-const onJSON = (v: BunionJSON) => {
+const onStandardizedJSON = (v: BunionJSON) => {
   
   if (++container.onJSONCount % 5 === 0) {
     // handleFileExcess();
@@ -611,7 +647,7 @@ const onJSON = (v: BunionJSON) => {
   }
   
   if (!(v as any)[RawJSONBytesSymbol]) {
-    throw new Error('Bunion JSON should have raw json bytes property.');
+    throw new Error('Bunion JSON should have raw json bytes property: ' + util.inspect(v));
   }
   
   if (container.mode !== BunionMode.SEARCHING) {
@@ -624,11 +660,13 @@ const onJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  } else if (output === 'medium') {
+  }
+  else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  } else {
+  }
+  else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -686,7 +724,6 @@ const onJSON = (v: BunionJSON) => {
   
   let searchTermStr = ' ';
   
-  
   if (container.stopOnNextMatch && isMatched) {
     unpipePiper();
     // clearLine();
@@ -738,10 +775,9 @@ const doTailing = () => {
     clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
   });
   
-  jsonParser.on('json',onBunionUnknownJSON);
+  jsonParser.on('json', onBunionUnknownJSON);
   jsonParser.on('bunion-json', onJSON);
   jsonParser.on('string', onBunionStr);
-  
   
   const fst = fs.createReadStream(logfile, {start: Math.max(container.prevStart - 5, 0)});
   
@@ -781,7 +817,6 @@ const doTailing = () => {
     container.piper = corked;
   });
   
-  
 };
 
 const createLoggedBreak = (m: string) => {
@@ -814,8 +849,7 @@ const startReading = () => {
   
   piper.on('bunion-json', onJSON);
   piper.on('string', onBunionStr);
-  piper.on('json',onBunionUnknownJSON);
-  
+  piper.on('json', onBunionUnknownJSON);
   
 };
 
@@ -830,7 +864,6 @@ const levelMap = new Map([
   ['1', BunionLevelToNum.TRACE],
 ]);
 
-
 const bJsonParser = createParser({
   onlyParseableOutput: Boolean(opts.only_parseable),
   clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
@@ -838,8 +871,7 @@ const bJsonParser = createParser({
 
 bJsonParser.on('bunion-json', onJSON);
 bJsonParser.on('string', onBunionStr);
-bJsonParser.on('json',onBunionUnknownJSON);
-
+bJsonParser.on('json', onBunionUnknownJSON);
 
 // const fd = fs.openSync('/dev/tty', 'r+');
 // console.log({fd});
@@ -855,7 +887,6 @@ const ctrlChars = new Set([
   '\u0012',  // r
   '\u001b\r'  // alt-return (might need to be \u001b\\r with escaped slash
 ]);
-
 
 const findLast = (logfilefd: number) => {
   
@@ -904,7 +935,8 @@ const findLast = (logfilefd: number) => {
     let val = null;
     try {
       val = JSON.parse(l).value;
-    } catch (err) {
+    }
+    catch (err) {
       continue;
     }
     
@@ -915,7 +947,6 @@ const findLast = (logfilefd: number) => {
     }
     
   }
-  
   
   if (hoppedOut) {
     fs.closeSync(logfilefd);
@@ -928,7 +959,6 @@ const findLast = (logfilefd: number) => {
   findLast(logfilefd);
   
 };
-
 
 const getMinBytes = () => {
   const rows = process.stdout.rows;
@@ -971,7 +1001,6 @@ const scrollUp = () => {
   container.prevStart -= lenToAdd;
   
 };
-
 
 const scrollUpFive = (): boolean => {
   
@@ -1016,7 +1045,6 @@ const scrollDownFive = (): boolean => {
   
   // unpipePiper();
   
-  
   const b = Buffer.alloc(15001);
   const ps = container.prevStart;
   
@@ -1044,12 +1072,10 @@ const scrollDownFive = (): boolean => {
     }
   }
   
-  
   container.prevStart += lenToAdd;
   return true;
   
 };
-
 
 const scrollDown = (): boolean => {
   
@@ -1077,7 +1103,6 @@ const scrollDown = (): boolean => {
   return true;
   
 };
-
 
 const createTimeout = () => {
   clearTimeout(container.to);
@@ -1284,7 +1309,6 @@ if (process.stdout.isTTY) {
         return;
       }
       
-      
       if (String(d) === '\r') {
         resume();
       }
@@ -1293,7 +1317,6 @@ if (process.stdout.isTTY) {
   }
   
 }
-
 
 // killall: unknown signal f; valid signals:
 // HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP
