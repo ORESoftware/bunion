@@ -11,6 +11,11 @@ const t = {
       identifyViaJSObject(v) {
         return v && v['id'] === '@truvia';
       },
+      
+      getValue(v) {
+        return v.message
+      },
+      
       transformToBunionFormat(v) {
         
         return {
@@ -19,7 +24,7 @@ const t = {
           level: v.level,
           pid: v.pid,
           date: v.date,
-          value: v.message,
+          value: this.getValue(v),
           fields: v.fields,
           host: v.host
         }

@@ -140,8 +140,7 @@ let opts: any, parser = dashdash.createParser({options: options});
 
 try {
   opts = parser.parse(process.argv);
-}
-catch (e) {
+} catch (e) {
   consumer.error('bunion: error: %s', e.message);
   process.exit(1);
 }
@@ -167,8 +166,7 @@ try {
   if (opts.filter) {
     filter = JSON.parse(opts.filter);
   }
-}
-catch (err) {
+} catch (err) {
   consumer.error('Bunion could not parse your filter option (JSON) at the command line.');
   throw err;
 }
@@ -177,8 +175,7 @@ try {
   Object.keys(filter).forEach(function (k) {
     filter[k] = new RegExp(filter[k]);
   });
-}
-catch (err) {
+} catch (err) {
   consumer.error('Bunion could not convert your filter option values to RegExp.');
   throw err;
 }
@@ -281,7 +278,6 @@ const getHighlightedString = (str: string) => {
 };
 
 
-
 const getDarkOrlight = (str: string) => {
   return darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;
 };
@@ -302,15 +298,13 @@ const bunionHomeFiles = path.resolve(bunionHome + '/files');
 
 try {
   fs.mkdirSync(bunionHome);
-}
-catch (err) {
+} catch (err) {
 
 }
 
 try {
   fs.mkdirSync(bunionHomeFiles);
-}
-catch (e) {
+} catch (e) {
 
 }
 
@@ -401,8 +395,7 @@ process.once('exit', code => {
   
   if (container.keepLogFile) {
     consumer.info('Log file path:', logfile);
-  }
-  else {
+  } else {
     fs.unlinkSync(logfile);
   }
   
@@ -535,8 +528,7 @@ const onBunionUnknownJSON = (v: any) => {
     
     if (v && v[RawJSONBytesSymbol]) {
       container.prevStart += v[RawJSONBytesSymbol] + 1;  // newline is 1
-    }
-    else {
+    } else {
       // TODO: we need to put byte count here
       container.prevStart += Buffer.byteLength(String(v)) + 1;  // newline is 1
     }
@@ -577,6 +569,44 @@ const onBunionStr = (s: string) => {
   // createTimeout();
   // const searchTermStr = ` Stopped on raw string. `;
   // writeStatusToStdout(searchTermStr);
+  
+};
+
+
+const getValue = (v: any) => {
+  
+  if (!(v && typeof v === 'object')) {
+    return '';
+  }
+  
+  const z = Array.isArray(v) ? v[v.length - 1] : v.value;
+  
+  if (typeof z === 'string') {
+    return z;
+  }
+  
+  
+  for (let k of transformers) {
+    
+    const t = transformKeys[k];
+    
+    let val = '';
+    
+    if (t.identifyViaJSObject(v)) {
+      if (typeof t.getValue === 'function') {
+        val = t.getValue(v);
+      }
+    }
+    
+    if (val && typeof val === 'string') {
+      return val;
+    }
+    
+  }
+  
+  
+  return '';
+  
   
 };
 
@@ -657,13 +687,11 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  }
-  else if (output === 'medium') {
+  } else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  }
-  else {
+  } else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -931,11 +959,11 @@ const findLast = (logfilefd: number) => {
     
     let val = null;
     try {
-      val = JSON.parse(l).value;
-    }
-    catch (err) {
+      val = getValue(JSON.parse(l));
+    } catch (err) {
       continue;
     }
+    
     
     if (new RegExp(st, 'i').test(val)) {
       container.extra = val.split(/\s+/)[0];

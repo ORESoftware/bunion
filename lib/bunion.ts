@@ -90,6 +90,7 @@ export interface BunionConf {
     transform?: {
       keys?: {
         [key: string]: {
+          getValue: (v: object) => string;
           identifyViaRawStr?: (v: string) => boolean,
           identifyViaJSObject: (v: object) => boolean;
           transformToBunionFormat: (v: object) => BunionJSON;
