@@ -28,28 +28,30 @@ const getRandomStr = () => {
   
 };
 
-log.setFields({zebra: '5', car: 'choose'});
+// log.setFields({zebra: '5', car: 'choose'});
 
 (function run() {
   
-  log.infox({zebra: 'blues', dog: 'not cat'}, '');
+  // log.infox({zebra: 'blues', dog: 'not cat'}, '');
   log.info(i++, 'just saying hi.');
   log.warn(i++, 'shit hit the fan');
   // log.error(i++, new Error('foo'));
   log.debug(i++, getRandomStr());
   log.trace(i++, getRandomStr());
   log.debug(i++, getRandomStr());
-  console.log('foo bar 133');
-  console.log(JSON.stringify({
-    id: '@truvia',
-    appName: 'garbo',
-    message: getRandomStr(),
-    host: os.hostname(),
-    level: 'INFO',
-    pid: process.pid,
-    date: new Date().toUTCString(),
-    fields: {a: 'foo', b: 5}
-  }));
+  // console.log('foo bar 133');
+  
+  // console.log(JSON.stringify({
+  //   id: '@truvia',
+  //   appName: 'garbo',
+  //   message: getRandomStr(),
+  //   host: os.hostname(),
+  //   level: 'INFO',
+  //   pid: process.pid,
+  //   date: new Date().toUTCString(),
+  //   fields: {a: 'foo', b: 5}
+  // }));
+  
   setTimeout(run, 200);
   
 })();

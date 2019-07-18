@@ -15,7 +15,10 @@ import {
   Level,
   BunionLevel, BunionLevelInternalUnion
 } from "./bunion";
+
 import deepMixin from "@oresoftware/deep.mixin";
+
+export {BunionConf} from './bunion';
 
 process.on('SIGINT', s => {
   producer.warn('SIGINT received.', s);
