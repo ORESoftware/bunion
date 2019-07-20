@@ -90,10 +90,10 @@ export interface BunionConf {
     transform?: {
       keys?: {
         [key: string]: {
-          getValue: (v: object) => string;
+          getValue: (v: any) => string;
           identifyViaRawStr?: (v: string) => boolean,
-          identifyViaJSObject: (v: object) => boolean;
-          transformToBunionFormat: (v: object) => BunionJSON;
+          identifyViaJSObject: (v: any) => boolean;
+          transformToBunionFormat: (v: any) => BunionJSON;
         }
       }
     }
