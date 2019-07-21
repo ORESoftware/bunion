@@ -88,8 +88,8 @@ try {
 const output = String(opts.output || 'medium').toLowerCase();
 const maxLevel = String(opts.level || (bunionConf.consumer && bunionConf.consumer.level) || 'TRACE').toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel) + 1;
-console.log({maxLevel,maxIndex});
-process.exit(1);
+// console.log({maxLevel,maxIndex});
+// process.exit(1);
 
 if (maxIndex < 1) {
   throw new Error(
