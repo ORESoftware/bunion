@@ -415,10 +415,11 @@ const scrollUp = () => {
     i--;
   }
   
-  for (let i = 0; i < rows; i++) {
+  const ln = lines.length;
+  
+  for (let i = 0; i < (rows + 1 - ln); i++) {
     process.stdout.write('\n');
   }
-  
   
   for (let i = lines.length - 1; i > 0; i--) {
     con.current--;
