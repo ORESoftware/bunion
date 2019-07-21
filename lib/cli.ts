@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-import chalk from 'chalk';
 import {RawJSONBytesSymbol} from "@oresoftware/json-stream-parser";
 import {createParser} from "./json-parser";
 import {getConf, getFields} from "./utils";
@@ -12,6 +11,7 @@ import * as fs from 'fs';
 import * as path from "path";
 import {ReadStream} from "tty";
 import * as util from "util";
+import chalk from 'chalk';
 
 const dashdash = require('dashdash');
 import readline = require('readline');
@@ -428,17 +428,6 @@ const transformers = Object.keys(transformKeys || {});
 
 const onBunionUnknownJSON = (v: any) => {
   
-  // if (container.mode !== BunionMode.SEARCHING) {
-  //
-  //   if (v && v[RawJSONBytesSymbol]) {
-  //     container.prevStart += v[RawJSONBytesSymbol] + 1;  // newline is 1
-  //   }
-  //   else {
-  //     // TODO: we need to put byte count here
-  //     container.prevStart += Buffer.byteLength(String(v)) + 1;  // newline is 1
-  //   }
-  //
-  // }
   
   for (let k of transformers) {
     
@@ -456,7 +445,13 @@ const onBunionUnknownJSON = (v: any) => {
     
   }
   
-  writeToStdout(util.inspect(v));
+  const inspected = util.inspect(v);
+  
+  if (container.mode !== BunionMode.SEARCHING) {
+    container.prevStart += Buffer.byteLength(inspected);  // newline is 1
+  }
+  
+  writeToStdout(inspected);
   
 };
 
@@ -701,11 +696,7 @@ const doTailing = () => {
   
   createLoggedBreak('[ctrl-t]');
   
-  const jsonParser = createParser({
-    onlyParseableOutput: Boolean(opts.only_parseable),
-    clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
-  });
-  
+  const jsonParser = createParser();
   jsonParser.on('json', onBunionUnknownJSON);
   jsonParser.on('bunion-json', onJSON);
   jsonParser.on('string', onBunionStr);
@@ -771,11 +762,7 @@ const startReading = () => {
   
   createLoggedBreak('[ctrl-p]');
   
-  const jsonParser = createParser({
-    onlyParseableOutput: Boolean(opts.only_parseable),
-    clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
-  });
-  
+  const jsonParser = createParser();
   const piper = container.piper = process.stdin.pipe(jsonParser, {end: true});
   
   piper.on('bunion-json', onJSON);
@@ -795,11 +782,7 @@ const levelMap = new Map([
   ['1', BunionLevelToNum.TRACE],
 ]);
 
-const bJsonParser = createParser({
-  onlyParseableOutput: Boolean(opts.only_parseable),
-  clearLine: allMatches.length > 0 && opts.no_show_match_count !== true
-});
-
+const bJsonParser = createParser();
 bJsonParser.on('bunion-json', onJSON);
 bJsonParser.on('string', onBunionStr);
 bJsonParser.on('json', onBunionUnknownJSON);
@@ -941,7 +924,6 @@ const scrollUp2 = () => {
   // console.log(getMinBytes());
   
   
-  
   if (container.prevStart <= 1000) {
     container.prevStart = 0;
     // process.stdout.write('\n');
@@ -1026,7 +1008,6 @@ const scrollUp = () => {
   // unpipePiper();
   // clearLine();
   // console.log(getMinBytes());
-  
   
   
   if (container.prevStart <= 0) {
@@ -1258,7 +1239,6 @@ if (process.stdout.isTTY) {
     strm.setRawMode(true);
     
     strm.on('data', (d: any) => {
-      
       
       
       createTimeout();

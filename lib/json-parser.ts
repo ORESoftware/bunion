@@ -12,10 +12,13 @@ export interface ParserOptions {
   clearLine: boolean
 }
 
-export const createParser = (opts: ParserOptions) => {
-  
-  const onlyParseableOutput = Boolean(opts.onlyParseableOutput);
-  const clearLine = Boolean(opts.clearLine);
+export const  createRawParser = () => {
+  return new JSONParser({includeByteCount: true, emitNonJSON: true});
+};
+
+
+
+export const createParser = () => {
   
   const strm = new JSONParser({includeByteCount: true, emitNonJSON: true});
   
