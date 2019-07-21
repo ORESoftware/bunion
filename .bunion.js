@@ -38,17 +38,17 @@ const t = {
 exports.default = {
   
   producer: {
-    "name": "bob",
-    "appName": "foobar",
-    "level": "TRACE",
+    'name': 'bob',
+    'appName': 'foobar',
+    'level': 'TRACE',
     getHostNameSync() {
       return 'foobarx'
     }
   },
   
   consumer: {
-    "highlightMatches": true,
-    "level": "INFO",
+    'highlightMatches': true,
+    'level': "DEBUG",
     transform: t,
   }
 };

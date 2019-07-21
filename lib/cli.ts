@@ -37,104 +37,11 @@ process.on('SIGTERM', function () {
   consumer.warn('SIGTERM received.');
 });
 
-const options = [
-  {
-    name: 'version',
-    type: 'bool',
-    help: 'Print tool version and exit.'
-  },
-  {
-    names: ['help'],
-    type: 'bool',
-    help: 'Print help and exit.'
-  },
-  {
-    names: ['verbose', 'v'],
-    type: 'arrayOfBool',
-    help: 'Verbose output. Use multiple times for more verbose.'
-  },
-  {
-    names: ['level', 'l'],
-    type: 'string',
-    default: 'trace'
-  },
-  {
-    names: ['show'],
-    type: 'string',
-    default: 'thpalf'  // time, host, process/pid, appname, level, fields
-  },
-  {
-    names: ['hide'],
-    type: 'string',
-    default: ''  // time, host, process/pid, appname, level, fields
-  },
-  {
-    names: ['output', 'o'],
-    type: 'string',
-    default: ''
-  },
-  {
-    names: ['match', 'or'],
-    type: 'arrayOfString',
-    default: [] as Array<string>
-  },
-  {
-    names: ['filter'],
-    type: 'string',
-    default: ''
-  },
-  {
-    names: ['must-match', 'and'],
-    type: 'arrayOfString',
-    default: [] as Array<string>
-  },
-  {
-    names: ['highlight'],
-    type: 'bool',
-    default: true
-  },
-  {
-    names: ['no-highlight'],
-    type: 'bool',
-    default: false
-  },
-  {
-    // names: ['dark-background', 'dark-bg', 'darkbg', 'dark'],
-    names: ['dark'],
-    type: 'bool',
-    default: false
-  },
-  {
-    // names: ['light-background', 'light-bg', 'lightbg', 'light'],
-    names: ['light'],
-    type: 'bool',
-    default: false
-  },
-  {
-    names: ['background', 'bg'],
-    type: 'string',
-    default: '',
-    enum: ['light', 'dark']
-  },
-  {
-    names: ['only-parseable', 'only'],
-    type: 'bool',
-    default: false
-  },
-  {
-    names: ['no-show-match-count'],
-    type: 'bool',
-    default: false
-  },
-  {
-    names: ['always-show-match-count'],
-    type: 'bool',
-    default: false
-  },
+import options from './cli-options';
 
-];
+const allowUnknown = process.argv.indexOf('--allow-unknown') > 1;
 
-let opts: any, parser = dashdash.createParser({options: options});
+let opts: any, parser = dashdash.createParser({options: options}, {allowUnknown});
 
 try {
   opts = parser.parse(process.argv);
@@ -178,12 +85,11 @@ try {
   throw err;
 }
 
-const level = opts.level;
 const output = String(opts.output || 'medium').toLowerCase();
-const maxLevel = String(level || (bunionConf.consumer && bunionConf.consumer.level) || 'TRACE').toUpperCase();
+const maxLevel = String(opts.level || (bunionConf.consumer && bunionConf.consumer.level) || 'TRACE').toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel) + 1;
-// console.log({maxLevel,maxIndex});
-// process.exit(1);
+console.log({maxLevel,maxIndex});
+process.exit(1);
 
 if (maxIndex < 1) {
   throw new Error(
