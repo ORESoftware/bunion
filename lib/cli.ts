@@ -4,20 +4,18 @@
 import chalk from 'chalk';
 import {RawJSONBytesSymbol} from "@oresoftware/json-stream-parser";
 import {createParser} from "./json-parser";
-import {getConf} from "./utils";
+import {getConf, getFields} from "./utils";
 import {consumer} from './logger';
 import {BunionFields, BunionJSON, BunionLevelToNum, BunionMode, Level, ordered} from "./bunion";
 import * as uuid from 'uuid';
 import * as fs from 'fs';
 import * as path from "path";
 import {ReadStream} from "tty";
-import {getFields} from './utils';
+import * as util from "util";
 
 const dashdash = require('dashdash');
 import readline = require('readline');
 import Timer = NodeJS.Timer;
-import * as safe from "@oresoftware/safe-stringify";
-import * as util from "util";
 
 process.on('uncaughtException', (e: any) => {
   consumer.error('Uncaught exception:', e || e);
@@ -529,17 +527,17 @@ const transformers = Object.keys(transformKeys || {});
 
 const onBunionUnknownJSON = (v: any) => {
   
-  if (container.mode !== BunionMode.SEARCHING) {
-    
-    if (v && v[RawJSONBytesSymbol]) {
-      container.prevStart += v[RawJSONBytesSymbol] + 1;  // newline is 1
-    }
-    else {
-      // TODO: we need to put byte count here
-      container.prevStart += Buffer.byteLength(String(v)) + 1;  // newline is 1
-    }
-    
-  }
+  // if (container.mode !== BunionMode.SEARCHING) {
+  //
+  //   if (v && v[RawJSONBytesSymbol]) {
+  //     container.prevStart += v[RawJSONBytesSymbol] + 1;  // newline is 1
+  //   }
+  //   else {
+  //     // TODO: we need to put byte count here
+  //     container.prevStart += Buffer.byteLength(String(v)) + 1;  // newline is 1
+  //   }
+  //
+  // }
   
   for (let k of transformers) {
     
@@ -997,7 +995,7 @@ const getMinBytes = () => {
 
 let scrollingUp = false;
 
-const scrollUp = () => {
+const scrollUp2 = () => {
   
   // unpipePiper();
   // clearLine();
@@ -1006,18 +1004,11 @@ const scrollUp = () => {
   
   scrollingUp = true;
   
-  // clearLine();
-  
-  // let i = process.stdout.rows;
-  // while (i > 0) {
-  //   i--;
-  //   process.stdout.write('\n');
-  // }
-  
   
   if (container.prevStart <= 1000) {
     container.prevStart = 0;
     // process.stdout.write('\n');
+    clearLine();
     writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file - scrolling up) '));
     scrollingUp = false;
     // throw 'fuck'
@@ -1025,12 +1016,17 @@ const scrollUp = () => {
   }
   
   
+  let i = process.stdout.rows;
+  while (i > 0) {
+    i--;
+    process.stdout.write('\n');
+  }
+  
   const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
   
   let ps = container.prevStart - 9500, abs = 9500;
   
   if (container.prevStart <= 9500) {
-    
     
     ps = 0;
     abs = Math.max(container.prevStart - 1000, 10);
@@ -1082,6 +1078,106 @@ const scrollUp = () => {
   
   for (let l of lines) {
     lenToAdd = Buffer.byteLength(l + '\n');
+    bJsonParser.write(l + '\n');
+  }
+  
+  container.prevStart -= lenToAdd;
+  scrollingUp = false;
+  
+};
+
+
+
+const scrollUp = () => {
+  
+  // unpipePiper();
+  // clearLine();
+  // console.log(getMinBytes());
+  
+  
+  scrollingUp = true;
+  
+  
+  if (container.prevStart <= 0) {
+    container.prevStart = 0;
+    // process.stdout.write('\n');
+    clearLine();
+    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file - scrolling up) '));
+    scrollingUp = false;
+    // throw 'fuck'
+    return;
+  }
+  
+  
+  const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+  
+  // const ps = container.prevStart;
+  
+  let ps = container.prevStart - 9500, abs = 9500;
+  
+  if (container.prevStart <= 9500) {
+  
+    let i = process.stdout.rows + 1;
+    while (i > 0) {
+      i--;
+      process.stdout.write('\n');
+    }
+    
+    ps = 0;
+    abs = container.prevStart;
+    
+    // if(container.prevStart - 1000 <= 0){
+    //   ps = 0;
+    //   abs = container.prevStart;
+    // }
+    // else{
+    //   ps = container.prevStart - 1000;
+    //   abs = 1000;
+    // }
+    
+  }
+  
+  
+  const b = Buffer.alloc(abs);
+  
+  // const ps = container.prevStart - (v || 9500);
+  
+  // if (ps <= 0) {
+  //
+  //   console.log('we below.');
+  //   fs.closeSync(logfilefd);
+  //
+  //   if (typeof v === "undefined") {
+  //     scrollUp(9300, ++count);
+  //     return;
+  //   }
+  //
+  //   const mx = Math.max(Math.floor(v - 200), 0);
+  //
+  //   if(mx < 10){
+  //     console.log('returning early.');
+  //     return;
+  //   }
+  //
+  //   scrollUp(mx, ++count);
+  //   return;
+  // }
+  
+  // createLoggedBreak('[scrolling up top]');
+  
+  const raw = fs.readSync(logfilefd, b, 0, abs, ps);
+  // process.stdout.write('\x1Bc'); // clear screen
+  fs.closeSync(logfilefd);
+  
+  const lines = String(b).split('\n');
+  let lastLine = lines.pop();
+  let lenToAdd = Buffer.byteLength(lastLine + '\n');
+  
+  if(lastLine.trim() === ''){
+    lenToAdd += Buffer.byteLength(lines.pop() + '\n');
+  }
+  
+  for (let l of lines) {
     bJsonParser.write(l + '\n');
   }
   
@@ -1224,6 +1320,8 @@ const handleShutdown = (signal: string) => () => {
 const handleCtrlC = handleShutdown('ctrl-c');
 const handleCtrlD = handleShutdown('ctrl-d');
 
+let firstScrollAfterSearch = false;
+
 if (process.stdout.isTTY) {
   
   {
@@ -1334,17 +1432,24 @@ if (process.stdout.isTTY) {
       }
       
       if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
-        if (container.mode === BunionMode.READING) {
-          container.prevStart = stdinStream.bytesWritten;
+        if(container.mode !== BunionMode.SEARCHING){
+          firstScrollAfterSearch = true;
+          if (container.mode === BunionMode.READING) {
+            container.prevStart = stdinStream.bytesWritten;
+          }
+          container.mode = BunionMode.SEARCHING;
+          container.prevStart = container.prevStart || stdinStream.bytesWritten;
+          unpipePiper();
+          writeStatusToStdout();
         }
-        container.mode = BunionMode.SEARCHING;
-        container.prevStart = container.prevStart || stdinStream.bytesWritten;
-        unpipePiper();
-        writeStatusToStdout();
         return;
       }
       
       if (String(d) === '\u001b[A' && container.mode === BunionMode.SEARCHING) {
+        if(firstScrollAfterSearch){
+          firstScrollAfterSearch = false;
+          container.prevStart += 50;
+        }
         scrollUp();
         return;
       }
@@ -1361,6 +1466,10 @@ if (process.stdout.isTTY) {
       
       if ((String(d) === '\r' || String(d) === '\u001b[B') && container.mode === BunionMode.SEARCHING) {
         // container.mode = BunionMode.SCROLLING;
+        if(firstScrollAfterSearch){
+          firstScrollAfterSearch = false;
+          container.prevStart -= 50;
+        }
         scrollDown();
         return;
       }
