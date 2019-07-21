@@ -368,24 +368,37 @@ const createLoggedBreak = (m: string) => {
 
 
 const doTailing = () => {
+  
   con.mode = BunionMode.TAILING;
   clearLine();
   createLoggedBreak('[ctrl-t]');
   let i = con.current;
+  
   while (con.mode === BunionMode.TAILING) {
+    
     i++;
+    
     if (!con.vals.has(i)) {
       break;
     }
-    onData(con.vals.get(i));
+    
     con.current = i;
+    onData(con.vals.get(i));
+    
   }
+  
+  
+  if (con.mode === <any>BunionMode.SEARCHING) {
+    return;
+  }
+  
   
   clearLine();   // remove later, do not need
   createLoggedBreak('[ctrl-p]');  // remove later, do not need
+  
   con.mode = BunionMode.READING;
+  
 };
-
 
 
 const startReading = () => {
@@ -401,7 +414,6 @@ const findLast = () => {
 };
 
 
-
 const scrollUpOneLine = () => {
   
   const rows = process.stdout.rows + 1;
@@ -409,7 +421,7 @@ const scrollUpOneLine = () => {
   
   let i = con.current - 1, count = 0;
   
-  if(i < con.tail){
+  if (i < con.tail) {
     writeToStdout('(beginning of file)');
     return;
   }
@@ -443,13 +455,13 @@ const scrollUpFive = () => {
   let amount = 5;
   let i = con.current - amount, count = 0;
   
-  while(i < con.tail){
+  while (i < con.tail) {
     amount--;
     i = con.current - amount;
   }
-
-  if(i >= con.current){
-    writeToStdout('(beginning of file 1)');
+  
+  if (i >= con.current) {
+    writeToStdout('(beginning of file)');
     return;
   }
   
@@ -473,7 +485,6 @@ const scrollUpFive = () => {
   con.current -= amount;
   
 };
-
 
 
 const scrollDown = () => {
