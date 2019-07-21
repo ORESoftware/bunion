@@ -138,8 +138,7 @@ let opts: any, parser = dashdash.createParser({options: options});
 
 try {
   opts = parser.parse(process.argv);
-}
-catch (e) {
+} catch (e) {
   consumer.error('bunion: error: %s', e.message);
   process.exit(1);
 }
@@ -165,8 +164,7 @@ try {
   if (opts.filter) {
     filter = JSON.parse(opts.filter);
   }
-}
-catch (err) {
+} catch (err) {
   consumer.error('Bunion could not parse your filter option (JSON) at the command line.');
   throw err;
 }
@@ -175,8 +173,7 @@ try {
   Object.keys(filter).forEach(function (k) {
     filter[k] = new RegExp(filter[k]);
   });
-}
-catch (err) {
+} catch (err) {
   consumer.error('Bunion could not convert your filter option values to RegExp.');
   throw err;
 }
@@ -298,15 +295,13 @@ const bunionHomeFiles = path.resolve(bunionHome + '/files');
 
 try {
   fs.mkdirSync(bunionHome);
-}
-catch (err) {
+} catch (err) {
 
 }
 
 try {
   fs.mkdirSync(bunionHomeFiles);
-}
-catch (e) {
+} catch (e) {
 
 }
 
@@ -397,8 +392,7 @@ process.once('exit', code => {
   
   if (container.keepLogFile) {
     consumer.info('Log file path:', logfile);
-  }
-  else {
+  } else {
     fs.unlinkSync(logfile);
   }
   
@@ -634,8 +628,8 @@ const onStandardizedJSON = (v: BunionJSON) => {
     return;
   }
   
-  if (Date.now() - container.lastUserEvent > 3000) {
-    if (stdinStream.bytesWritten > 300000) {
+  if (Date.now() - container.lastUserEvent > 30000) {
+    if (stdinStream.bytesWritten > 3000000) {
       closeStdin();
       return;
     }
@@ -644,6 +638,7 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (container.mode === BunionMode.PAUSED) {
     return;
   }
+  
   
   // container.currentBytes = (container.piper && container.piper.bytesRead) || container.currentBytes;
   
@@ -677,9 +672,13 @@ const onStandardizedJSON = (v: BunionJSON) => {
     throw new Error('Bunion JSON should have raw json bytes property: ' + util.inspect(v));
   }
   
+  
+  // since we always log something after this line, we can add it here
+  
   if (container.mode !== BunionMode.SEARCHING) {
-    container.prevStart += (v as any)[RawJSONBytesSymbol] + 1;
+    container.prevStart += ((v as any)[RawJSONBytesSymbol] + 1);
   }
+  
   
   matchCount++;
   let fields = '';
@@ -687,13 +686,11 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  }
-  else if (output === 'medium') {
+  } else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  }
-  else {
+  } else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -962,8 +959,7 @@ const findLast = (logfilefd: number) => {
     let val = null;
     try {
       val = getValue(JSON.parse(l));
-    }
-    catch (err) {
+    } catch (err) {
       continue;
     }
     
@@ -978,7 +974,7 @@ const findLast = (logfilefd: number) => {
   if (hoppedOut) {
     fs.closeSync(logfilefd);
     container.mode = BunionMode.SEARCHING;
-    scrollUp();
+    scrollUpOriginal();
     return;
   }
   
@@ -993,7 +989,43 @@ const getMinBytes = () => {
   return rows * columns * 4;
 };
 
-let scrollingUp = false;
+
+const scrollUpOriginal = () => {
+  
+  const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+  // unpipePiper();
+  // clearLine();
+  
+  // console.log(getMinBytes());
+  
+  const b = Buffer.alloc(9501);
+  const ps = container.prevStart - 9500;
+  
+  if (ps <= 0) {
+    container.prevStart = 0;
+    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file 2) '));
+    fs.closeSync(logfilefd);
+    return;
+  }
+  
+  // createLoggedBreak('[scrolling up top]');
+  
+  const raw = fs.readSync(logfilefd, b, 0, 9500, ps);
+  // process.stdout.write('\x1Bc'); // clear screen
+  fs.closeSync(logfilefd);
+  
+  const lines = String(b).split('\n');
+  let lenToAdd = 0;
+  
+  for (let l of lines) {
+    lenToAdd = Buffer.byteLength(l + '\n');
+    bJsonParser.write(l + '\n');
+  }
+  
+  container.prevStart -= lenToAdd;
+  
+};
+
 
 const scrollUp2 = () => {
   
@@ -1002,16 +1034,12 @@ const scrollUp2 = () => {
   // console.log(getMinBytes());
   
   
-  scrollingUp = true;
-  
   
   if (container.prevStart <= 1000) {
     container.prevStart = 0;
     // process.stdout.write('\n');
     clearLine();
     writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file - scrolling up) '));
-    scrollingUp = false;
-    // throw 'fuck'
     return;
   }
   
@@ -1082,10 +1110,8 @@ const scrollUp2 = () => {
   }
   
   container.prevStart -= lenToAdd;
-  scrollingUp = false;
   
 };
-
 
 
 const scrollUp = () => {
@@ -1095,16 +1121,12 @@ const scrollUp = () => {
   // console.log(getMinBytes());
   
   
-  scrollingUp = true;
-  
   
   if (container.prevStart <= 0) {
     container.prevStart = 0;
     // process.stdout.write('\n');
     clearLine();
     writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file - scrolling up) '));
-    scrollingUp = false;
-    // throw 'fuck'
     return;
   }
   
@@ -1116,7 +1138,7 @@ const scrollUp = () => {
   let ps = container.prevStart - 9500, abs = 9500;
   
   if (container.prevStart <= 9500) {
-  
+    
     let i = process.stdout.rows + 1;
     while (i > 0) {
       i--;
@@ -1173,7 +1195,7 @@ const scrollUp = () => {
   let lastLine = lines.pop();
   let lenToAdd = Buffer.byteLength(lastLine + '\n');
   
-  if(lastLine.trim() === ''){
+  if (lastLine.trim() === '') {
     lenToAdd += Buffer.byteLength(lines.pop() + '\n');
   }
   
@@ -1182,7 +1204,6 @@ const scrollUp = () => {
   }
   
   container.prevStart -= lenToAdd;
-  scrollingUp = false;
   
 };
 
@@ -1332,10 +1353,6 @@ if (process.stdout.isTTY) {
     strm.on('data', (d: any) => {
       
       
-      if(scrollingUp){
-        throw 'what';
-      }
-      
       
       createTimeout();
       container.lastUserEvent = Date.now();
@@ -1432,7 +1449,7 @@ if (process.stdout.isTTY) {
       }
       
       if (String(d) === 's' && container.mode !== BunionMode.PAUSED) {
-        if(container.mode !== BunionMode.SEARCHING){
+        if (container.mode !== BunionMode.SEARCHING) {
           firstScrollAfterSearch = true;
           if (container.mode === BunionMode.READING) {
             container.prevStart = stdinStream.bytesWritten;
@@ -1446,7 +1463,7 @@ if (process.stdout.isTTY) {
       }
       
       if (String(d) === '\u001b[A' && container.mode === BunionMode.SEARCHING) {
-        if(firstScrollAfterSearch){
+        if (firstScrollAfterSearch) {
           firstScrollAfterSearch = false;
           container.prevStart += 50;
         }
@@ -1466,7 +1483,7 @@ if (process.stdout.isTTY) {
       
       if ((String(d) === '\r' || String(d) === '\u001b[B') && container.mode === BunionMode.SEARCHING) {
         // container.mode = BunionMode.SCROLLING;
-        if(firstScrollAfterSearch){
+        if (firstScrollAfterSearch) {
           firstScrollAfterSearch = false;
           container.prevStart -= 50;
         }
