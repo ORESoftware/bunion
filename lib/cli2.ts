@@ -56,7 +56,7 @@ const con = {
   sigCount: 0,
   lastUserEvent: null as number,
   to: null as Timer,
-  timeout: 45000  // 45 seconds
+  timeout: 55500  // 45 seconds
   
 };
 
@@ -68,13 +68,11 @@ const replacer = function (match: any) {
 
 
 const getHighlightedString = (match: string) => {
-  
   if (con.searchTerm !== '') {
     match = match.replace(new RegExp(con.searchTerm, 'ig'), replacer);
   }
   
   return match;
-  
 };
 
 
@@ -127,7 +125,6 @@ const onBunionUnknownJSON = (v: any) => {
   for (let k of transformers) {
     
     const t = transformKeys[k];
-    
     if (t.identifyViaJSObject(v)) {
       const c = t.transformToBunionFormat(v);
       if (c) {
@@ -135,9 +132,7 @@ const onBunionUnknownJSON = (v: any) => {
         onStandardizedJSON(c);
         return;
       }
-      
     }
-    
   }
   
   writeToStdout(util.inspect(v));
@@ -186,11 +181,9 @@ const onStandardizedJSON = (v: BunionJSON) => {
     return;
   }
   
-  
   if (con.mode === BunionMode.PAUSED) {
     return;
   }
-  
   
   if (!(v && v['@bunion'] === true)) {
     throw 'we should not have non-bunion-json at this point in the program.'
@@ -204,7 +197,6 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (!(v as any)[RawJSONBytesSymbol]) {
     throw new Error('Bunion JSON should have raw json bytes property: ' + util.inspect(v));
   }
-  
   
   // since we always log something after this line, we can add it here
   
@@ -285,7 +277,7 @@ const handleIn = (d: any) => {
   const h = con.head++;
   con.vals.set(h, d);
   
-  if (h > 50000) {
+  if (con.head - con.tail > 50000) {
     con.vals.delete(con.tail);
     con.tail++;
   }
@@ -296,7 +288,7 @@ const handleIn = (d: any) => {
   }
 };
 
-process.stdin.resume()
+const parser = process.stdin.resume()
   .pipe(createRawParser())
   .on('string', handleIn)
   .on('data', handleIn);
@@ -304,6 +296,8 @@ process.stdin.resume()
 
 const onTimeout = () => {
   console.log('TIMED OUT.');
+  parser.destroy();
+  process.exit(1);
 };
 
 const createTimeout = () => {
@@ -313,6 +307,8 @@ const createTimeout = () => {
 
 
 const resume = () => {
+  
+  return;
   
   clearLine();
   
@@ -384,8 +380,12 @@ const doTailing = () => {
     onData(con.vals.get(i));
     con.current = i;
   }
+  
+  clearLine();   // remove later, do not need
+  createLoggedBreak('[ctrl-p]');  // remove later, do not need
   con.mode = BunionMode.READING;
 };
+
 
 
 const startReading = () => {
@@ -401,12 +401,18 @@ const findLast = () => {
 };
 
 
-const scrollUp = () => {
+
+const scrollUpOneLine = () => {
   
   const rows = process.stdout.rows + 1;
   const lines: Array<any> = [];
   
   let i = con.current - 1, count = 0;
+  
+  if(i < con.tail){
+    writeToStdout('(beginning of file)');
+    return;
+  }
   
   while (count < rows && i >= con.tail) {
     lines.push(con.vals.get(i));
@@ -420,20 +426,55 @@ const scrollUp = () => {
     process.stdout.write('\n');
   }
   
-  for (let i = lines.length - 1; i > 0; i--) {
-    con.current--;
+  con.current--;
+  
+  for (let i = lines.length - 1; i >= 0; i--) {
     onData(lines[i]);
   }
   
-
 };
 
 
 const scrollUpFive = () => {
   
-  clearLine();
-  console.log('Scroll up five.');
+  const rows = process.stdout.rows + 1;
+  const lines: Array<any> = [];
+  
+  let amount = 5;
+  let i = con.current - amount, count = 0;
+  
+  while(i < con.tail){
+    amount--;
+    i = con.current - amount;
+  }
+
+  if(i >= con.current){
+    writeToStdout('(beginning of file 1)');
+    return;
+  }
+  
+  
+  while (count < rows && i >= con.tail) {
+    lines.push(con.vals.get(i));
+    count++;
+    i--;
+  }
+  
+  const ln = lines.length;
+  
+  for (let i = 0; i < (rows + 1 - ln); i++) {
+    process.stdout.write('\n');
+  }
+  
+  for (let i = lines.length - 1; i >= 0; i--) {
+    onData(lines[i]);
+  }
+  
+  con.current -= amount;
+  
 };
+
+
 
 const scrollDown = () => {
   
@@ -453,7 +494,7 @@ const scrollDownFive = () => {
   
   let i = 5, next = con.current + i;
   
-  while (next > con.head) {
+  while (next > con.head && i > 0) {
     i--;
     next = con.current + i;
   }
@@ -607,7 +648,7 @@ const handleUserInput = () => {
     }
     
     if (String(d) === '\u001b[A' && con.mode === BunionMode.SEARCHING) {
-      scrollUp();
+      scrollUpOneLine();
       return;
     }
     

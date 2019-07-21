@@ -1005,10 +1005,6 @@ const scrollUp2 = () => {
 
 const scrollUp = () => {
   
-  // unpipePiper();
-  // clearLine();
-  // console.log(getMinBytes());
-  
   
   if (container.prevStart <= 0) {
     container.prevStart = 0;
@@ -1020,9 +1016,6 @@ const scrollUp = () => {
   
   
   const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
-  
-  // const ps = container.prevStart;
-  
   let ps = container.prevStart - 9500, abs = 9500;
   
   if (container.prevStart <= 9500) {
@@ -1036,47 +1029,11 @@ const scrollUp = () => {
     ps = 0;
     abs = container.prevStart;
     
-    // if(container.prevStart - 1000 <= 0){
-    //   ps = 0;
-    //   abs = container.prevStart;
-    // }
-    // else{
-    //   ps = container.prevStart - 1000;
-    //   abs = 1000;
-    // }
-    
   }
-  
   
   const b = Buffer.alloc(abs);
   
-  // const ps = container.prevStart - (v || 9500);
-  
-  // if (ps <= 0) {
-  //
-  //   console.log('we below.');
-  //   fs.closeSync(logfilefd);
-  //
-  //   if (typeof v === "undefined") {
-  //     scrollUp(9300, ++count);
-  //     return;
-  //   }
-  //
-  //   const mx = Math.max(Math.floor(v - 200), 0);
-  //
-  //   if(mx < 10){
-  //     console.log('returning early.');
-  //     return;
-  //   }
-  //
-  //   scrollUp(mx, ++count);
-  //   return;
-  // }
-  
-  // createLoggedBreak('[scrolling up top]');
-  
   const raw = fs.readSync(logfilefd, b, 0, abs, ps);
-  // process.stdout.write('\x1Bc'); // clear screen
   fs.closeSync(logfilefd);
   
   const lines = String(b).split('\n');
