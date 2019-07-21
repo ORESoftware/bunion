@@ -260,7 +260,7 @@ const allMatches = andMatches.concat(orMatches);
 
 const replacer = function (match: any) {
   // p1 is nondigits, p2 digits, and p3 non-alphanumerics
-  return chalk.magentaBright.bold(match);
+  return chalk.redBright.bold(match);
 };
 
 const getHighlightedString = (str: string) => {
