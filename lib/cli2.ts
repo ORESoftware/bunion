@@ -373,9 +373,8 @@ const createLoggedBreak = (m: string) => {
 
 const doTailing = () => {
   con.mode = BunionMode.TAILING;
-  createLoggedBreak('[ctrl-t]');
   clearLine();
-  console.log('Do tailing');
+  createLoggedBreak('[ctrl-t]');
   let i = con.current;
   while (con.mode === BunionMode.TAILING) {
     i++;
@@ -391,7 +390,7 @@ const doTailing = () => {
 
 const startReading = () => {
   clearLine();
-  console.log('Start reading');
+  createLoggedBreak('[ctrl-p]');
   con.mode = BunionMode.READING;
 };
 
@@ -426,7 +425,7 @@ const scrollUp = () => {
     onData(lines[i]);
   }
   
-  console.log('lines ln:', lines.length);
+
 };
 
 
@@ -594,7 +593,6 @@ const handleUserInput = () => {
     }
     
     if (String(d) === '\u0014' && con.mode !== BunionMode.TAILING) {  // ctrl-t
-      con.mode = BunionMode.TAILING;
       con.stopOnNextMatch = false;
       doTailing();
       return;
