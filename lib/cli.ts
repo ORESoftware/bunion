@@ -995,6 +995,8 @@ const getMinBytes = () => {
   return rows * columns * 4;
 };
 
+let scrollingUp = false;
+
 const scrollUp = () => {
   
   // unpipePiper();
@@ -1002,26 +1004,33 @@ const scrollUp = () => {
   // console.log(getMinBytes());
   
   
-  clearLine();
+  scrollingUp = true;
   
-  let i = process.stdout.rows;
-  while (i > 0) {
-    i--;
-    process.stdout.write('\n');
-  }
+  // clearLine();
+  
+  // let i = process.stdout.rows;
+  // while (i > 0) {
+  //   i--;
+  //   process.stdout.write('\n');
+  // }
+  
   
   if (container.prevStart <= 1000) {
     container.prevStart = 0;
     // process.stdout.write('\n');
     writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file - scrolling up) '));
+    scrollingUp = false;
+    // throw 'fuck'
     return;
   }
+  
   
   const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
   
   let ps = container.prevStart - 9500, abs = 9500;
   
   if (container.prevStart <= 9500) {
+    
     
     ps = 0;
     abs = Math.max(container.prevStart - 1000, 10);
@@ -1077,6 +1086,7 @@ const scrollUp = () => {
   }
   
   container.prevStart -= lenToAdd;
+  scrollingUp = false;
   
 };
 
@@ -1222,6 +1232,12 @@ if (process.stdout.isTTY) {
     strm.setRawMode(true);
     
     strm.on('data', (d: any) => {
+      
+      
+      if(scrollingUp){
+        throw 'what';
+      }
+      
       
       createTimeout();
       container.lastUserEvent = Date.now();
