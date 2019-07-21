@@ -367,12 +367,13 @@ const createLoggedBreak = (m: string) => {
 };
 
 
-const doTailing = () => {
+const doTailing = (startPoint?: number) => {
   
   con.mode = BunionMode.TAILING;
   clearLine();
   createLoggedBreak('[ctrl-t]');
-  let i = con.current;
+  
+  let i = Number.isInteger(startPoint) ? startPoint : con.current;
   
   while (con.mode === BunionMode.TAILING) {
     
@@ -408,9 +409,93 @@ const startReading = () => {
 };
 
 
-const findLast = () => {
+const getValue = (v: any) => {
+  
+  if (!(v && typeof v === 'object')) {
+    return typeof v === 'string' ? v : String(v);
+  }
+  
+  const z = Array.isArray(v) ? v[v.length - 1] : v.value;
+  
+  if (typeof z === 'string') {
+    return z;
+  }
+  
+  for (let k of transformers) {
+    
+    const t = transformKeys[k];
+    
+    let val = '';
+    
+    if (t.identifyViaJSObject(v)) {
+      if (typeof t.getValue === 'function') {
+        val = t.getValue(v);
+      }
+    }
+    
+    if (val && typeof val === 'string') {
+      return val;
+    }
+    
+  }
+  
+  return '';
+  
+};
+
+
+const findLatestMatch = () => {
+  
+  if (con.searchTerm === '') {
+    con.mode = BunionMode.SEARCHING;
+    writeToStdout('No search term.');
+    return;
+  }
+  
+  const startPoint = con.head;
+  let i = con.head, matched = false;
+  const st = con.searchTerm;
+  const r = new RegExp(st, 'i');
+  
+  while (i >= con.tail) {
+    
+    const v = con.vals.get(i);
+    
+    let val = null;
+    
+    try {
+      val = getValue(v);
+    } catch (err) {
+      continue;
+    }
+    
+    clearLine();
+    writeToStdout('Searching line:', String(i));
+    
+    if (r.test(val)) {
+      matched = true;
+      break;
+    }
+    
+    
+    i--;
+  }
+  
+  
+  if (matched) {
+    con.current = i + 5;
+    scrollUpFive();
+    con.mode = BunionMode.SEARCHING;
+    return;
+  }
+  
+  
   clearLine();
-  console.log('Find last');
+  writeToStdout('Could not find anything matching:', con.searchTerm);
+  con.stopOnNextMatch = true;
+  con.mode = BunionMode.SEARCHING;
+  // doTailing(startPoint);
+  
 };
 
 
@@ -617,7 +702,7 @@ const handleUserInput = () => {
     if (String(d) === '\u0001') {
       if (con.mode !== BunionMode.FIND_LAST) {
         con.mode = BunionMode.FIND_LAST;
-        findLast();
+        findLatestMatch();
       }
       return;
     }

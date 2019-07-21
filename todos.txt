@@ -22,11 +22,9 @@ ctrl-p  and then s (stop)
 you are reading from an older point than the latest
 
 
-Buffer.byteLength('')
-
-instead of
-
-Buffer.from('').length
+slice(0,400);  trim things to 400 chars max  - makes sure the beginning of a line makes it onto the screen.
+give the user a uuid at the end of the string - they can look up the uuid in redis, if they really want to
+see the remainder of the string.
 
 
 tab \t should not starting tailing and then stop,
