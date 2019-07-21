@@ -32,19 +32,18 @@ const getRandomStr = () => {
 
 (function run() {
   
-  log.infox({zebra: 'blues', dog: 'not cat'}, '');
+  log.infox({zebra: 'blues', dog: 'not cat'}, i++, 'fanny');
   log.info(i++, 'just saying hi.');
   log.warn(i++, 'shit hit the fan');
-  // log.error(i++, new Error('foo'));
+
   log.debug(i++, getRandomStr());
   log.trace(i++, getRandomStr());
   log.debug(i++, getRandomStr());
-  // console.log('foo bar 133');
   
   console.log(JSON.stringify({
     id: '@truvia',
     appName: 'garbo',
-    message: getRandomStr()+ '  XXXZ',
+    message: i++ + ' ' + getRandomStr() + '  XXXZ',
     host: os.hostname(),
     level: 'INFO',
     pid: process.pid,

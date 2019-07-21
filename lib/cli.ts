@@ -140,7 +140,8 @@ let opts: any, parser = dashdash.createParser({options: options});
 
 try {
   opts = parser.parse(process.argv);
-} catch (e) {
+}
+catch (e) {
   consumer.error('bunion: error: %s', e.message);
   process.exit(1);
 }
@@ -166,7 +167,8 @@ try {
   if (opts.filter) {
     filter = JSON.parse(opts.filter);
   }
-} catch (err) {
+}
+catch (err) {
   consumer.error('Bunion could not parse your filter option (JSON) at the command line.');
   throw err;
 }
@@ -175,7 +177,8 @@ try {
   Object.keys(filter).forEach(function (k) {
     filter[k] = new RegExp(filter[k]);
   });
-} catch (err) {
+}
+catch (err) {
   consumer.error('Bunion could not convert your filter option values to RegExp.');
   throw err;
 }
@@ -277,7 +280,6 @@ const getHighlightedString = (str: string) => {
   
 };
 
-
 const getDarkOrlight = (str: string) => {
   return darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;
 };
@@ -298,13 +300,15 @@ const bunionHomeFiles = path.resolve(bunionHome + '/files');
 
 try {
   fs.mkdirSync(bunionHome);
-} catch (err) {
+}
+catch (err) {
 
 }
 
 try {
   fs.mkdirSync(bunionHomeFiles);
-} catch (e) {
+}
+catch (e) {
 
 }
 
@@ -395,7 +399,8 @@ process.once('exit', code => {
   
   if (container.keepLogFile) {
     consumer.info('Log file path:', logfile);
-  } else {
+  }
+  else {
     fs.unlinkSync(logfile);
   }
   
@@ -528,7 +533,8 @@ const onBunionUnknownJSON = (v: any) => {
     
     if (v && v[RawJSONBytesSymbol]) {
       container.prevStart += v[RawJSONBytesSymbol] + 1;  // newline is 1
-    } else {
+    }
+    else {
       // TODO: we need to put byte count here
       container.prevStart += Buffer.byteLength(String(v)) + 1;  // newline is 1
     }
@@ -572,7 +578,6 @@ const onBunionStr = (s: string) => {
   
 };
 
-
 const getValue = (v: any) => {
   
   if (!(v && typeof v === 'object')) {
@@ -584,7 +589,6 @@ const getValue = (v: any) => {
   if (typeof z === 'string') {
     return z;
   }
-  
   
   for (let k of transformers) {
     
@@ -685,11 +689,13 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  } else if (output === 'medium') {
+  }
+  else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  } else {
+  }
+  else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -958,10 +964,10 @@ const findLast = (logfilefd: number) => {
     let val = null;
     try {
       val = getValue(JSON.parse(l));
-    } catch (err) {
+    }
+    catch (err) {
       continue;
     }
-    
     
     if (new RegExp(st, 'i').test(val)) {
       container.extra = val.split(/\s+/)[0];
@@ -991,25 +997,74 @@ const getMinBytes = () => {
 
 const scrollUp = () => {
   
-  const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
   // unpipePiper();
   // clearLine();
-  
   // console.log(getMinBytes());
   
-  const b = Buffer.alloc(9501);
-  const ps = container.prevStart - 9500;
   
-  if (ps <= 0) {
+  clearLine();
+  
+  let i = process.stdout.rows;
+  while (i > 0) {
+    i--;
+    process.stdout.write('\n');
+  }
+  
+  if (container.prevStart <= 1000) {
     container.prevStart = 0;
-    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file 2) '));
-    fs.closeSync(logfilefd);
+    // process.stdout.write('\n');
+    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file - scrolling up) '));
     return;
   }
   
+  const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
+  
+  let ps = container.prevStart - 9500, abs = 9500;
+  
+  if (container.prevStart <= 9500) {
+    
+    ps = 0;
+    abs = Math.max(container.prevStart - 1000, 10);
+    
+    // if(container.prevStart - 1000 <= 0){
+    //   ps = 0;
+    //   abs = container.prevStart;
+    // }
+    // else{
+    //   ps = container.prevStart - 1000;
+    //   abs = 1000;
+    // }
+    
+  }
+  
+  const b = Buffer.alloc(abs);
+  
+  // const ps = container.prevStart - (v || 9500);
+  
+  // if (ps <= 0) {
+  //
+  //   console.log('we below.');
+  //   fs.closeSync(logfilefd);
+  //
+  //   if (typeof v === "undefined") {
+  //     scrollUp(9300, ++count);
+  //     return;
+  //   }
+  //
+  //   const mx = Math.max(Math.floor(v - 200), 0);
+  //
+  //   if(mx < 10){
+  //     console.log('returning early.');
+  //     return;
+  //   }
+  //
+  //   scrollUp(mx, ++count);
+  //   return;
+  // }
+  
   // createLoggedBreak('[scrolling up top]');
   
-  const raw = fs.readSync(logfilefd, b, 0, 9500, ps);
+  const raw = fs.readSync(logfilefd, b, 0, abs, ps);
   // process.stdout.write('\x1Bc'); // clear screen
   fs.closeSync(logfilefd);
   
@@ -1035,7 +1090,7 @@ const scrollUpFive = (): boolean => {
   if (ps <= 0) {
     container.prevStart = 0;
     clearLine();
-    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file 0) '));
+    writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file - scrolling up 5 at a time) '));
     return false;
   }
   
