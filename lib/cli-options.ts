@@ -1,6 +1,6 @@
 'use strict';
 
-export default  [
+export default [
   {
     name: 'version',
     type: 'bool',
@@ -18,7 +18,8 @@ export default  [
   },
   {
     names: ['level', 'l'],
-    type: 'string'
+    type: 'string',
+    default: ''
   },
   {
     names: ['show'],
