@@ -6,9 +6,9 @@
   },
   "version": "0.0.113",
   "description": "Semver-oriented TypeScript library skeleton.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "typings": "dist/index.d.ts",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "typings": "dist/main.d.ts",
   "scripts": {
     "test": "suman test"
   },

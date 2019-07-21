@@ -60,6 +60,7 @@ const flattenDeep = function (a: Array<string>): Array<string> {
   return a.reduce((acc, val) => Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
 };
 
+
 const bunionConf = getConf();
 
 // console.log(bunionConf);

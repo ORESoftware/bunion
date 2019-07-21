@@ -48,7 +48,7 @@ exports.default = {
   
   consumer: {
     'highlightMatches': true,
-    'level': "DEBUG",
+    'level': "TRACE",
     transform: t,
   }
 };

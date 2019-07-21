@@ -73,8 +73,6 @@ const utilOpts = {
   maxArrayLength: 10
 };
 
-
-
 const getJSON = (level: string, args: any[], appName: string, fields: object, host: string, opt?: boolean): string => {
   
   fields = fields || null;
@@ -86,7 +84,6 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
   if (fields && Object.keys(fields).length > 8) {
     throw new Error(chalk.red('Fields object can have no more than 8 keys.'));
   }
-  
   
   const clean = args.map(function (a, i): string {
     
@@ -102,9 +99,8 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     return util.inspect(a, utilOpts); //+ '\n';
   });
   
-  
-  if(process.stdout.isTTY && !opt){
-    return logTTY(3, 'short',{
+  if (process.stdout.isTTY && !opt) {
+    return logTTY(3, 'short', {
       appName,
       level: level as BunionLevelInternal,
       fields: fields as BunionFields,
@@ -256,10 +252,10 @@ export class BunionLogger {
     return this;
   }
   
-  child(): BunionLogger {
+  child(shallow?: boolean): BunionLogger {
     return new BunionLogger({
       appName: this.appName,
-      fields: Object.assign({}, this.fields),
+      fields: shallow ? Object.assign({}, this.fields) : <any>deepMixin(this.fields),
       level: this.level
     });
   }

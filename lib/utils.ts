@@ -8,15 +8,15 @@ import * as util from "util";
 import {producer} from "./logger";
 import chalk from "chalk";
 import deepMixin from '@oresoftware/deep.mixin';
+
 const ajv = new AJV();
 const schema = require('../assets/schema/bunion.conf.json');
 
 ///////////////////////////////////////////////////////////////////////////////
 
-
 export const getFields = (fields: any) => {
   return Object.keys(fields).reduce(function (s, k) {
-    return s += `(${k}=${String(fields[k])}) `;
+    return s + `(${k}=${String(fields[k])}) `;
   }, '');
 };
 
@@ -47,44 +47,48 @@ const getDefaultBunionConf = (): BunionConf => {
 };
 
 export const getConf = (): BunionConf => {
-
+  
   let projectRoot: string;
-
+  
   try {
     projectRoot = findProjectRoot(process.cwd());
   }
   catch (err) {
-    console.error('bunion could not find the project root given the current working directory:', process.cwd());
+    producer.error('bunion could not find the project root given the current working directory:', process.cwd());
     throw err;
   }
-
+  
   let confPath, conftemp;
-
+  
   try {
     confPath = path.resolve(projectRoot + '/' + '.bunion.js');
     conftemp = require(confPath);
   }
   catch (err) {
-    console.error('Missing ".bunion.json" file:',err.message);
+    producer.error('Missing ".bunion.json" file:', err.message);
     conftemp = {};
   }
   
   conftemp = conftemp.default || conftemp;
   
   const conf = <BunionConf>deepMixin(getDefaultBunionConf(), conftemp);
-  const valid = true;
-  // const valid = ajv.validate(schema, conf);
   
-  // console.log({conf});
-
-  if (!valid) {
-    producer.error('Your bunion configuation file has an invalid format, see the following error(s):');
-    ajv.errors.forEach(function (e) {
-      console.error(util.inspect(e));
-    });
-    throw chalk.red('Bunion configuration error - your config is invalid, see above errors.')
+  try {
+    const valid = ajv.validate(schema, conf);
+    
+    // console.log({conf});
+    
+    if (!valid) {
+      producer.warn('Your bunion configuation file has an invalid format, see the following error(s):');
+      for (const e of ajv.errors) {
+        producer.error(util.inspect(e));
+      }
+    }
   }
-
+  catch (e) {
+    console.error(e.message || e);
+  }
+  
   return conf;
   
 };
