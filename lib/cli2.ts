@@ -175,7 +175,7 @@ const onData = (d: any) => {
     writeStatusToStdout();
   }
   
-  if (d && d[0] && String(d[0]).startsWith('@bunion')) {
+  if (d && typeof d[0] === 'string' && d[0].split(':')[0] === '@bunion') {
     onJSON(d);
     return;
   }
@@ -307,7 +307,8 @@ const handleIn = (d: any) => {
   const h = con.head++;
   con.vals.set(h, d);
   
-  if (con.head - con.tail > 50000) {
+  if (con.head - con.tail > 900) {
+    con.current = Math.max(con.current, con.tail + 1);
     con.vals.delete(con.tail);
     con.tail++;
   }
@@ -522,6 +523,7 @@ const scrollUpOneLine = () => {
   let i = con.current - 1, count = 0;
   
   if (i < con.tail) {
+    // console.log('head:', con.head, 'tail:', con.tail, 'current:', con.current);
     writeToStdout('(beginning of file)');
     return;
   }
@@ -560,6 +562,7 @@ const scrollUpFive = () => {
   }
   
   if (i >= con.current) {
+    // console.log('head:', con.head, 'tail:', con.tail, 'current:', con.current);
     writeToStdout('(beginning of file)');
     return;
   }
@@ -615,7 +618,7 @@ const scrollDownFive = () => {
   }
   
   for (let v = 0; v < i; v++) {
-    onData(con.vals.get(con.current++));
+    onData(con.vals.get(++con.current));
   }
   
 };
