@@ -45,7 +45,8 @@ let opts: any, parser = dashdash.createParser({options: options}, {allowUnknown}
 
 try {
   opts = parser.parse(process.argv);
-} catch (e) {
+}
+catch (e) {
   consumer.error('bunion: error: %s', e.message);
   process.exit(1);
 }
@@ -60,7 +61,6 @@ const flattenDeep = function (a: Array<string>): Array<string> {
   return a.reduce((acc, val) => Array.isArray(val) ? acc.concat(flattenDeep(val)) : acc.concat(val), []);
 };
 
-
 const bunionConf = getConf();
 
 // console.log(bunionConf);
@@ -72,7 +72,8 @@ try {
   if (opts.filter) {
     filter = JSON.parse(opts.filter);
   }
-} catch (err) {
+}
+catch (err) {
   consumer.error('Bunion could not parse your filter option (JSON) at the command line.');
   throw err;
 }
@@ -81,7 +82,8 @@ try {
   Object.keys(filter).forEach(function (k) {
     filter[k] = new RegExp(filter[k]);
   });
-} catch (err) {
+}
+catch (err) {
   consumer.error('Bunion could not convert your filter option values to RegExp.');
   throw err;
 }
@@ -202,13 +204,15 @@ const bunionHomeFiles = path.resolve(bunionHome + '/files');
 
 try {
   fs.mkdirSync(bunionHome);
-} catch (err) {
+}
+catch (err) {
 
 }
 
 try {
   fs.mkdirSync(bunionHomeFiles);
-} catch (e) {
+}
+catch (e) {
 
 }
 
@@ -299,7 +303,8 @@ process.once('exit', code => {
   
   if (container.keepLogFile) {
     consumer.info('Log file path:', logfile);
-  } else {
+  }
+  else {
     fs.unlinkSync(logfile);
   }
   
@@ -426,21 +431,46 @@ const closeStdin = () => {
 const transformKeys = bunionConf.consumer.transform && bunionConf.consumer.transform.keys;
 const transformers = Object.keys(transformKeys || {});
 
+const sym = Symbol('cannot find me.');
+
+const getId = (v: any): string => {
+  if (v && typeof v[0] === 'string') {
+    return v[0].split(':')[0];  //   ["@app:version", x,y,z]
+  }
+  if (v && v.id && typeof v.id === 'string') {
+    return v.id.split(':')[0]
+  }
+  
+  return <any>sym;
+  
+};
+
+const runTransform = (v: any, t: any): boolean => {
+  
+  const c = t.transformToBunionFormat(v);
+  
+  if (c && typeof c === 'object') {
+    c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
+    onStandardizedJSON(c);
+    return true;
+  }
+  
+};
+
 const onBunionUnknownJSON = (v: any) => {
   
+  const t = transformKeys[getId(v)];
+  
+  if (runTransform(v, t)) {
+    return;
+  }
   
   for (let k of transformers) {
     
     const t = transformKeys[k];
     
-    if (t.identifyViaJSObject(v)) {
-      const c = t.transformToBunionFormat(v);
-      if (c) {
-        c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
-        onStandardizedJSON(c);
-        return;
-      }
-      
+    if (t && t.identifyViaJSObject(v) && runTransform(v, t)) {
+      return true;
     }
     
   }
@@ -541,7 +571,6 @@ const onStandardizedJSON = (v: BunionJSON) => {
     return;
   }
   
-  
   // container.currentBytes = (container.piper && container.piper.bytesRead) || container.currentBytes;
   
   if (!(v && v['@bunion'] === true)) {
@@ -574,13 +603,11 @@ const onStandardizedJSON = (v: BunionJSON) => {
     throw new Error('Bunion JSON should have raw json bytes property: ' + util.inspect(v));
   }
   
-  
   // since we always log something after this line, we can add it here
   
   if (container.mode !== BunionMode.SEARCHING) {
     container.prevStart += ((v as any)[RawJSONBytesSymbol] + 1);
   }
-  
   
   matchCount++;
   let fields = '';
@@ -588,11 +615,13 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  } else if (output === 'medium') {
+  }
+  else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  } else {
+  }
+  else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -849,7 +878,8 @@ const findLast = (logfilefd: number) => {
     let val = null;
     try {
       val = getValue(JSON.parse(l));
-    } catch (err) {
+    }
+    catch (err) {
       continue;
     }
     
@@ -878,7 +908,6 @@ const getMinBytes = () => {
   const columns = process.stdout.columns;
   return rows * columns * 4;
 };
-
 
 const scrollUpOriginal = () => {
   
@@ -916,13 +945,11 @@ const scrollUpOriginal = () => {
   
 };
 
-
 const scrollUp2 = () => {
   
   // unpipePiper();
   // clearLine();
   // console.log(getMinBytes());
-  
   
   if (container.prevStart <= 1000) {
     container.prevStart = 0;
@@ -931,7 +958,6 @@ const scrollUp2 = () => {
     writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file - scrolling up) '));
     return;
   }
-  
   
   let i = process.stdout.rows;
   while (i > 0) {
@@ -1002,9 +1028,7 @@ const scrollUp2 = () => {
   
 };
 
-
 const scrollUp = () => {
-  
   
   if (container.prevStart <= 0) {
     container.prevStart = 0;
@@ -1013,7 +1037,6 @@ const scrollUp = () => {
     writeToStdout(chalk.bgBlack.whiteBright(' (beginning of file - scrolling up) '));
     return;
   }
-  
   
   const logfilefd = fs.openSync(logfile, fs.constants.O_RDWR);
   let ps = container.prevStart - 9500, abs = 9500;
@@ -1196,7 +1219,6 @@ if (process.stdout.isTTY) {
     strm.setRawMode(true);
     
     strm.on('data', (d: any) => {
-      
       
       createTimeout();
       container.lastUserEvent = Date.now();

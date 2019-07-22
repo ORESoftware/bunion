@@ -5,3 +5,4 @@
 // console.log(firstLineBytes);
 
 
+console.log('age:'.split(':')[0])

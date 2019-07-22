@@ -14,35 +14,38 @@ import {consumer} from "./logger";
 import {ReadStream} from "tty";
 import Timer = NodeJS.Timer;
 
-
 process.on('uncaughtException', (e: any) => {
+  console.error();
   consumer.error('Uncaught exception:', e || e);
 });
 
 process.on('unhandledRejection', (e: any) => {
+  console.error();
   consumer.error('Unhandled rejection:', e || e);
 });
 
 process.on('SIGINT', function () {
+  console.error();
   consumer.warn('SIGINT received.');
 });
 
 process.on('SIGHUP', function () {
+  console.error();
   consumer.warn('SIGHUP received.');
 });
 
 process.on('SIGTERM', function () {
+  console.error();
   consumer.warn('SIGTERM received.');
 });
-
 
 const maxIndex = 1;
 const output = 'medium' || 'short';
 const highlight = Boolean(true);
 const darkBackground = Boolean(true);
 
-
 const con = {
+  fullTrace: false,
   tail: 0,
   keepLogFile: false,
   vals: new Map<number, any>(),
@@ -60,12 +63,10 @@ const con = {
   
 };
 
-
 const replacer = function (match: any) {
   // p1 is nondigits, p2 digits, and p3 non-alphanumerics
   return chalk.redBright.bold(match);
 };
-
 
 const getHighlightedString = (match: string) => {
   if (con.searchTerm !== '') {
@@ -74,7 +75,6 @@ const getHighlightedString = (match: string) => {
   
   return match;
 };
-
 
 const clearLine = () => {
   readline.clearLine(process.stdout, 0);  // clear current text
@@ -112,30 +112,60 @@ const writeToStdout = (...args: string[]) => {
   }
 };
 
-
 const bunionConf = getConf();
-
 
 const transformKeys = bunionConf.consumer.transform && bunionConf.consumer.transform.keys;
 const transformers = Object.keys(transformKeys || {});
 
+const sym = Symbol('cannot find me.');
 
-const onBunionUnknownJSON = (v: any) => {
+const getId = (v: any): string => {
+  if (v && typeof v[0] === 'string') {
+    return v[0].split(':')[0];  //   ["@app:version", x,y,z]
+  }
+  if (v && v.id && typeof v.id === 'string') {
+    return v.id.split(':')[0]
+  }
+  
+  return <any>sym;
+  
+};
+
+const runTransform = (v: any, t: any): boolean => {
+  
+  const c = t.transformToBunionFormat(v);
+  
+  if (c && typeof c === 'object') {
+    c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
+    onStandardizedJSON(c);
+    return true;
+  }
+  
+};
+
+const onBunionUnknownJSON = (v: any): void => {
+  
+  const t = transformKeys[getId(v)];
+  
+  if (t && runTransform(v, t)) {
+    return;
+  }
   
   for (let k of transformers) {
     
     const t = transformKeys[k];
-    if (t.identifyViaJSObject(v)) {
-      const c = t.transformToBunionFormat(v);
-      if (c) {
-        c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
-        onStandardizedJSON(c);
+    
+    if (t && typeof t.identifyViaJSObject === 'function' && t.identifyViaJSObject(v)) {
+      if (runTransform(v, t)) {
         return;
       }
+      
     }
+    
   }
   
   writeToStdout(util.inspect(v));
+  
 };
 
 const onData = (d: any) => {
@@ -154,7 +184,6 @@ const onData = (d: any) => {
   
 };
 
-
 const onJSON = (v: Array<any>) => {
   return onStandardizedJSON({
     '@bunion': true,
@@ -169,13 +198,11 @@ const onJSON = (v: Array<any>) => {
   });
 };
 
-
 const getDarkOrlight = (str: string) => {
   return darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;
 };
 
 const onStandardizedJSON = (v: BunionJSON) => {
-  
   
   if (con.mode === BunionMode.CLOSED) {
     return;
@@ -193,7 +220,6 @@ const onStandardizedJSON = (v: BunionJSON) => {
   
   const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(v.value);
   
-  
   if (!(v as any)[RawJSONBytesSymbol]) {
     throw new Error('Bunion JSON should have raw json bytes property: ' + util.inspect(v));
   }
@@ -205,11 +231,13 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  } else if (output === 'medium') {
+  }
+  else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  } else {
+  }
+  else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -259,7 +287,6 @@ const onStandardizedJSON = (v: BunionJSON) => {
     );
   }
   
-  
   let searchTermStr = ' ';
   
   if (con.stopOnNextMatch && isMatched) {
@@ -271,8 +298,11 @@ const onStandardizedJSON = (v: BunionJSON) => {
   
 };
 
-
 const handleIn = (d: any) => {
+  
+  if (!d) {
+    throw 'Should always be defined.'
+  }
   
   const h = con.head++;
   con.vals.set(h, d);
@@ -293,7 +323,6 @@ const parser = process.stdin.resume()
   .on('string', handleIn)
   .on('data', handleIn);
 
-
 const onTimeout = () => {
   console.log('TIMED OUT.');
   parser.destroy();
@@ -304,7 +333,6 @@ const createTimeout = () => {
   clearTimeout(con.to);
   con.to = setTimeout(onTimeout, con.timeout);
 };
-
 
 const resume = () => {
   
@@ -317,19 +345,16 @@ const resume = () => {
     case BunionMode.READING:
       return;
     
-    
     case BunionMode.CLOSED:
       con.mode = BunionMode.READING;
       createTimeout();
       return;
-    
     
     default:
       writeStatusToStdout();
   }
   
 };
-
 
 const ctrlChars = new Set([
   '\t', // tab
@@ -343,7 +368,6 @@ const ctrlChars = new Set([
   '\u0012',  // r
   '\u001b\r'  // alt-return (might need to be \u001b\\r with escaped slash
 ]);
-
 
 const levelMap = new Map([
   ['6', BunionLevelToNum.FATAL],
@@ -366,7 +390,6 @@ const createLoggedBreak = (m: string) => {
   console.log();
 };
 
-
 const doTailing = (startPoint?: number) => {
   
   con.mode = BunionMode.TAILING;
@@ -388,11 +411,9 @@ const doTailing = (startPoint?: number) => {
     
   }
   
-  
   if (con.mode === <any>BunionMode.SEARCHING) {
     return;
   }
-  
   
   clearLine();   // remove later, do not need
   createLoggedBreak('[ctrl-p]');  // remove later, do not need
@@ -401,13 +422,11 @@ const doTailing = (startPoint?: number) => {
   
 };
 
-
 const startReading = () => {
   clearLine();
   createLoggedBreak('[ctrl-p]');
   con.mode = BunionMode.READING;
 };
-
 
 const getValue = (v: any) => {
   
@@ -443,7 +462,6 @@ const getValue = (v: any) => {
   
 };
 
-
 const findLatestMatch = () => {
   
   if (con.searchTerm === '') {
@@ -465,7 +483,8 @@ const findLatestMatch = () => {
     
     try {
       val = getValue(v);
-    } catch (err) {
+    }
+    catch (err) {
       continue;
     }
     
@@ -477,10 +496,8 @@ const findLatestMatch = () => {
       break;
     }
     
-    
     i--;
   }
-  
   
   if (matched) {
     con.current = i + 5;
@@ -489,7 +506,6 @@ const findLatestMatch = () => {
     return;
   }
   
-  
   clearLine();
   writeToStdout('Could not find anything matching:', con.searchTerm);
   con.stopOnNextMatch = true;
@@ -497,7 +513,6 @@ const findLatestMatch = () => {
   // doTailing(startPoint);
   
 };
-
 
 const scrollUpOneLine = () => {
   
@@ -531,7 +546,6 @@ const scrollUpOneLine = () => {
   
 };
 
-
 const scrollUpFive = () => {
   
   const rows = process.stdout.rows + 1;
@@ -549,7 +563,6 @@ const scrollUpFive = () => {
     writeToStdout('(beginning of file)');
     return;
   }
-  
   
   while (count < rows && i >= con.tail) {
     lines.push(con.vals.get(i));
@@ -571,7 +584,6 @@ const scrollUpFive = () => {
   
 };
 
-
 const scrollDown = () => {
   
   let next = con.current + 1;
@@ -581,8 +593,10 @@ const scrollDown = () => {
     return;
   }
   
-  
-  onData(con.vals.get(++con.current))
+  if (con.vals.has(next)) {
+    con.current = next;
+    onData(con.vals.get(next));
+  }
   
 };
 
@@ -605,7 +619,6 @@ const scrollDownFive = () => {
   }
   
 };
-
 
 const handleSearchTermTyping = (d: string) => {
   clearLine();
@@ -633,15 +646,12 @@ const handleShutdown = (signal: string) => () => {
 const handleCtrlC = handleShutdown('ctrl-c');
 const handleCtrlD = handleShutdown('ctrl-d');
 
-
 const handleUserInput = () => {
-  
   
   const strm = new ReadStream(<any>1);   // previously fd =  fs.open('/dev/tty','r+')
   strm.setRawMode(true);
   
   strm.on('data', (d: any) => {
-    
     
     createTimeout();
     
@@ -672,7 +682,6 @@ const handleUserInput = () => {
       handleCtrlD();
       return;
     }
-    
     
     con.sigCount = 0;
     
@@ -806,7 +815,6 @@ const handleUserInput = () => {
   });
   
 };
-
 
 if (process.stdout.isTTY) {
   handleUserInput();

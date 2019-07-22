@@ -4,11 +4,14 @@ const t = {
   
   keys: {
     
-    foo: {
+    '@truvia': {
+      
       identifyViaRawStr() {
         return true;
       },
+      
       identifyViaJSObject(v) {
+        throw 'fark';
         return v && v['id'] === '@truvia';
       },
       
@@ -17,7 +20,6 @@ const t = {
       },
       
       transformToBunionFormat(v) {
-        
         return {
           '@bunion': true,
           appName: v.appName,
