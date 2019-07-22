@@ -36,6 +36,13 @@ process.on('SIGTERM', function () {
   consumer.warn('SIGTERM received.');
 });
 
+
+process.on('SIGPIPE', () => {
+  console.error();
+  consumer.warn('SIGPIPE received.');
+});
+
+
 const maxIndex = 1;
 const output = 'medium' || 'short';
 const highlight = Boolean(true);
@@ -318,7 +325,14 @@ const handleIn = (d: any) => {
   }
 };
 
+
+const onStdinEnd = () => {
+  con.mode = BunionMode.SEARCHING;
+  console.log('stdin end');
+};
+
 const parser = process.stdin.resume()
+  .once('end', onStdinEnd)
   .pipe(createRawParser())
   .on('string', handleIn)
   .on('data', handleIn);
@@ -695,15 +709,22 @@ const handleSearchTermTyping = (d: string) => {
 };
 
 const handleShutdown = (signal: string) => () => {
-  console.log();
-  consumer.warn(`User hit ${signal}.`);
+  con.mode = BunionMode.SEARCHING;
+  
+  clearLine();
+
   if (con.sigCount++ === 1) {
+    consumer.warn(`User hit ${signal}, now exiting.`);
     if (signal === 'ctrl-d') {
       con.keepLogFile = true;
     }
+    console.log();
     process.exit(1);
     return;
   }
+  
+  console.log();
+  consumer.warn(`User hit ${signal}.`);
   consumer.warn('Hit ctrl-d/ctrl-c again to exit. Use ctrl-d to keep the log file, ctrl-c will delete it.');
 };
 
