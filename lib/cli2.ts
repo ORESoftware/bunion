@@ -307,10 +307,9 @@ const handleIn = (d: any) => {
   const h = con.head++;
   con.vals.set(h, d);
   
-  if (con.head - con.tail > 900) {
-    con.current = Math.max(con.current, con.tail + 1);
+  while(con.head - con.tail > 90){
     con.vals.delete(con.tail);
-    con.tail++;
+    con.current = Math.max(con.current, ++con.tail);
   }
   
   if (con.mode === BunionMode.READING) {
