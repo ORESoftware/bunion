@@ -469,8 +469,8 @@ const findLatestMatch = () => {
       continue;
     }
     
-    clearLine();
-    writeToStdout('Searching line:', String(i));
+    // clearLine();
+    // writeToStdout('Searching line:', String(i));
     
     if (r.test(val)) {
       matched = true;
