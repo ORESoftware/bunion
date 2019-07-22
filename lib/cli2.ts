@@ -1,14 +1,11 @@
 'use strict';
 
 import {createRawParser} from "./json-parser";
-import {BunionMode} from "./bunion";
-import {BunionJSON} from "./bunion";
-import {BunionLevelToNum} from "./bunion";
+import {BunionJSON, BunionLevelToNum, BunionMode} from "./bunion";
 import {RawJSONBytesSymbol} from "@oresoftware/json-stream-parser";
 import * as util from "util";
 import chalk from "chalk";
-import {getFields} from "./utils";
-import {getConf} from "./utils";
+import {getConf, getFields} from "./utils";
 import * as readline from "readline";
 import {consumer} from "./logger";
 import {ReadStream} from "tty";
@@ -171,8 +168,11 @@ const onBunionUnknownJSON = (v: any): void => {
 const onData = (d: any) => {
   
   if (typeof d === 'string') {
-    console.log(d);
-    writeStatusToStdout();
+    if(d){
+      console.log(d);
+      writeStatusToStdout();
+    }
+    return;
   }
   
   if (d && typeof d[0] === 'string' && d[0].split(':')[0] === '@bunion') {
@@ -307,7 +307,7 @@ const handleIn = (d: any) => {
   const h = con.head++;
   con.vals.set(h, d);
   
-  while(con.head - con.tail > 90){
+  while (con.head - con.tail > 9000) {
     con.vals.delete(con.tail);
     con.current = Math.max(con.current, ++con.tail);
   }
@@ -428,7 +428,51 @@ const startReading = () => {
   con.mode = BunionMode.READING;
 };
 
-const getValue = (v: any) => {
+const getValFromTransform = (t: any, v: any): string => {
+  
+  let val = '';
+  
+  try {
+    if (typeof t.identifyViaJSObject === 'function' && t.identifyViaJSObject(v)) {
+      if (typeof t.getValue === 'function') {
+        val = t.getValue(v);
+      }
+    }
+  }
+  catch (err) {
+    consumer.error(err);
+  }
+  
+  if (typeof val === 'string') {
+    return val;
+  }
+  
+  return util.inspect(val);
+  
+};
+
+const getValFromTransformAlreadyIdentified = (t: any, v: any): string => {
+  
+  let val = '';
+  
+  try {
+    if (typeof t.getValue === 'function') {
+      val = t.getValue(v);
+    }
+  }
+  catch (err) {
+    consumer.error(err);
+  }
+  
+  if (typeof val === 'string') {
+    return val;
+  }
+  
+  return util.inspect(v);
+  
+};
+
+const getValue = (v: any): string => {
   
   if (!(v && typeof v === 'object')) {
     return typeof v === 'string' ? v : String(v);
@@ -440,19 +484,36 @@ const getValue = (v: any) => {
     return z;
   }
   
+  const t = transformKeys[getId(v)];
+  
+  let val = '';
+  
+  if (t) {
+    
+    try {
+      val = getValFromTransformAlreadyIdentified(t, v);
+    }
+    catch (e) {
+      consumer.warn(e);
+    }
+    
+    if (val) {
+      return val;
+    }
+  }
+  
   for (let k of transformers) {
     
     const t = transformKeys[k];
     
-    let val = '';
-    
-    if (t.identifyViaJSObject(v)) {
-      if (typeof t.getValue === 'function') {
-        val = t.getValue(v);
-      }
+    try {
+      val = getValFromTransform(t, v);
+    }
+    catch (e) {
+      consumer.warn(e);
     }
     
-    if (val && typeof val === 'string') {
+    if (val) {
       return val;
     }
     
@@ -485,13 +546,14 @@ const findLatestMatch = () => {
       val = getValue(v);
     }
     catch (err) {
-      continue;
+      // ignore
+      console.error(err);
     }
     
     // clearLine();
     // writeToStdout('Searching line:', String(i));
     
-    if (r.test(val)) {
+    if (val && r.test(val)) {
       matched = true;
       break;
     }
@@ -506,7 +568,6 @@ const findLatestMatch = () => {
     return;
   }
   
-  clearLine();
   writeToStdout('Could not find anything matching:', con.searchTerm);
   con.stopOnNextMatch = true;
   con.mode = BunionMode.SEARCHING;
@@ -566,6 +627,7 @@ const scrollUpFive = () => {
     return;
   }
   
+  
   while (count < rows && i >= con.tail) {
     lines.push(con.vals.get(i));
     count++;
@@ -574,7 +636,7 @@ const scrollUpFive = () => {
   
   const ln = lines.length;
   
-  for (let i = 0; i < (rows + 1 - ln); i++) {
+  for (let i = 0; i < (rows - ln); i++) {
     process.stdout.write('\n');
   }
   
@@ -710,7 +772,7 @@ const handleUserInput = () => {
       return;
     }
     
-    if (String(d) === '\u0001') {
+    if (String(d) === '\u0001') {  // ctrl-a
       if (con.mode !== BunionMode.FIND_LAST) {
         con.mode = BunionMode.FIND_LAST;
         findLatestMatch();

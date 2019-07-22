@@ -11,7 +11,7 @@ const t = {
       },
       
       identifyViaJSObject(v) {
-        throw 'fark';
+        throw new Error('fark');
         return v && v['id'] === '@truvia';
       },
       
