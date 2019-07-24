@@ -45,6 +45,7 @@ const getDefaultMaxLevel = () => {
 
 const maxLevel = String(getDefaultMaxLevel()).toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel);
+const forceRaw  = bunionConf.producer.forceRaw;
 
 if (maxIndex < 0) {
   throw new Error(
@@ -99,7 +100,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     return util.inspect(a, utilOpts); //+ '\n';
   });
   
-  if (process.stdout.isTTY && !opt) {
+  if (!forceRaw && process.stdout.isTTY && !opt) {
     return logTTY(3, 'short', {
       appName,
       level: level as BunionLevelInternal,

@@ -25,6 +25,7 @@ const getDefaultBunionConf = (): BunionConf => {
     producer: {
       name: 'default',
       appName: 'default',
+      forceRaw: false,
       level: BunionLevelInternal.TRACE,
       inspect: {
         array: {
@@ -33,7 +34,8 @@ const getDefaultBunionConf = (): BunionConf => {
         object: {
           depth: 5
         }
-      }
+      },
+      fields: {}
     },
     consumer: {
       localeDateString: 'en-US',

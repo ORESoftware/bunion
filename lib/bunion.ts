@@ -69,6 +69,7 @@ export interface BunionConf {
   producer: {
     name?: string
     appName?: string
+    forceRaw?: boolean,
     level?: BunionLevel
     inspect?: {
       array?: {
@@ -78,6 +79,7 @@ export interface BunionConf {
         depth?: number
       }
     },
+    fields: { [key: string]: any },
     getHostNameSync?: () => string
   },
   consumer: {

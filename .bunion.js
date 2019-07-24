@@ -40,17 +40,22 @@ const t = {
 exports.default = {
   
   producer: {
-    'name': 'bob',
-    'appName': 'foobar',
-    'level': 'TRACE',
+    forceRaw: true,
+    name: 'bob',
+    appName: 'foobar',
+    level: 'TRACE',
     getHostNameSync() {
       return 'foobarx'
+    },
+    fields: {
+      logStream: 'log-stream',
+      logGroup: 'log-group'
     }
   },
   
   consumer: {
-    'highlightMatches': true,
-    'level': "TRACE",
+    highlightMatches: true,
+    level: "TRACE",
     transform: t,
   }
 };

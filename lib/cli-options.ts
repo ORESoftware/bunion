@@ -7,6 +7,11 @@ export default [
     help: 'Print tool version and exit.'
   },
   {
+    name: 'raw',
+    type: 'bool',
+    help: 'Force raw JSON output.'
+  },
+  {
     names: ['help'],
     type: 'bool',
     help: 'Print help and exit.'
