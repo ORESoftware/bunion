@@ -51,7 +51,7 @@ const getRandomStr = () => {
     fields: {a: 'foo', b: 5}
   }));
   
-  setTimeout(run, 80);
+  setTimeout(run, Math.floor(10 + Math.random() * 10));
   
 })();
 

@@ -43,7 +43,10 @@ const getDefaultBunionConf = (): BunionConf => {
       level: BunionLevelInternal.TRACE,
       match: [],
       matchAny: [],
-      matchAll: []
+      matchAll: [],
+      transform: {
+        keys: {}
+      }
     }
   }
 };
@@ -54,8 +57,7 @@ export const getConf = (): BunionConf => {
   
   try {
     projectRoot = findProjectRoot(process.cwd());
-  }
-  catch (err) {
+  } catch (err) {
     producer.error('bunion could not find the project root given the current working directory:', process.cwd());
     throw err;
   }
@@ -65,8 +67,7 @@ export const getConf = (): BunionConf => {
   try {
     confPath = path.resolve(projectRoot + '/' + '.bunion.js');
     conftemp = require(confPath);
-  }
-  catch (err) {
+  } catch (err) {
     producer.error('Missing ".bunion.json" file:', err.message);
     conftemp = {};
   }
@@ -86,8 +87,7 @@ export const getConf = (): BunionConf => {
         producer.error(util.inspect(e));
       }
     }
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e.message || e);
   }
   

@@ -131,7 +131,8 @@ const getId = (v: any): string => {
     return v.id.split(':')[0]
   }
   
-  return <any>sym;
+  // return <any>sym;
+  return '';
   
 };
 
@@ -144,6 +145,8 @@ const runTransform = (v: any, t: any): boolean => {
     onStandardizedJSON(c);
     return true;
   }
+  
+  
   
 };
 
@@ -175,9 +178,11 @@ const onBunionUnknownJSON = (v: any): void => {
 const onData = (d: any) => {
   
   if (typeof d === 'string') {
-    if(d){
+    if (d) {
+      clearLine();
       console.log(d);
-      writeStatusToStdout();
+      const isMatched =  con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(d);
+      handleSearchTermMatched(isMatched)
     }
     return;
   }
@@ -204,6 +209,20 @@ const onJSON = (v: Array<any>) => {
     [RawJSONBytesSymbol]: v[<any>RawJSONBytesSymbol]
   });
 };
+
+const handleSearchTermMatched =(isMatched: boolean) => {
+  
+  let searchTermStr = ' ';
+  
+  if (con.stopOnNextMatch && isMatched) {
+    con.mode = BunionMode.SEARCHING;
+    searchTermStr = ` Stopped on match. `;
+  }
+  
+  writeStatusToStdout(searchTermStr);
+  
+};
+
 
 const getDarkOrlight = (str: string) => {
   return darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;
@@ -238,13 +257,11 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  }
-  else if (output === 'medium') {
+  } else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  }
-  else {
+  } else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -294,14 +311,7 @@ const onStandardizedJSON = (v: BunionJSON) => {
     );
   }
   
-  let searchTermStr = ' ';
-  
-  if (con.stopOnNextMatch && isMatched) {
-    con.mode = BunionMode.SEARCHING;
-    searchTermStr = ` Stopped on match. `;
-  }
-  
-  writeStatusToStdout(searchTermStr);
+   handleSearchTermMatched(isMatched);
   
 };
 
@@ -312,6 +322,11 @@ const handleIn = (d: any) => {
   }
   
   const h = con.head++;
+  
+  if (con.mode === BunionMode.READING) {
+    con.current = h;
+  }
+  
   con.vals.set(h, d);
   
   while (con.head - con.tail > 9000) {
@@ -320,7 +335,6 @@ const handleIn = (d: any) => {
   }
   
   if (con.mode === BunionMode.READING) {
-    con.current = h;
     onData(d);
   }
 };
@@ -452,8 +466,7 @@ const getValFromTransform = (t: any, v: any): string => {
         val = t.getValue(v);
       }
     }
-  }
-  catch (err) {
+  } catch (err) {
     consumer.error(err);
   }
   
@@ -473,8 +486,7 @@ const getValFromTransformAlreadyIdentified = (t: any, v: any): string => {
     if (typeof t.getValue === 'function') {
       val = t.getValue(v);
     }
-  }
-  catch (err) {
+  } catch (err) {
     consumer.error(err);
   }
   
@@ -506,8 +518,7 @@ const getValue = (v: any): string => {
     
     try {
       val = getValFromTransformAlreadyIdentified(t, v);
-    }
-    catch (e) {
+    } catch (e) {
       consumer.warn(e);
     }
     
@@ -522,8 +533,7 @@ const getValue = (v: any): string => {
     
     try {
       val = getValFromTransform(t, v);
-    }
-    catch (e) {
+    } catch (e) {
       consumer.warn(e);
     }
     
@@ -558,8 +568,7 @@ const findLatestMatch = () => {
     
     try {
       val = getValue(v);
-    }
-    catch (err) {
+    } catch (err) {
       // ignore
       console.error(err);
     }
@@ -712,7 +721,7 @@ const handleShutdown = (signal: string) => () => {
   con.mode = BunionMode.SEARCHING;
   
   clearLine();
-
+  
   if (con.sigCount++ === 1) {
     consumer.warn(`User hit ${signal}, now exiting.`);
     if (signal === 'ctrl-d') {
