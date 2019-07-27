@@ -62,13 +62,15 @@ export const getConf = (): BunionConf => {
     throw err;
   }
   
+  projectRoot = projectRoot || process.cwd();
+  
   let confPath, conftemp;
   
   try {
     confPath = path.resolve(projectRoot + '/' + '.bunion.js');
     conftemp = require(confPath);
   } catch (err) {
-    producer.error('Missing ".bunion.json" file:', err.message);
+    producer.error('Missing ".bunion.js" file:', err.message);
     conftemp = {};
   }
   
