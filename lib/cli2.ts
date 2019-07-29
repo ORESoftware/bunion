@@ -63,6 +63,7 @@ const con = {
   sigCount: 0,
   lastUserEvent: null as number,
   to: null as Timer,
+  searchRegex: null as RegExp,
   timeout: 55500  // 45 seconds
   
 };
@@ -147,7 +148,6 @@ const runTransform = (v: any, t: any): boolean => {
   }
   
   
-  
 };
 
 const onBunionUnknownJSON = (v: any): void => {
@@ -180,8 +180,8 @@ const onData = (d: any) => {
   if (typeof d === 'string') {
     if (d) {
       clearLine();
-      console.log(d);
-      const isMatched =  con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(d);
+      console.log(getHighlightedString(d));
+      const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(d);
       handleSearchTermMatched(isMatched)
     }
     return;
@@ -210,7 +210,7 @@ const onJSON = (v: Array<any>) => {
   });
 };
 
-const handleSearchTermMatched =(isMatched: boolean) => {
+const handleSearchTermMatched = (isMatched: boolean) => {
   
   let searchTermStr = ' ';
   
@@ -311,7 +311,7 @@ const onStandardizedJSON = (v: BunionJSON) => {
     );
   }
   
-   handleSearchTermMatched(isMatched);
+  handleSearchTermMatched(isMatched);
   
 };
 
@@ -675,7 +675,7 @@ const scrollDown = () => {
   
   let next = con.current + 1;
   
-  if (next > con.head) {
+  if (next >= con.head) { // makes no sense, should be next > con.head, but works?
     writeToStdout('(Current end of file)');
     return;
   }
@@ -708,12 +708,24 @@ const scrollDownFive = () => {
 };
 
 const handleSearchTermTyping = (d: string) => {
+  
   clearLine();
+  
   if (ctrlChars.has(String(d))) {
     consumer.warn('ctrl command ignored.');
     return;
   }
-  con.searchTerm += String(d);
+  
+  const newSearchTerm = con.searchTerm + String(d);
+  
+  try {
+    con.searchRegex = new RegExp(newSearchTerm, 'ig');
+  } catch (e) {
+    consumer.warn('Could not create regex from string:', newSearchTerm);
+    return;
+  }
+  
+  con.searchTerm = newSearchTerm;
   writeToStdout('Search term:', con.searchTerm);
 };
 
