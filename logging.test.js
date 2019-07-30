@@ -51,6 +51,9 @@ const getRandomStr = () => {
     fields: {a: 'foo', b: 5}
   }));
   
+  console.log('this is the real zone, this is not fantasy.');
+  console.log('easy come easy go.');
+  
   setTimeout(run, Math.floor(10 + Math.random() * 10));
   
 })();

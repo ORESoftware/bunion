@@ -13,7 +13,7 @@ export interface ParserOptions {
 }
 
 export const  createRawParser = () => {
-  return new JSONParser({includeByteCount: true, emitNonJSON: true});
+  return new JSONParser({includeByteCount: true, emitNonJSON: true, includeRawString: true});
 };
 
 

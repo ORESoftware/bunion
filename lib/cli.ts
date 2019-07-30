@@ -2,7 +2,7 @@
 
 import {createRawParser} from "./json-parser";
 import {BunionJSON, BunionLevelToNum, BunionMode} from "./bunion";
-import {RawJSONBytesSymbol} from "@oresoftware/json-stream-parser";
+import {RawJSONBytesSymbol, RawStringSymbol} from "@oresoftware/json-stream-parser";
 import * as util from "util";
 import chalk from "chalk";
 import {getConf, getFields} from "./utils";
@@ -10,6 +10,13 @@ import * as readline from "readline";
 import {consumer} from "./logger";
 import {ReadStream} from "tty";
 import Timer = NodeJS.Timer;
+import uuid = require("uuid");
+import {LinkedQueue} from "@oresoftware/linked-queue";
+import * as fs from "fs";
+import * as path from "path";
+import * as cp from 'child_process';
+import {LinkedQueueValue} from "@oresoftware/linked-queue";
+
 
 process.on('uncaughtException', (e: any) => {
   console.error();
@@ -43,6 +50,33 @@ process.on('SIGPIPE', () => {
 });
 
 
+const dirId = uuid.v4();
+const bunionHome = path.resolve(process.env.HOME + '/.bunion');
+const runs = path.resolve(bunionHome + '/runs');
+const runId = path.resolve(runs + '/' + dirId);
+const logFileId = path.resolve(runId + '/run.log');
+const rawFileId = path.resolve(runId + '/raw.log');
+// const fileDir = path.resolve(runId + '/files');
+
+try {
+  fs.mkdirSync(bunionHome);
+} catch (err) {
+
+}
+
+try {
+  fs.mkdirSync(runs);
+} catch (e) {
+
+}
+
+try {
+  fs.mkdirSync(runId);
+} catch (e) {
+
+}
+
+
 const maxIndex = 1;
 const output = 'medium' || 'short';
 const highlight = Boolean(true);
@@ -67,6 +101,23 @@ const con = {
   timeout: 55500  // 45 seconds
   
 };
+
+const rawFD = fs.openSync(rawFileId, 'w+');
+
+process.once('exit', code => {
+  
+  fs.closeSync(rawFD);
+  // fs.unlinkSync(rawFileId);
+  
+  if (con.keepLogFile) {
+    consumer.info('Log file path:', logFileId);
+  } else {
+    fs.unlinkSync(logFileId);
+  }
+  
+  consumer.info('exiting with code:', code);
+});
+
 
 const replacer = function (match: any) {
   // p1 is nondigits, p2 digits, and p3 non-alphanumerics
@@ -104,7 +155,7 @@ const writeStatusToStdout = (searchTermStr?: string) => {
   
   writeToStdout(
     chalk.bgBlack.whiteBright(
-      ` # Mode: ${con.mode},${searchTermStr}Log level: ${con.logLevel}, ${currentSearchTerm} ${stopMsg}`
+      ` Line # ${con.current}, mode: ${con.mode},${searchTermStr}Log level: ${con.logLevel}, ${currentSearchTerm} ${stopMsg}`
     )
   );
   
@@ -121,8 +172,6 @@ const bunionConf = getConf();
 
 const transformKeys = bunionConf.consumer.transform && bunionConf.consumer.transform.keys;
 const transformers = Object.keys(transformKeys || {});
-
-const sym = Symbol('cannot find me.');
 
 const getId = (v: any): string => {
   
@@ -317,6 +366,39 @@ const onStandardizedJSON = (v: BunionJSON) => {
   
 };
 
+
+const q = new LinkedQueue();
+
+
+const writeToFile = (vals: Array<LinkedQueueValue>) => {
+  
+  const val = vals.map(lqv => {
+    
+    const v = lqv.value;
+    
+    if (v && v[RawStringSymbol]) {
+      return String(v[RawStringSymbol]).trim();
+    }
+    
+    if (typeof v === 'string') {
+      return v.trim();
+    }
+    
+    return util.inspect(v);
+    
+  });
+  
+  const raw = val.join('\n');
+  
+  fs.appendFile(logFileId, raw, (e) => {
+    e && consumer.warn(e.message || e);
+  });
+  
+};
+
+
+let pos = 0;
+
 const handleIn = (d: any) => {
   
   if (!d) {
@@ -329,16 +411,33 @@ const handleIn = (d: any) => {
     con.current = h;
   }
   
-  con.vals.set(h, d);
+  const raw = JSON.stringify(d) + '\n';
+  const byteLen = Buffer.byteLength(raw);
   
-  while (con.head - con.tail > 9000) {
-    con.vals.delete(con.tail);
-    con.current = Math.max(con.current, ++con.tail);
+  con.vals.set(h, d);
+  q.enqueue(h, d);
+  
+  try {
+    fs.writeSync(rawFD, raw, pos);
+  } catch (err) {
+    consumer.warn(err.message || err);
   }
+  
+  pos += byteLen;
+  
+  if (q.length > 100) {
+    writeToFile(q.deq(100));
+  }
+  
+  // while (con.head - con.tail > 9000) {
+  //   con.vals.delete(con.tail);
+  //   con.current = Math.max(con.current, ++con.tail);
+  // }
   
   if (con.mode === BunionMode.READING) {
     onData(d);
   }
+  
 };
 
 
@@ -419,6 +518,30 @@ const createLoggedBreak = (m: string) => {
   console.log(`${line}${m}${line}`);
   console.log();
 };
+
+
+const gotoLine = (line: number) => {
+  
+  const rows = process.stdout.rows;
+  const start = Math.max(line - rows - 1, con.tail);
+  
+  con.current = start;
+  
+  for (let i = start; i < rows + start; i++) {
+    
+    if (!con.vals.has(i)) {
+      break;
+    }
+    
+    con.current = i;
+    onData(con.vals.get(i));
+  }
+  
+  con.mode = BunionMode.SEARCHING;
+  writeStatusToStdout();
+  
+};
+
 
 const doTailing = (startPoint?: number) => {
   
@@ -771,6 +894,12 @@ const handleUserInput = () => {
       console.log({d: String(d)});
     }
     
+    if (con.mode !== BunionMode.STOPPED && con.mode !== BunionMode.PAUSED && String(d) === ':') {
+      con.mode = BunionMode.STOPPED;
+      writeToStdout(':');
+      return;
+    }
+    
     // if (String(d) === '\r' && con.mode === BunionMode.SEARCHING) {
     //   unpipePiper();
     //   clearLine();
@@ -793,9 +922,15 @@ const handleUserInput = () => {
       return;
     }
     
+    
     con.sigCount = 0;
     
-    if (String(d) === '\u0002') { // ctrl-b
+    if (String(d) === '\u0002') { // ctrl-l
+      gotoLine(0);
+      return;
+    }
+    
+    if (String(d) === '\f') { // ctrl-l
       con.searchTerm = '';
       clearLine();
       writeToStdout('Cleared search term.');
@@ -830,6 +965,12 @@ const handleUserInput = () => {
     //   doTailing();
     //   return;
     // }
+    
+    
+    if (con.mode !== BunionMode.PAUSED && String(d) === '\u001b[Z') {
+      console.log('shift tab');
+      return;
+    }
     
     if (con.mode === BunionMode.SEARCHING && String(d) === '\t') {
       con.stopOnNextMatch = true;
