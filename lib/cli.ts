@@ -86,7 +86,8 @@ const con = {
   fullTrace: false,
   tail: 0,
   keepLogFile: false,
-  vals: new Map<number, any>(),
+  fromMemory: new Map<number, any>(),
+  fromFile: new Map<number, any>(),
   current: 0 as number,
   head: 0 as number,
   mode: BunionMode.READING,
@@ -98,21 +99,24 @@ const con = {
   lastUserEvent: null as number,
   to: null as Timer,
   searchRegex: null as RegExp,
-  timeout: 55500  // 45 seconds
+  timeout: 555500  // 450 seconds
   
 };
 
 const rawFD = fs.openSync(rawFileId, 'w+');
+const logFD = fs.openSync(logFileId, 'w+');
 
 process.once('exit', code => {
   
   fs.closeSync(rawFD);
+  fs.closeSync(logFD);
+  // fs.unlinkSync(logFileId);
   // fs.unlinkSync(rawFileId);
   
   if (con.keepLogFile) {
-    consumer.info('Log file path:', logFileId);
+    consumer.info('Log file path:', rawFileId);
   } else {
-    fs.unlinkSync(logFileId);
+    fs.unlinkSync(rawFileId);
   }
   
   consumer.info('exiting with code:', code);
@@ -297,9 +301,9 @@ const onStandardizedJSON = (v: BunionJSON) => {
   
   const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(v.value);
   
-  if (!(v as any)[RawJSONBytesSymbol]) {
-    throw new Error('Bunion JSON should have raw json bytes property: ' + util.inspect(v));
-  }
+  // if (!(v as any)[RawJSONBytesSymbol]) {
+  //   throw new Error('Bunion JSON should have raw json bytes property: ' + util.inspect(v));
+  // }
   
   // since we always log something after this line, we can add it here
   
@@ -369,8 +373,29 @@ const onStandardizedJSON = (v: BunionJSON) => {
 
 const q = new LinkedQueue();
 
+const readFromFile = (pos: number): any => {
+  
+  const start = pos * 50;
+  const b = Buffer.alloc(299);
+  fs.readSync(logFD, b, 0, b.length, start);
+  const i = b.indexOf(0x00);
+  const nb = b.slice(0, i);
+  
+  try {
+    const v = JSON.parse(String(nb).trim());
+    
+    const nnb = Buffer.alloc(v.b);
+    fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
+    return JSON.parse(String(nnb).trim());
+  } catch (err) {
+    return chalk.red(err.message);
+  }
+  
+  
+};
 
-const writeToFile = (vals: Array<LinkedQueueValue>) => {
+
+const writeToFile = (vals: Array<LinkedQueueValue<any>>) => {
   
   const val = vals.map(lqv => {
     
@@ -397,7 +422,7 @@ const writeToFile = (vals: Array<LinkedQueueValue>) => {
 };
 
 
-let pos = 0;
+let pos = 0, currDel = 0;
 
 const handleIn = (d: any) => {
   
@@ -414,8 +439,9 @@ const handleIn = (d: any) => {
   const raw = JSON.stringify(d) + '\n';
   const byteLen = Buffer.byteLength(raw);
   
-  con.vals.set(h, d);
-  q.enqueue(h, d);
+  con.fromMemory.set(h, d);
+  
+  // q.enqueue(h, d);
   
   try {
     fs.writeSync(rawFD, raw, pos);
@@ -423,14 +449,25 @@ const handleIn = (d: any) => {
     consumer.warn(err.message || err);
   }
   
+  try {
+    fs.writeSync(logFD, JSON.stringify({p: pos, b: byteLen}), h * 50, 'utf-8');
+  } catch (err) {
+    consumer.warn(err.message || err);
+  }
+  
+  
   pos += byteLen;
   
-  if (q.length > 100) {
-    writeToFile(q.deq(100));
+  // if (q.length > 100) {
+  //   writeToFile(q.deq(100));
+  // }
+  
+  if (con.fromMemory.size > 90) {
+    con.fromMemory.delete(currDel++);
   }
   
   // while (con.head - con.tail > 9000) {
-  //   con.vals.delete(con.tail);
+  //   con.fromMemory.delete(con.tail);
   //   con.current = Math.max(con.current, ++con.tail);
   // }
   
@@ -529,12 +566,16 @@ const gotoLine = (line: number) => {
   
   for (let i = start; i < rows + start; i++) {
     
-    if (!con.vals.has(i)) {
+    // if (!con.fromMemory.has(i)) {
+    //   break;
+    // }
+    
+    if (i > con.head) {
       break;
     }
     
     con.current = i;
-    onData(con.vals.get(i));
+    onData(con.fromMemory.get(i) || readFromFile(i));
   }
   
   con.mode = BunionMode.SEARCHING;
@@ -555,12 +596,16 @@ const doTailing = (startPoint?: number) => {
     
     i++;
     
-    if (!con.vals.has(i)) {
+    // if (!con.fromMemory.has(i)) {
+    //   break;
+    // }
+    
+    if (i > con.head) {
       break;
     }
     
     con.current = i;
-    onData(con.vals.get(i));
+    onData(con.fromMemory.get(i) || readFromFile(i));
     
   }
   
@@ -689,7 +734,7 @@ const findLatestMatch = () => {
   
   while (i >= con.tail) {
     
-    const v = con.vals.get(i);
+    const v = con.fromMemory.get(i) || readFromFile(i);
     
     let val = null;
     
@@ -739,7 +784,7 @@ const scrollUpOneLine = () => {
   }
   
   while (count < rows && i >= con.tail) {
-    lines.push(con.vals.get(i));
+    lines.push(con.fromMemory.get(i) || readFromFile(i));
     count++;
     i--;
   }
@@ -779,7 +824,7 @@ const scrollUpFive = () => {
   
   
   while (count < rows && i >= con.tail) {
-    lines.push(con.vals.get(i));
+    lines.push(con.fromMemory.get(i) || readFromFile(i));
     count++;
     i--;
   }
@@ -807,10 +852,10 @@ const scrollDown = () => {
     return;
   }
   
-  if (con.vals.has(next)) {
-    con.current = next;
-    onData(con.vals.get(next));
-  }
+  // if (con.fromMemory.has(next)) {
+  con.current = next;
+  onData(con.fromMemory.get(next) || readFromFile(next));
+  // }
   
 };
 
@@ -829,7 +874,8 @@ const scrollDownFive = () => {
   }
   
   for (let v = 0; v < i; v++) {
-    onData(con.vals.get(++con.current));
+    let z = ++con.current;
+    onData(con.fromMemory.get(z) || readFromFile(z));
   }
   
 };
