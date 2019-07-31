@@ -12,23 +12,22 @@ export interface ParserOptions {
   clearLine: boolean
 }
 
-export const  createRawParser = () => {
-  return new JSONParser({includeByteCount: true, emitNonJSON: true, includeRawString: true});
+export const createRawParser = () => {
+  return new JSONParser({includeByteCount: true, emitNonJSON: true, includeRawString: true, delayEvery: 55});
 };
-
 
 
 export const createParser = () => {
   
   const strm = new JSONParser({includeByteCount: true, emitNonJSON: true});
   
-  strm.on('data', function (d:any) {
+  strm.on('data', function (d: any) {
     
     // if (clearLine) {
     //   readline.clearLine(process.stdout, 0);  // clear current text
     //   readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
     // }
-  
+    
     if (d && d[0] && String(d[0]).startsWith('@bunion')) {
       strm.emit('bunion-json', d);
       return;

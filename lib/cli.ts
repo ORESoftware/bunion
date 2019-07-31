@@ -21,11 +21,15 @@ import {LinkedQueueValue} from "@oresoftware/linked-queue";
 process.on('uncaughtException', (e: any) => {
   console.error();
   consumer.error('Uncaught exception:', e || e);
+  console.error();
+  process.exit(1);
 });
 
 process.on('unhandledRejection', (e: any) => {
   console.error();
   consumer.error('Unhandled rejection:', e || e);
+  console.error();
+  process.exit(1);
 });
 
 process.on('SIGINT', function () {
@@ -430,6 +434,7 @@ const handleIn = (d: any) => {
     throw 'Should always be defined.'
   }
   
+  
   const h = con.head++;
   
   if (con.mode === BunionMode.READING) {
@@ -483,11 +488,12 @@ const handleIn = (d: any) => {
 
 const onStdinEnd = () => {
   con.mode = BunionMode.SEARCHING;
-  console.log('stdin end');
+  console.log();
+  consumer.warn('stdin end');
 };
 
 const parser = process.stdin.resume()
-  .once('end', onStdinEnd)
+  .on('end', onStdinEnd)
   .pipe(createRawParser())
   .on('string', handleIn)
   .on('data', handleIn);
@@ -625,6 +631,7 @@ const doTailing = (startPoint?: number) => {
 };
 
 const startReading = () => {
+  con.current = con.head;
   con.mode = BunionMode.READING;
   clearLine();
   createLoggedBreak('[ctrl-p]');
@@ -906,6 +913,7 @@ const handleSearchTermTyping = (d: string) => {
 };
 
 const handleShutdown = (signal: string) => () => {
+  
   con.mode = BunionMode.SEARCHING;
   
   clearLine();
