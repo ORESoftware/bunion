@@ -472,8 +472,11 @@ const handleIn = (d: any) => {
   // }
   
   if (con.mode === BunionMode.READING) {
+    // console.log(h);
     onData(d);
   }
+  
+  // console.log(process.memoryUsage());
   
 };
 
@@ -600,7 +603,7 @@ const doTailing = (startPoint?: number) => {
     //   break;
     // }
     
-    if (i > con.head) {
+    if (i >= con.head) {
       break;
     }
     
