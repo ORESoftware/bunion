@@ -69,7 +69,7 @@ const read = (v: any) => {
       process.stdout.write(shortb);
       resolve(null);
       
-    })
+    });
     
   }));
   

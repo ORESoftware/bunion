@@ -285,7 +285,7 @@ const onBunionUnknownJSON = (v: any): void => {
     
   }
   
-  writeToStdout(typeof v === 'string' ? v : util.inspect(v), '\n');
+  writeToStdout(getHighlightedString(typeof v === 'string' ? v : util.inspect(v)), '\n');
   writeStatusToStdout();
   
 };
