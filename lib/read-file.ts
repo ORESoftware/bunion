@@ -49,15 +49,15 @@ const con = {
   currentByte: 0,
   prom: Promise.resolve(null),
   dataTo: null as Timer,
-  prev: ''
+  defaultBytesToRead: 50000
 };
 
 
 const read = (v: any) => {
   
-  return con.prom = con.prom.then(_ => new Promise((resolve) => {
+  con.prom = con.prom.then(_ => new Promise((resolve) => {
     
-    const bytesToRead = v.bytesToRead || 50000;
+    const bytesToRead = v.bytesToRead || con.defaultBytesToRead;
     const curr = con.currentByte;
     const b = Buffer.alloc(bytesToRead);
     
@@ -66,29 +66,7 @@ const read = (v: any) => {
       const i = b.indexOf(0x00);
       const shortb = b.slice(0, i);
       con.currentByte = curr + shortb.length;
-      
-      // let s = con.prev + String(shortb).trim();
-      
       process.stdout.write(shortb);
-      
-      // const lines = s.split('\n');
-      // con.prev = String(lines.pop() || '').trim();
-      //
-      // console.error('prev:', con.prev);
-      //
-      // for (let line of lines) {
-      //
-      //   console.error('line:', line);
-      //
-      //   const trimmed = String(line || '').trim();
-      //   // const trimmed = String(line || '').trim().replace(/\0/g, ''); // replace null byte
-      //
-      //   if (trimmed) {
-      //     process.stdout.write(trimmed + '\n');
-      //   }
-      //
-      // }
-      
       resolve(null);
       
     })
@@ -98,7 +76,7 @@ const read = (v: any) => {
 };
 
 const dataRead = () => {
-  read({bytesToRead: 50000});
+  read({bytesToRead: con.defaultBytesToRead});
 };
 
 const createTimeout = () => {
