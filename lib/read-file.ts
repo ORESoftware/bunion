@@ -49,7 +49,7 @@ const con = {
   currentByte: 0,
   prom: Promise.resolve(null),
   dataTo: null as Timer,
-  prev:''
+  prev: ''
 };
 
 
@@ -66,20 +66,28 @@ const read = (v: any) => {
       const i = b.indexOf(0x00);
       const shortb = b.slice(0, i);
       con.currentByte = curr + shortb.length;
-      let s = con.prev + String(shortb).trim();
-      const lines = s.split('\n');
-      con.prev = String(lines.pop() || '').trim();
       
-      for (let line of lines) {
-  
-        const trimmed = String(line || '').trim();
-        // const trimmed = String(line || '').trim().replace(/\0/g, ''); // replace null byte
-        
-        if (trimmed) {
-          process.stdout.write(trimmed + '\n');
-        }
-        
-      }
+      // let s = con.prev + String(shortb).trim();
+      
+      process.stdout.write(shortb);
+      
+      // const lines = s.split('\n');
+      // con.prev = String(lines.pop() || '').trim();
+      //
+      // console.error('prev:', con.prev);
+      //
+      // for (let line of lines) {
+      //
+      //   console.error('line:', line);
+      //
+      //   const trimmed = String(line || '').trim();
+      //   // const trimmed = String(line || '').trim().replace(/\0/g, ''); // replace null byte
+      //
+      //   if (trimmed) {
+      //     process.stdout.write(trimmed + '\n');
+      //   }
+      //
+      // }
       
       resolve(null);
       
@@ -95,7 +103,7 @@ const dataRead = () => {
 
 const createTimeout = () => {
   clearTimeout(con.dataTo);
-  con.dataTo = setTimeout(dataRead, 30);
+  con.dataTo = setTimeout(dataRead, 25);
 };
 
 fs.watch(f, ev => {
