@@ -15,7 +15,18 @@ if (!f) {
 const fd = fs.openSync(f, 'r');
 const udsFile = path.resolve(process.env.HOME + '/uds-1.sock');
 
-setTimeout(() => {
+try {
+  fs.writeFileSync(udsFile, 'null', {flag: 'wx'});
+} catch (e) {
+  // ignore
+}
+
+
+const w = fs.watch(udsFile);
+
+w.once('change', ev => {
+  
+  w.close();
   
   const conn = net.createConnection(udsFile);
   
@@ -31,17 +42,20 @@ setTimeout(() => {
     
   });
   
-}, 100);
+});
+
 
 const con = {
   currentByte: 0,
   prom: Promise.resolve(null),
-  dataTo: null as Timer
+  dataTo: null as Timer,
+  prev:''
 };
+
 
 const read = (v: any) => {
   
-  con.prom.then(_ => new Promise((resolve) => {
+  return con.prom = con.prom.then(_ => new Promise((resolve) => {
     
     const bytesToRead = v.bytesToRead || 50000;
     const curr = con.currentByte;
@@ -52,14 +66,17 @@ const read = (v: any) => {
       const i = b.indexOf(0x00);
       const shortb = b.slice(0, i);
       con.currentByte = curr + shortb.length;
-      const s = String(shortb).trim();
+      let s = con.prev + String(shortb).trim();
+      const lines = s.split('\n');
+      con.prev = String(lines.pop() || '').trim();
       
-      for (let line of s.split('\n')) {
-        
-        const trimmed = String(line || '').trim().replace(/\0/g, ''); // replace null byte
+      for (let line of lines) {
+  
+        const trimmed = String(line || '').trim();
+        // const trimmed = String(line || '').trim().replace(/\0/g, ''); // replace null byte
         
         if (trimmed) {
-          console.log(trimmed);
+          process.stdout.write(trimmed + '\n');
         }
         
       }

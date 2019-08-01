@@ -62,22 +62,19 @@ const rawFileId = path.resolve(runId + '/raw.log');
 
 try {
   fs.mkdirSync(bunionHome);
-}
-catch (err) {
+} catch (err) {
 
 }
 
 try {
   fs.mkdirSync(runs);
-}
-catch (e) {
+} catch (e) {
 
 }
 
 try {
   fs.mkdirSync(runId);
-}
-catch (e) {
+} catch (e) {
 
 }
 
@@ -143,8 +140,7 @@ const sendRequestForData = () => {
 
 try {
   fs.unlinkSync(udsFile);
-}
-catch (e) {
+} catch (e) {
   //ignore
 }
 
@@ -164,8 +160,7 @@ process.once('exit', code => {
   
   if (con.keepLogFile) {
     consumer.info('Log file path:', rawFileId);
-  }
-  else {
+  } else {
     fs.unlinkSync(rawFileId);
   }
   
@@ -195,6 +190,8 @@ const writeStatusToStdout = (searchTermStr?: string) => {
   if (!process.stdout.isTTY) {
     return;
   }
+  
+  // console.log();
   
   searchTermStr = searchTermStr || ' ';
   
@@ -251,8 +248,7 @@ const runTransform = (v: any, t: any): boolean => {
       onStandardizedJSON(c);
       return true;
     }
-  }
-  catch (err) {
+  } catch (err) {
     
     return false;  // explicit for your pleasure
   }
@@ -278,8 +274,7 @@ const onBunionUnknownJSON = (v: any): void => {
         if (bool && runTransform(v, t)) {
           return;
         }
-      }
-      catch (err) {
+      } catch (err) {
         clearLine();
         consumer.error(err);
         consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
@@ -290,7 +285,7 @@ const onBunionUnknownJSON = (v: any): void => {
     
   }
   
-  writeToStdout(util.inspect(v), '\n');
+  writeToStdout(typeof v === 'string' ? v : util.inspect(v), '\n');
   writeStatusToStdout();
   
 };
@@ -376,13 +371,11 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  }
-  else if (output === 'medium') {
+  } else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  }
-  else {
+  } else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -452,8 +445,7 @@ const readFromFile = (pos: number): any => {
     const nnb = Buffer.alloc(v.b);
     fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
     return JSON.parse(String(nnb).trim());
-  }
-  catch (err) {
+  } catch (err) {
     return chalk.red(err.message);
   }
   
@@ -517,15 +509,13 @@ const handleIn = (d: any) => {
   
   try {
     fs.writeSync(rawFD, raw, pos);
-  }
-  catch (err) {
+  } catch (err) {
     consumer.warn(err.message || err);
   }
   
   try {
     fs.writeSync(logFD, JSON.stringify({p: pos, b: byteLen}), h * 50, 'utf-8');
-  }
-  catch (err) {
+  } catch (err) {
     consumer.warn(err.message || err);
   }
   
@@ -535,7 +525,7 @@ const handleIn = (d: any) => {
   //   writeToFile(q.deq(100));
   // }
   
-  if (con.fromMemory.size > 90) {
+  if (con.fromMemory.size > -1) {
     con.fromMemory.delete(currDel++);
   }
   
@@ -727,8 +717,7 @@ const getValFromTransform = (t: any, v: any): string => {
     let bool;
     try {
       bool = t.identifyViaJSObject(v);
-    }
-    catch (err) {
+    } catch (err) {
       clearLine();
       consumer.error(err);
       consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
@@ -739,8 +728,7 @@ const getValFromTransform = (t: any, v: any): string => {
     if (bool && typeof t.getValue === 'function') {
       try {
         val = t.getValue(v);
-      }
-      catch (err) {
+      } catch (err) {
         clearLine();
         consumer.error(err);
         consumer.error('Could not call getValue on value:', v);
@@ -768,8 +756,7 @@ const getValFromTransformAlreadyIdentified = (t: any, v: any): string => {
     if (typeof t.getValue === 'function') {
       val = t.getValue(v);
     }
-  }
-  catch (err) {
+  } catch (err) {
     consumer.error(err);
   }
   
@@ -801,8 +788,7 @@ const getValue = (v: any): string => {
     
     try {
       val = getValFromTransformAlreadyIdentified(t, v);
-    }
-    catch (e) {
+    } catch (e) {
       consumer.warn(e);
     }
     
@@ -817,8 +803,7 @@ const getValue = (v: any): string => {
     
     try {
       val = getValFromTransform(t, v);
-    }
-    catch (e) {
+    } catch (e) {
       consumer.warn(e);
     }
     
@@ -853,8 +838,7 @@ const findLatestMatch = () => {
     
     try {
       val = getValue(v);
-    }
-    catch (err) {
+    } catch (err) {
       // ignore
       console.error(err);
     }
@@ -1006,8 +990,7 @@ const handleSearchTermTyping = (d: string) => {
   
   try {
     con.searchRegex = new RegExp(newSearchTerm, 'ig');
-  }
-  catch (e) {
+  } catch (e) {
     consumer.warn('Could not create regex from string:', newSearchTerm);
     return;
   }
