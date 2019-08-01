@@ -2,7 +2,7 @@
 
 import {createRawParser} from "./json-parser";
 import {BunionJSON, BunionLevelToNum, BunionMode} from "./bunion";
-import {RawJSONBytesSymbol, RawStringSymbol} from "@oresoftware/json-stream-parser";
+import JSONParser, {RawJSONBytesSymbol, RawStringSymbol} from "@oresoftware/json-stream-parser";
 import * as util from "util";
 import chalk from "chalk";
 import {getConf, getFields} from "./utils";
@@ -16,7 +16,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as cp from 'child_process';
 import {LinkedQueueValue} from "@oresoftware/linked-queue";
-
+import * as net from "net";
 
 process.on('uncaughtException', (e: any) => {
   console.error();
@@ -47,12 +47,10 @@ process.on('SIGTERM', function () {
   consumer.warn('SIGTERM received.');
 });
 
-
 process.on('SIGPIPE', () => {
   console.error();
   consumer.warn('SIGPIPE received.');
 });
-
 
 const dirId = uuid.v4();
 const bunionHome = path.resolve(process.env.HOME + '/.bunion');
@@ -64,22 +62,24 @@ const rawFileId = path.resolve(runId + '/raw.log');
 
 try {
   fs.mkdirSync(bunionHome);
-} catch (err) {
+}
+catch (err) {
 
 }
 
 try {
   fs.mkdirSync(runs);
-} catch (e) {
+}
+catch (e) {
 
 }
 
 try {
   fs.mkdirSync(runId);
-} catch (e) {
+}
+catch (e) {
 
 }
-
 
 const maxIndex = 1;
 const output = 'medium' || 'short';
@@ -101,11 +101,56 @@ const con = {
   logChars: false,
   sigCount: 0,
   lastUserEvent: null as number,
+  dataTo: null as Timer,
   to: null as Timer,
   searchRegex: null as RegExp,
   timeout: 555500  // 450 seconds
   
 };
+
+const udsFile = path.resolve(process.env.HOME + '/uds-1.sock');
+
+const connections = new Set<net.Socket>();
+
+const server = net.createServer(c => {
+  
+  connections.add(c);
+  
+  c.pipe(new JSONParser())
+    .on('error', e => {
+      console.error('client conn error:', e);
+    })
+    .on('string', s => {
+      console.log('string from client:', s);
+    })
+    .on('data', d => {
+      console.log('json from client:', d);
+    })
+  
+});
+
+const sendRequestForData = () => {
+  clearTimeout(con.dataTo);
+  for (const c of connections) {
+    c.write(JSON.stringify({
+      bunionType: 'read',
+      value: {
+        bytesToRead: 30000
+      }
+    }) + '\n');
+  }
+};
+
+try {
+  fs.unlinkSync(udsFile);
+}
+catch (e) {
+  //ignore
+}
+
+server.listen(udsFile, () => {
+  console.log('Listening on unix domain socket:', udsFile);
+});
 
 const rawFD = fs.openSync(rawFileId, 'w+');
 const logFD = fs.openSync(logFileId, 'w+');
@@ -119,13 +164,13 @@ process.once('exit', code => {
   
   if (con.keepLogFile) {
     consumer.info('Log file path:', rawFileId);
-  } else {
+  }
+  else {
     fs.unlinkSync(rawFileId);
   }
   
   consumer.info('exiting with code:', code);
 });
-
 
 const replacer = function (match: any) {
   // p1 is nondigits, p2 digits, and p3 non-alphanumerics
@@ -206,7 +251,6 @@ const runTransform = (v: any, t: any): boolean => {
     return true;
   }
   
-  
 };
 
 const onBunionUnknownJSON = (v: any): void => {
@@ -282,7 +326,6 @@ const handleSearchTermMatched = (isMatched: boolean) => {
   
 };
 
-
 const getDarkOrlight = (str: string) => {
   return darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;
 };
@@ -316,11 +359,13 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  } else if (output === 'medium') {
+  }
+  else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  } else {
+  }
+  else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -374,7 +419,6 @@ const onStandardizedJSON = (v: BunionJSON) => {
   
 };
 
-
 const q = new LinkedQueue();
 
 const readFromFile = (pos: number): any => {
@@ -391,13 +435,12 @@ const readFromFile = (pos: number): any => {
     const nnb = Buffer.alloc(v.b);
     fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
     return JSON.parse(String(nnb).trim());
-  } catch (err) {
+  }
+  catch (err) {
     return chalk.red(err.message);
   }
   
-  
 };
-
 
 const writeToFile = (vals: Array<LinkedQueueValue<any>>) => {
   
@@ -425,8 +468,14 @@ const writeToFile = (vals: Array<LinkedQueueValue<any>>) => {
   
 };
 
-
 let pos = 0, currDel = 0;
+
+const createDataTimeout = () => {
+  clearTimeout(con.dataTo);
+  con.dataTo = setTimeout(() => {
+    sendRequestForData();
+  }, 30);
+};
 
 const handleIn = (d: any) => {
   
@@ -434,6 +483,7 @@ const handleIn = (d: any) => {
     throw 'Should always be defined.'
   }
   
+  createDataTimeout();
   
   const h = con.head++;
   
@@ -450,16 +500,17 @@ const handleIn = (d: any) => {
   
   try {
     fs.writeSync(rawFD, raw, pos);
-  } catch (err) {
+  }
+  catch (err) {
     consumer.warn(err.message || err);
   }
   
   try {
     fs.writeSync(logFD, JSON.stringify({p: pos, b: byteLen}), h * 50, 'utf-8');
-  } catch (err) {
+  }
+  catch (err) {
     consumer.warn(err.message || err);
   }
-  
   
   pos += byteLen;
   
@@ -484,7 +535,6 @@ const handleIn = (d: any) => {
   // console.log(process.memoryUsage());
   
 };
-
 
 const onStdinEnd = () => {
   con.mode = BunionMode.SEARCHING;
@@ -565,7 +615,6 @@ const createLoggedBreak = (m: string) => {
   console.log();
 };
 
-
 const gotoLine = (line: number) => {
   
   const rows = process.stdout.rows;
@@ -592,6 +641,35 @@ const gotoLine = (line: number) => {
   
 };
 
+type EVCb<T> = (err: any, v?: T) => void;
+
+const doTailingSubroutine = (i: number, cb: EVCb<any>) => {
+  
+  while (con.mode === BunionMode.TAILING) {
+    
+    i++;
+    
+    if (i >= con.head) {
+      cb(null);
+      break;
+    }
+    
+    con.current = i;
+    onData(con.fromMemory.get(i) || readFromFile(i));
+    
+    if (i % 285 === 0) {
+      setTimeout(() => {
+        if (con.mode === BunionMode.TAILING) {
+          doTailingSubroutine(i, cb);
+        }
+      }, 25);
+      // setImmediate(doTailingSubroutine, null, i, cb);
+      break;
+    }
+    
+  }
+  
+};
 
 const doTailing = (startPoint?: number) => {
   
@@ -601,32 +679,18 @@ const doTailing = (startPoint?: number) => {
   
   let i = Number.isInteger(startPoint) ? startPoint : con.current;
   
-  while (con.mode === BunionMode.TAILING) {
+  doTailingSubroutine(i, e => {
     
-    i++;
-    
-    // if (!con.fromMemory.has(i)) {
-    //   break;
-    // }
-    
-    if (i >= con.head) {
-      break;
+    if (con.mode === <any>BunionMode.SEARCHING) {
+      return;
     }
     
-    con.current = i;
-    onData(con.fromMemory.get(i) || readFromFile(i));
+    con.mode = BunionMode.READING;
+    clearLine();   // remove later, do not need
+    createLoggedBreak('[ctrl-p]');  // remove later, do not need
+    writeStatusToStdout();
     
-  }
-  
-  if (con.mode === <any>BunionMode.SEARCHING) {
-    return;
-  }
-  
-  
-  con.mode = BunionMode.READING;
-  clearLine();   // remove later, do not need
-  createLoggedBreak('[ctrl-p]');  // remove later, do not need
-  writeStatusToStdout();
+  });
   
 };
 
@@ -648,7 +712,8 @@ const getValFromTransform = (t: any, v: any): string => {
         val = t.getValue(v);
       }
     }
-  } catch (err) {
+  }
+  catch (err) {
     consumer.error(err);
   }
   
@@ -668,7 +733,8 @@ const getValFromTransformAlreadyIdentified = (t: any, v: any): string => {
     if (typeof t.getValue === 'function') {
       val = t.getValue(v);
     }
-  } catch (err) {
+  }
+  catch (err) {
     consumer.error(err);
   }
   
@@ -700,7 +766,8 @@ const getValue = (v: any): string => {
     
     try {
       val = getValFromTransformAlreadyIdentified(t, v);
-    } catch (e) {
+    }
+    catch (e) {
       consumer.warn(e);
     }
     
@@ -715,7 +782,8 @@ const getValue = (v: any): string => {
     
     try {
       val = getValFromTransform(t, v);
-    } catch (e) {
+    }
+    catch (e) {
       consumer.warn(e);
     }
     
@@ -750,7 +818,8 @@ const findLatestMatch = () => {
     
     try {
       val = getValue(v);
-    } catch (err) {
+    }
+    catch (err) {
       // ignore
       console.error(err);
     }
@@ -832,7 +901,6 @@ const scrollUpFive = () => {
     return;
   }
   
-  
   while (count < rows && i >= con.tail) {
     lines.push(con.fromMemory.get(i) || readFromFile(i));
     count++;
@@ -903,7 +971,8 @@ const handleSearchTermTyping = (d: string) => {
   
   try {
     con.searchRegex = new RegExp(newSearchTerm, 'ig');
-  } catch (e) {
+  }
+  catch (e) {
     consumer.warn('Could not create regex from string:', newSearchTerm);
     return;
   }
@@ -979,7 +1048,6 @@ const handleUserInput = () => {
       return;
     }
     
-    
     con.sigCount = 0;
     
     if (String(d) === '\u0002') { // ctrl-l
@@ -1022,7 +1090,6 @@ const handleUserInput = () => {
     //   doTailing();
     //   return;
     // }
-    
     
     if (con.mode !== BunionMode.PAUSED && String(d) === '\u001b[Z') {
       console.log('shift tab');

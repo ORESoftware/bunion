@@ -35,7 +35,7 @@ const getRandomStr = () => {
   log.infox({zebra: 'blues', dog: 'not cat'}, i++, 'fanny');
   log.info(i++, 'just saying hi.');
   log.warn(i++, 'shit hit the fan');
-
+  
   log.debug(i++, getRandomStr());
   log.trace(i++, getRandomStr());
   log.debug(i++, getRandomStr());
@@ -51,8 +51,8 @@ const getRandomStr = () => {
     fields: {a: 'foo', b: 5}
   }));
   
-  console.log('this is the real zone, this is not fantasy.');
-  console.log('easy come easy go.');
+  console.log(i++, 'this is the real zone, this is not fantasy.');
+  console.log(i++, 'easy come easy go.');
   
   setTimeout(run, Math.floor(10 + Math.random() * 10));
   
