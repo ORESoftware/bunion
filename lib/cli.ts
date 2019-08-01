@@ -243,12 +243,18 @@ const getId = (v: any): string => {
 
 const runTransform = (v: any, t: any): boolean => {
   
-  const c = t.transformToBunionFormat(v);
-  
-  if (c && typeof c === 'object') {
-    c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
-    onStandardizedJSON(c);
-    return true;
+  try {
+    const c = t.transformToBunionFormat(v);
+    
+    if (c && typeof c === 'object') {
+      c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
+      onStandardizedJSON(c);
+      return true;
+    }
+  }
+  catch (err) {
+    
+    return false;  // explicit for your pleasure
   }
   
 };
@@ -265,16 +271,27 @@ const onBunionUnknownJSON = (v: any): void => {
     
     const t = transformKeys[k];
     
-    if (t && typeof t.identifyViaJSObject === 'function' && t.identifyViaJSObject(v)) {
-      if (runTransform(v, t)) {
-        return;
+    if (t && typeof t.identifyViaJSObject === 'function') {
+      
+      try {
+        let bool = t.identifyViaJSObject(v);
+        if (bool && runTransform(v, t)) {
+          return;
+        }
+      }
+      catch (err) {
+        clearLine();
+        consumer.error(err);
+        consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
+        consumer.error('The function body is:', t.identifyViaJSObject.toString());
       }
       
     }
     
   }
   
-  writeToStdout(util.inspect(v));
+  writeToStdout(util.inspect(v), '\n');
+  writeStatusToStdout();
   
 };
 
@@ -657,13 +674,12 @@ const doTailingSubroutine = (i: number, cb: EVCb<any>) => {
     con.current = i;
     onData(con.fromMemory.get(i) || readFromFile(i));
     
-    if (i % 285 === 0) {
+    if (i % 185 === 0) {
       setTimeout(() => {
         if (con.mode === BunionMode.TAILING) {
           doTailingSubroutine(i, cb);
         }
-      }, 25);
-      // setImmediate(doTailingSubroutine, null, i, cb);
+      }, 35);
       break;
     }
     
@@ -706,15 +722,34 @@ const getValFromTransform = (t: any, v: any): string => {
   
   let val = '';
   
-  try {
-    if (typeof t.identifyViaJSObject === 'function' && t.identifyViaJSObject(v)) {
-      if (typeof t.getValue === 'function') {
+  if (typeof t.identifyViaJSObject === 'function') {
+    
+    let bool;
+    try {
+      bool = t.identifyViaJSObject(v);
+    }
+    catch (err) {
+      clearLine();
+      consumer.error(err);
+      consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
+      consumer.error('The function body is:', t.identifyViaJSObject.toString());
+      writeStatusToStdout();
+    }
+    
+    if (bool && typeof t.getValue === 'function') {
+      try {
         val = t.getValue(v);
       }
+      catch (err) {
+        clearLine();
+        consumer.error(err);
+        consumer.error('Could not call getValue on value:', v);
+        consumer.error('The function body is:', t.getValue.toString());
+        writeStatusToStdout();
+      }
+      
     }
-  }
-  catch (err) {
-    consumer.error(err);
+    
   }
   
   if (typeof val === 'string') {

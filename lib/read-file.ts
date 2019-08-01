@@ -4,6 +4,7 @@ import * as net from 'net';
 import * as path from 'path';
 import {JSONParser} from "@oresoftware/json-stream-parser";
 import * as fs from 'fs';
+import Timer = NodeJS.Timer;
 
 const f = process.argv[2];
 
@@ -34,12 +35,13 @@ setTimeout(() => {
 
 const con = {
   currentByte: 0,
-  prom: Promise.resolve(null)
+  prom: Promise.resolve(null),
+  dataTo: null as Timer
 };
 
 const read = (v: any) => {
   
-  return con.prom.then(_ => new Promise((resolve) => {
+  con.prom.then(_ => new Promise((resolve) => {
     
     const bytesToRead = v.bytesToRead || 50000;
     const curr = con.currentByte;
@@ -70,6 +72,18 @@ const read = (v: any) => {
   
 };
 
+const dataRead = () => {
+  read({bytesToRead: 50000});
+};
+
+const createTimeout = () => {
+  clearTimeout(con.dataTo);
+  con.dataTo = setTimeout(dataRead, 30);
+};
+
+fs.watch(f, ev => {
+  createTimeout();
+});
 
 
 
