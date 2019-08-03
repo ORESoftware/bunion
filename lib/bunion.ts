@@ -2,6 +2,8 @@
 
 import {RawJSONBytesSymbol} from "@oresoftware/json-stream-parser";
 
+export type EVCb<T, E = any> = (err: E, val?: T) => void;
+
 export type BunionLevelStrings =
   'WARN' | 'INFO' | 'DEBUG' | 'ERROR' | 'TRACE' | 'FATAL' |
   'warn' | 'info' | 'debug' | 'error' | 'trace' | 'fatal'

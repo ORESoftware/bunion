@@ -1,7 +1,7 @@
 
 
 
-bxn(){
+bxn2(){
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(date +%s%N).sock";
@@ -10,7 +10,11 @@ bxn(){
 }
 
 bunny(){
+  export bunion_socks="$HOME/.bunion/sockets"
+  mkdir -p "$bunion_socks";
+  export bunion_uds_file="$bunion_socks/$(date +%s%N).sock";
   "$@" | bunion
+  rm "$bunion_uds_file"
 }
 
 # bunion --read makes a tcp/uds connection to bunion_uds_file

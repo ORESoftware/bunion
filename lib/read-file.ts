@@ -6,6 +6,7 @@ import {JSONParser} from "@oresoftware/json-stream-parser";
 import * as fs from 'fs';
 import Timer = NodeJS.Timer;
 import log from './logging';
+import {EVCb} from "./bunion";
 
 const f = process.argv[2];
 
@@ -28,9 +29,7 @@ const fd = tryReadingInputFile();
 const budsFile = process.env.bunion_uds_file || '';
 const cwd = process.cwd();
 
-const udsFile = path.resolve(process.env.HOME + '/uds-1.sock');
-
-const udsFile2 = budsFile ?
+const udsFile = budsFile ?
   path.resolve(budsFile) :
   path.resolve(cwd + '/.bunion.sock');
 
@@ -43,14 +42,15 @@ catch (e) {
 
 const w = fs.watch(udsFile);
 
-w.once('change', ev => {
-  
-  w.close();
+const makeConnection = (cb: EVCb<any>) => {
   
   const conn = net.createConnection(udsFile);
   
+  conn.once('error', cb);
+  
   conn.once('connect', () => {
     console.log('connected');
+    cb(null);
   });
   
   conn.pipe(new JSONParser()).on('data', (d: any) => {
@@ -58,6 +58,28 @@ w.once('change', ev => {
     if (d.bunionType && d.bunionType === 'read') {
       return read(d.value);
     }
+    
+  });
+  
+};
+
+w.once('change', ev => {
+  
+  w.close();
+  
+  makeConnection(err => {
+    
+    if (!err) {
+     return;
+    }
+  
+    setTimeout(() => {
+      makeConnection(err => {
+        if (err) {
+          throw err;
+        }
+      })
+    }, 20);
     
   });
   

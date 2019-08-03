@@ -34,22 +34,22 @@ process.on('unhandledRejection', (e: any) => {
 
 process.on('SIGINT', function () {
   console.error();
-  consumer.warn('SIGINT received.');
+  consumer.warn('SIGINT received. Current pid:', process.pid);
 });
 
 process.on('SIGHUP', function () {
   console.error();
-  consumer.warn('SIGHUP received.');
+  consumer.warn('SIGHUP received. Current pid:', process.pid);
 });
 
 process.on('SIGTERM', function () {
   console.error();
-  consumer.warn('SIGTERM received.');
+  consumer.warn('SIGTERM received. Current pid:', process.pid);
 });
 
 process.on('SIGPIPE', () => {
   console.error();
-  consumer.warn('SIGPIPE received.');
+  consumer.warn('SIGPIPE received. Current pid:', process.pid);
 });
 
 const dirId = uuid.v4();
@@ -62,19 +62,22 @@ const rawFileId = path.resolve(runId + '/raw.log');
 
 try {
   fs.mkdirSync(bunionHome);
-} catch (err) {
+}
+catch (err) {
 
 }
 
 try {
   fs.mkdirSync(runs);
-} catch (e) {
+}
+catch (e) {
 
 }
 
 try {
   fs.mkdirSync(runId);
-} catch (e) {
+}
+catch (e) {
 
 }
 
@@ -84,6 +87,7 @@ const highlight = Boolean(true);
 const darkBackground = Boolean(true);
 
 const con = {
+  rsi: null as ReadStream,
   fullTrace: false,
   tail: 0,
   keepLogFile: false,
@@ -108,11 +112,9 @@ const con = {
 const budsFile = process.env.bunion_uds_file || '';
 const cwd = process.cwd();
 
-const udsFile2 = budsFile ?
+const udsFile = budsFile ?
   path.resolve(budsFile) :
   path.resolve(cwd + '/.bunion.sock');
-
-const udsFile = path.resolve(process.env.HOME + '/uds-1.sock');
 
 const connections = new Set<net.Socket>();
 
@@ -147,31 +149,51 @@ const sendRequestForData = () => {
 
 try {
   fs.unlinkSync(udsFile);
-} catch (e) {
-  //ignore
+}
+catch (e) {
+  consumer.warn(e);
 }
 
+server.on('error', e => {
+  // consumer.warn(e);
+});
+
 server.listen(udsFile, () => {
-  console.log('Listening on unix domain socket:', udsFile);
+  consumer.info('Listening on unix domain socket:', udsFile);
 });
 
 const rawFD = fs.openSync(rawFileId, 'w+');
 const logFD = fs.openSync(logFileId, 'w+');
 
+const tryAndLogErrors = (fn: EVCb<void>) => {
+  try {
+    fn(null);
+  }
+  catch (err) {
+    consumer.warn(err.message || err);
+  }
+};
+
 process.once('exit', code => {
   
-  fs.closeSync(rawFD);
-  fs.closeSync(logFD);
+  process.removeAllListeners();
+  
+  tryAndLogErrors(() => fs.closeSync(rawFD));
+  tryAndLogErrors(() => fs.closeSync(logFD));
+  tryAndLogErrors(() => con.rsi && con.rsi.destroy());
+  
   // fs.unlinkSync(logFileId);
   // fs.unlinkSync(rawFileId);
   
   if (con.keepLogFile) {
     consumer.info('Log file path:', rawFileId);
-  } else {
-    fs.unlinkSync(rawFileId);
+  }
+  else {
+    tryAndLogErrors(() => fs.unlinkSync(rawFileId));
   }
   
   consumer.info('exiting with code:', code);
+  process.exit(code);
 });
 
 const replacer = function (match: any) {
@@ -255,7 +277,8 @@ const runTransform = (v: any, t: any): boolean => {
       onStandardizedJSON(c);
       return true;
     }
-  } catch (err) {
+  }
+  catch (err) {
     
     return false;  // explicit for your pleasure
   }
@@ -281,7 +304,8 @@ const onBunionUnknownJSON = (v: any): void => {
         if (bool && runTransform(v, t)) {
           return;
         }
-      } catch (err) {
+      }
+      catch (err) {
         clearLine();
         consumer.error(err);
         consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
@@ -378,11 +402,13 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  } else if (output === 'medium') {
+  }
+  else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  } else {
+  }
+  else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -452,7 +478,8 @@ const readFromFile = (pos: number): any => {
     const nnb = Buffer.alloc(v.b);
     fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
     return JSON.parse(String(nnb).trim());
-  } catch (err) {
+  }
+  catch (err) {
     return chalk.red(err.message);
   }
   
@@ -516,13 +543,15 @@ const handleIn = (d: any) => {
   
   try {
     fs.writeSync(rawFD, raw, pos);
-  } catch (err) {
+  }
+  catch (err) {
     consumer.warn(err.message || err);
   }
   
   try {
     fs.writeSync(logFD, JSON.stringify({p: pos, b: byteLen}), h * 50, 'utf-8');
-  } catch (err) {
+  }
+  catch (err) {
     consumer.warn(err.message || err);
   }
   
@@ -724,7 +753,8 @@ const getValFromTransform = (t: any, v: any): string => {
     let bool;
     try {
       bool = t.identifyViaJSObject(v);
-    } catch (err) {
+    }
+    catch (err) {
       clearLine();
       consumer.error(err);
       consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
@@ -735,7 +765,8 @@ const getValFromTransform = (t: any, v: any): string => {
     if (bool && typeof t.getValue === 'function') {
       try {
         val = t.getValue(v);
-      } catch (err) {
+      }
+      catch (err) {
         clearLine();
         consumer.error(err);
         consumer.error('Could not call getValue on value:', v);
@@ -763,7 +794,8 @@ const getValFromTransformAlreadyIdentified = (t: any, v: any): string => {
     if (typeof t.getValue === 'function') {
       val = t.getValue(v);
     }
-  } catch (err) {
+  }
+  catch (err) {
     consumer.error(err);
   }
   
@@ -795,7 +827,8 @@ const getValue = (v: any): string => {
     
     try {
       val = getValFromTransformAlreadyIdentified(t, v);
-    } catch (e) {
+    }
+    catch (e) {
       consumer.warn(e);
     }
     
@@ -810,7 +843,8 @@ const getValue = (v: any): string => {
     
     try {
       val = getValFromTransform(t, v);
-    } catch (e) {
+    }
+    catch (e) {
       consumer.warn(e);
     }
     
@@ -845,7 +879,8 @@ const findLatestMatch = () => {
     
     try {
       val = getValue(v);
-    } catch (err) {
+    }
+    catch (err) {
       // ignore
       console.error(err);
     }
@@ -997,7 +1032,8 @@ const handleSearchTermTyping = (d: string) => {
   
   try {
     con.searchRegex = new RegExp(newSearchTerm, 'ig');
-  } catch (e) {
+  }
+  catch (e) {
     consumer.warn('Could not create regex from string:', newSearchTerm);
     return;
   }
@@ -1032,7 +1068,7 @@ const handleCtrlD = handleShutdown('ctrl-d');
 
 const handleUserInput = () => {
   
-  const strm = new ReadStream(<any>1);   // previously fd =  fs.open('/dev/tty','r+')
+  const strm = con.rsi = new ReadStream(<any>1);   // previously fd =  fs.open('/dev/tty','r+')
   strm.setRawMode(true);
   
   strm.on('data', (d: any) => {
