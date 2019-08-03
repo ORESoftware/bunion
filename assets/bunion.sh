@@ -26,11 +26,27 @@ __bxn_controlled(){
   declare -a bxn_args=("${!1}")
   shift;
 
+  echo "${bxn_args}"
+  echo "${bxn_args[@]}"
+
+  local cmd="$1";
+  shift;
+
+  echo "${bxn_args}"
+  echo "${bxn_args[@]}"
+
+  if ! which "$cmd" && ! type cmd &> /dev/null; then
+    echo "The following command is not recognized: $cmd"
+    echo "You need to run something like this: 'bxn --controlled your-command'";
+    echo "where 'your-command' is an available program on the system path.";
+    return 1;
+  fi
+
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
-  bunion "${bxn_args[@]}" | "$@" | bunion
-  rm "$bunion_uds_file"
+  bunion "${bxn_args[@]}" | "$cmd" "$@" | bunion
+  rm -f "$bunion_uds_file"
 
 }
 
