@@ -19,6 +19,7 @@ bxn_resource(){
 
 bxn_remove_old_runs(){
  rm -rf "$HOME/.bunion/runs/"*
+ rm -rf "$HOME/.bunion/sockets/"*
 }
 
 __bxn_controlled(){
