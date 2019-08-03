@@ -12,6 +12,11 @@ export default [
     help: 'Force raw JSON output.'
   },
   {
+    names: ['inspect','pretty'],
+    type: 'bool',
+    help: 'Make objects pretty - using util.inspect.'
+  },
+  {
     names: ['help'],
     type: 'bool',
     help: 'Print help and exit.'

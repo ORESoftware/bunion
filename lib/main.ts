@@ -45,7 +45,7 @@ const getDefaultMaxLevel = () => {
 
 const maxLevel = String(getDefaultMaxLevel()).toUpperCase();
 const maxIndex = ordered.indexOf(maxLevel);
-const forceRaw  = bunionConf.producer.forceRaw;
+const forceRaw = bunionConf.producer.forceRaw;
 
 if (maxIndex < 0) {
   throw new Error(
@@ -86,7 +86,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     throw new Error(chalk.red('Fields object can have no more than 8 keys.'));
   }
   
-  const clean = args.map(function (a, i): string {
+  const clean = args.map((a, i): string => {
     
     if (typeof a === 'string') {
       return a;
@@ -95,6 +95,14 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     if (a && a.message && a.stack && typeof a.stack === 'string') {
       return (i > 0 ? '' : ' (see below ⬃ )') + ' \n\n' + a.stack.split('\n')
         .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v)).join('\n') + '\n';
+    }
+    
+    try {
+      // we can only JSON.parse a message on the receiving end, if there is one object
+      return a;  // leave it as an object
+    }
+    catch (err) {
+      // ignore
     }
     
     return util.inspect(a, utilOpts); //+ '\n';
@@ -131,7 +139,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     host,
     new Date().toUTCString(),
     fields,
-    clean.join(' ')
+    clean
   ]) + '\n';
 };
 

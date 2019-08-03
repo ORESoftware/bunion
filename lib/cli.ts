@@ -17,6 +17,9 @@ import * as path from "path";
 import * as cp from 'child_process';
 import {LinkedQueueValue} from "@oresoftware/linked-queue";
 import * as net from "net";
+import options from './cli-options';
+
+const dashdash = require('dashdash');
 
 process.on('uncaughtException', (e: any) => {
   console.error();
@@ -51,6 +54,23 @@ process.on('SIGPIPE', () => {
   console.error();
   consumer.warn('SIGPIPE received. Current pid:', process.pid);
 });
+
+const allowUnknown = process.argv.indexOf('--allow-unknown') > 1;
+let opts: any, cliParser = dashdash.createParser({options: options}, {allowUnknown});
+
+try {
+  opts = cliParser.parse(process.argv);
+}
+catch (e) {
+  consumer.error('bunion: error: %s', e.message);
+  process.exit(1);
+}
+
+if (opts.help) {
+  const help = cliParser.help({includeEnv: true}).trimRight();
+  consumer.info('usage: node foo.js [OPTIONS]\n' + 'options:\n' + help);
+  process.exit(0);
+}
 
 const dirId = uuid.v4();
 const bunionHome = path.resolve(process.env.HOME + '/.bunion');
@@ -109,7 +129,7 @@ const con = {
   
 };
 
-const budsFile =  process.env.bunion_uds_file || '';
+const budsFile = process.env.bunion_uds_file || '';
 const cwd = process.cwd();
 
 const udsFile = budsFile ?
@@ -203,7 +223,8 @@ const replacer = function (match: any) {
 };
 
 const getHighlightedString = (match: string) => {
-  if (con.searchTerm !== '') {
+  
+  if (highlight && con.searchTerm !== '') {
     match = match.replace(new RegExp(con.searchTerm, 'ig'), replacer);
   }
   
@@ -294,6 +315,37 @@ const utilInspectOpts = {
   sorted: true
 };
 
+const getInspected = (v: any): string => {
+  
+  if (typeof v === 'string') {
+    return v;
+  }
+  
+  if(!Array.isArray(v)){
+    if (true || opts.inspect) {
+      console.log('biggg:',v);
+      return util.inspect(v, utilInspectOpts);
+    }
+  
+    return JSON.stringify(v);
+  }
+  
+  return v.map(v => {
+    
+      if (typeof v === 'string') {
+        return v;
+      }
+      
+      if (true || opts.inspect) {
+        return util.inspect(v, utilInspectOpts);
+      }
+    
+      return JSON.stringify(v);
+  })
+    .join(' ');
+  
+};
+
 const onBunionUnknownJSON = (v: any): void => {
   
   const t = transformKeys[getId(v)];
@@ -325,9 +377,10 @@ const onBunionUnknownJSON = (v: any): void => {
     
   }
   
-  //util.inspect(v, utilInspectOpts)
+  // util.inspect(v, utilInspectOpts)
+  // JSON.stringify(v))
   
-  writeToStdout(getHighlightedString(typeof v === 'string' ? v : JSON.stringify(v)), '\n');
+  writeToStdout(getHighlightedString(getInspected(v)), '\n');
   writeStatusToStdout();
   
 };
@@ -425,9 +478,10 @@ const onStandardizedJSON = (v: BunionJSON) => {
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
   }
   
-  if (highlight) {
-    v.value = getHighlightedString(v.value);
-  }
+  // const msgVal = getHighlightedString(getInspected(v.value));
+  
+  const msgVal = getInspected(v.value);
+  
   
   if (v.fields) {
     fields = getFields(v.fields);
@@ -435,37 +489,37 @@ const onStandardizedJSON = (v: BunionJSON) => {
   
   if (v.level === 'FATAL') {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.red.bold(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'ERROR' && con.logLevel < 6) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'WARN' && con.logLevel < 5) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.magentaBright.bold(v.level)} ${chalk.gray(fields)} ${getDarkOrlight(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.magentaBright(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'INFO' && con.logLevel < 4) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${chalk.cyan.bold(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.blueBright(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'DEBUG' && con.logLevel < 3) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.yellowBright.bold(v.level)} ${chalk.gray(fields)} ${chalk.yellow(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'TRACE' && con.logLevel < 2) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${chalk.gray.bold(v.value)} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
@@ -485,7 +539,6 @@ const readFromFile = (pos: number): any => {
   
   try {
     const v = JSON.parse(String(nb).trim());
-    
     const nnb = Buffer.alloc(v.b);
     fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
     return JSON.parse(String(nnb).trim());

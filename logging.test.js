@@ -36,6 +36,8 @@ const getRandomStr = () => {
   log.info(i++, 'just saying hi.');
   log.warn(i++, 'shit hit the fan');
   
+  log.warn({"these":{colors:{do:{not:'run'}}}});
+  
   log.debug(i++, getRandomStr());
   log.trace(i++, getRandomStr());
   log.debug(i++, getRandomStr());
