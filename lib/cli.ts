@@ -286,6 +286,14 @@ const runTransform = (v: any, t: any): boolean => {
   
 };
 
+const utilInspectOpts = {
+  showHidden: true,
+  colors: true,
+  depth: 5,
+  compact: false,
+  sorted: true
+};
+
 const onBunionUnknownJSON = (v: any): void => {
   
   const t = transformKeys[getId(v)];
@@ -317,7 +325,9 @@ const onBunionUnknownJSON = (v: any): void => {
     
   }
   
-  writeToStdout(getHighlightedString(typeof v === 'string' ? v : util.inspect(v)), '\n');
+  //util.inspect(v, utilInspectOpts)
+  
+  writeToStdout(getHighlightedString(typeof v === 'string' ? v : JSON.stringify(v)), '\n');
   writeStatusToStdout();
   
 };

@@ -91,7 +91,7 @@ const makeConnection = (cb: EVCb<any>) => {
 //
 // }, 200);
 
-w.once('change', ev => {
+w.once('change', (ev,f) => {
   
   w.close();
   
@@ -101,7 +101,7 @@ w.once('change', ev => {
         throw err;
       }
     });
-  }, 5);
+  }, 25);
   
 });
 
