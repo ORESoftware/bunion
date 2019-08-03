@@ -12,6 +12,10 @@ fi
 export bunion_install_root="$(cd "$(dirname $(dirname "$BASH_SOURCE"))" && pwd)"
 
 
+b4n(){
+ :::
+}
+
 bxn_resource(){
  . "$BASH_SOURCE"
 }
@@ -45,7 +49,7 @@ __bxn_controlled(){
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
-  bunion "${bxn_args[@]}" | "$cmd" "$@" | bunion
+  bunion "${bxn_args[@]}" | "$cmd" "$@" 2>&1 | bunion # --ignore-controlled "${bxn_args[@]}"
   rm -f "$bunion_uds_file"
 
 }
@@ -56,14 +60,14 @@ __bxn_read_file(){
 
   local file_path="$(__bxn_get_next '-f' "$@")";
 
-  if [[ -L "$file_path" ]]; then
-     file_path="$(readlink "$file_path")";
-  fi
-
-  if [[ ! -f "$file_path" ]]; then
-    echo "You need to pass a file after the -f flag. The resolved file path was: '$file_path'. This path did not appear to exist on the filesystem".;
-    return 1;
-  fi
+#  if [[ -L "$file_path" ]]; then
+#     file_path="$(readlink "$file_path")";
+#  fi
+#
+#  if [[ ! -f "$file_path" ]]; then
+#    echo "You need to pass a file after the -f flag. The resolved file path was: '$file_path'. This path did not appear to exist on the filesystem".;
+#    return 1;
+#  fi
 
   export bxn_file_path="$file_path";
 
@@ -142,6 +146,20 @@ __bxn_contains(){
 
 
 bxn(){
+
+  echo "$1"
+
+  read "$1"
+
+  if [[ -L "$1" ]]; then
+     echo 'IS SYMLIANK'
+  else
+     echo 'NOT SYMLANK'
+  fi
+
+  foo="$(readlink "$1")"
+  echo "$foo"
+  return 1;
 
  local all_args=( "$@" );
  local bxn_args=();

@@ -21,6 +21,11 @@ if (!f) {
 }
 
 const tryReadingInputFile = (): number => {
+  
+  if (f.startsWith('/dev/fd/')) {
+    return parseInt(f.split('/').pop());
+  }
+  
   try {
     return fs.openSync(f, 'r');
   } catch (err) {
@@ -31,6 +36,10 @@ const tryReadingInputFile = (): number => {
 };
 
 const fd = tryReadingInputFile();
+
+// console.log({fd});
+// process.exit(0);
+
 const budsFile = process.env.bunion_uds_file || '';
 
 const udsFile = budsFile ?
@@ -120,8 +129,8 @@ const setChangeTo = () => {
 w.on('change', (ev, f) => {
   
   con.changeCount++;
-
-  if(con.changeCount > 4){
+  
+  if (con.changeCount > 4) {
     clearTimeout(con.changeTo);
     handleConn();
     return;
