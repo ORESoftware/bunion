@@ -8,6 +8,7 @@ import * as util from "util";
 import {producer} from "./logger";
 import chalk from "chalk";
 import deepMixin from '@oresoftware/deep.mixin';
+import {consumer} from "./logger";
 
 const ajv = new AJV();
 const schema = require('../assets/schema/bunion.conf.json');
@@ -90,7 +91,7 @@ export const getConf = (): BunionConf => {
       }
     }
   } catch (e) {
-    console.error(e.message || e);
+    consumer.debug(e.message || e);
   }
   
   return conf;

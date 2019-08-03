@@ -159,7 +159,7 @@ server.on('error', e => {
 });
 
 server.listen(udsFile, () => {
-  consumer.info('Listening on unix domain socket:', udsFile);
+  consumer.debug('Listening on unix domain socket:', udsFile);
 });
 
 const rawFD = fs.openSync(rawFileId, 'w+');
@@ -176,7 +176,7 @@ const tryAndLogErrors = (fn: EVCb<void>) => {
 
 process.once('exit', code => {
   
-  process.removeAllListeners();
+  // process.removeAllListeners();
   
   tryAndLogErrors(() => fs.closeSync(rawFD));
   tryAndLogErrors(() => fs.closeSync(logFD));
@@ -582,8 +582,9 @@ const handleIn = (d: any) => {
 
 const onStdinEnd = () => {
   con.mode = BunionMode.SEARCHING;
-  console.log();
-  consumer.warn('stdin end');
+  clearLine();
+  consumer.info('stdin end');
+  writeStatusToStdout();
 };
 
 const parser = process.stdin.resume()
@@ -1050,18 +1051,16 @@ const handleShutdown = (signal: string) => () => {
   clearLine();
   
   if (con.sigCount++ === 1) {
-    consumer.warn(`User hit ${signal}, now exiting.`);
+    consumer.warn(`User hit ${signal} again, now exiting.`);
     if (signal === 'ctrl-d') {
       con.keepLogFile = true;
     }
-    console.log();
     process.exit(1);
     return;
   }
   
-  console.log();
-  consumer.warn(`User hit ${signal}.`);
-  consumer.warn('Hit ctrl-d/ctrl-c again to exit. Use ctrl-d to keep the log file, ctrl-c will delete it.');
+  consumer.info(`User hit ${signal}.`);
+  consumer.info('Hit ctrl-d/ctrl-c again to exit. Use ctrl-d to keep the log file, ctrl-c will delete it.');
 };
 
 const handleCtrlC = handleShutdown('ctrl-c');

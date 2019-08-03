@@ -68,10 +68,13 @@ __bxn_read_file(){
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
   bunion "$@" | bunion
-  rm "$bunion_uds_file"
+  rm -f "$bunion_uds_file"
 }
 
 __bunny(){
+
+   echo 'bunny'
+  return;
 
   local cmd="$1";
   shift;
@@ -87,7 +90,7 @@ __bunny(){
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
   "$cmd" "$@" | bunion
-  rm "$bunion_uds_file"
+  rm -f "$bunion_uds_file"
 
 }
 
@@ -166,14 +169,19 @@ bxn(){
   fi
 
 
-  remaining_args_ln="$#";
+   remaining_args_ln="$#";
 
    if [[ "$remaining_args_ln" == '0' ]]; then
-      echo 'No remaining args - you need to pass a command for bunion to run.'
+
+     if [[ -t 0 ]]; then
+       echo 'You passed no command to run to bxn, but ran it directly from a terminal.';
+       echo 'Please attach a process to bxn using something like `echo foo | bxn`'
+       return 1;
+     fi
+
       bunion;
       return;
    fi
-
 
   __bunny "${all_args[@]}"
 
