@@ -105,6 +105,13 @@ const con = {
   
 };
 
+const budsFile = process.env.bunion_uds_file || '';
+const cwd = process.cwd();
+
+const udsFile2 = budsFile ?
+  path.resolve(budsFile) :
+  path.resolve(cwd + '/.bunion.sock');
+
 const udsFile = path.resolve(process.env.HOME + '/uds-1.sock');
 
 const connections = new Set<net.Socket>();

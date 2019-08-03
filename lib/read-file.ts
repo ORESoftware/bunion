@@ -5,6 +5,7 @@ import * as path from 'path';
 import {JSONParser} from "@oresoftware/json-stream-parser";
 import * as fs from 'fs';
 import Timer = NodeJS.Timer;
+import log from './logging';
 
 const f = process.argv[2];
 
@@ -12,15 +13,33 @@ if (!f) {
   throw 'Pass filepath as first arg.';
 }
 
-const fd = fs.openSync(f, 'r');
+const tryReadingInputFile = (): number => {
+  try {
+    return fs.openSync(f, 'r');
+  }
+  catch (err) {
+    log.error('Could not open the following file for reading:', f);
+    log.error(err.message || err);
+    process.exit(1);
+  }
+};
+
+const fd = tryReadingInputFile();
+const budsFile = process.env.bunion_uds_file || '';
+const cwd = process.cwd();
+
 const udsFile = path.resolve(process.env.HOME + '/uds-1.sock');
+
+const udsFile2 = budsFile ?
+  path.resolve(budsFile) :
+  path.resolve(cwd + '/.bunion.sock');
 
 try {
   fs.writeFileSync(udsFile, 'null', {flag: 'wx'});
-} catch (e) {
+}
+catch (e) {
   // ignore
 }
-
 
 const w = fs.watch(udsFile);
 
@@ -44,14 +63,12 @@ w.once('change', ev => {
   
 });
 
-
 const con = {
   currentByte: 0,
   prom: Promise.resolve(null),
   dataTo: null as Timer,
   defaultBytesToRead: 50000
 };
-
 
 const read = (v: any) => {
   
