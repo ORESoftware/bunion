@@ -35,10 +35,6 @@ __bxn_controlled(){
 }
 
 __bxn_read_file(){
-
-  echo "bxn read file: $@"
-  return;
-
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
