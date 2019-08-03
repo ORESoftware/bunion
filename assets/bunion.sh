@@ -80,6 +80,12 @@ __bunny(){
 
   if ! which "$cmd"  &> /dev/null && ! type cmd &> /dev/null; then
     echo "The following command is not recognized: $cmd"
+    local fp="$(readlink "$cmd")"
+    if [[ -f "$fp" ]] || [[ -f "$cmd" ]]; then
+       echo "You passed in a file as the argument: 'bxn <file>'";
+       echo "If you meant to have a controlled tailing of this file, then use the -f flag as in: 'bxn -f <file>'";
+       return 1;
+    fi
     echo "You need to run something like this: 'bxn your-command'";
     echo "where 'your-command' is an available program on the system path.";
     return 1;
@@ -145,12 +151,10 @@ bxn(){
       break;
   fi
 
-    bxn_args+="$v";
+    bxn_args+=( "$v" );
     shift;
 
   done;
-
-
 
   if __bxn_contains '-f' "${bxn_args[@]}" ; then
      __bxn_read_file "${all_args[@]}"

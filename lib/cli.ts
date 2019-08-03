@@ -447,6 +447,10 @@ const getDarkOrlight = (str: string) => {
   return darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;
 };
 
+const makeBold = (str: string) => {
+  return chalk.bold(str);
+}
+
 const onStandardizedJSON = (v: BunionJSON) => {
   
   if (con.mode === BunionMode.CLOSED) {
@@ -499,13 +503,13 @@ const onStandardizedJSON = (v: BunionJSON) => {
   
   if (v.level === 'FATAL') {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
     );
   }
   
   if (v.level === 'ERROR' && con.logLevel < 6) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
+      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
     );
   }
   
