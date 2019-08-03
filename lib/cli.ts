@@ -109,7 +109,7 @@ const con = {
   
 };
 
-const budsFile = '' && process.env.bunion_uds_file || '';
+const budsFile =  process.env.bunion_uds_file || '';
 const cwd = process.cwd();
 
 const udsFile = budsFile ?
@@ -1252,6 +1252,12 @@ const handleUserInput = () => {
   
 };
 
+// if(process.stdin.isTTY){
+//   consumer.debug('handing b/c of stdin.')
+//   handleUserInput();
+// }
+
 if (process.stdout.isTTY) {
+  consumer.debug('handing b/c of stdout.');
   handleUserInput();
 }

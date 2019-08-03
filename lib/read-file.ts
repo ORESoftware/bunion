@@ -16,7 +16,6 @@ let fraw = process.env.bxn_file_path || process.argv[fileFlagIndex + 1];
 const cwd = process.cwd();
 const f = path.isAbsolute(fraw) ? path.resolve(fraw) : path.resolve(cwd + '/' + fraw);
 
-
 if (!f) {
   throw 'Pass filepath as first arg.';
 }
@@ -24,7 +23,8 @@ if (!f) {
 const tryReadingInputFile = (): number => {
   try {
     return fs.openSync(f, 'r');
-  } catch (err) {
+  }
+  catch (err) {
     log.error('Could not open the following file for reading:', f);
     log.error(err.message || err);
     process.exit(1);
@@ -32,16 +32,16 @@ const tryReadingInputFile = (): number => {
 };
 
 const fd = tryReadingInputFile();
-const budsFile = '' && process.env.bunion_uds_file || '';
+const budsFile = process.env.bunion_uds_file || '';
 
 const udsFile = budsFile ?
   path.resolve(budsFile) :
   path.resolve(cwd + '/.bunion.sock');
 
-
 try {
   fs.writeFileSync(udsFile, 'null', {flag: 'wx'});
-} catch (e) {
+}
+catch (e) {
   // ignore
 }
 
@@ -52,8 +52,8 @@ const makeConnection = (cb: EVCb<any>) => {
   const conn = net.createConnection(udsFile);
   
   conn.once('error', e => {
-    producer.error('Could not connect to socket:', '\n', e);
-    cb(null);
+    producer.debug('Could not connect to socket:', '\n', e);
+    cb(e);
   });
   
   conn.once('connect', () => {
@@ -70,7 +70,6 @@ const makeConnection = (cb: EVCb<any>) => {
   });
   
 };
-
 
 // setTimeout(() => {
 //
@@ -96,21 +95,13 @@ w.once('change', ev => {
   
   w.close();
   
-  makeConnection(err => {
-    
-    if (!err) {
-      return;
-    }
-    
-    setTimeout(() => {
-      makeConnection(err => {
-        if (err) {
-          throw err;
-        }
-      })
-    }, 20);
-    
-  });
+  setTimeout(() => {
+    makeConnection(err => {
+      if (err) {
+        throw err;
+      }
+    });
+  }, 5);
   
 });
 

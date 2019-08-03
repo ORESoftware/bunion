@@ -51,6 +51,8 @@ __bxn_controlled(){
 
 __bxn_read_file(){
 
+  echo 'reading file'
+
   local file_path="$(__bxn_get_next '-f' "$@")";
 
   if [[ -L "$file_path" ]]; then
@@ -72,9 +74,6 @@ __bxn_read_file(){
 }
 
 __bunny(){
-
-   echo 'bunny'
-  return;
 
   local cmd="$1";
   shift;
@@ -174,8 +173,10 @@ bxn(){
    if [[ "$remaining_args_ln" == '0' ]]; then
 
      if [[ -t 0 ]]; then
-       echo 'You passed no command to run to bxn, but ran it directly from a terminal.';
-       echo 'Please attach a process to bxn using something like `echo foo | bxn`'
+       echo 'bxn: You passed no arguments to bxn, and ran it directly from a terminal.';
+       echo 'bxn: You have two options:'
+       echo '1. something like `echo foo | bxn`'
+       echo '2. or something like: `bxn node app.js`'
        return 1;
      fi
 

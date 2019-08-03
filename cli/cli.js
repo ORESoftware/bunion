@@ -13,5 +13,9 @@ if (process.argv.indexOf('-c') > 1 || process.argv.indexOf('--controlled') > 1) 
 }
 
 
+if(process.stdin.isTTY){
+  throw 'Cannot run from TTY';
+}
+
 require('../dist/cli.js');
 
