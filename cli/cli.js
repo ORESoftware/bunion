@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-console.log('process argv:', process.argv);
-
+// console.log('process argv:', process.argv);
 
 if (process.argv.indexOf('-f') > 1) {
   require('../dist/read-file.js');

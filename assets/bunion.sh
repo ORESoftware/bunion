@@ -29,6 +29,11 @@ __bxn_controlled(){
   local cmd="$1";
   shift;
 
+  if [[ -z "$cmd" ]]; then
+      echo 'No command argument - you need to pass a command to run.'
+      return 1;
+  fi
+
   if ! which "$cmd"  &> /dev/null && ! type cmd &> /dev/null; then
     echo "The following command is not recognized: $cmd"
     echo "You need to run something like this: 'bxn --controlled your-command'";
@@ -48,10 +53,16 @@ __bxn_read_file(){
 
   local file_path="$(__bxn_get_next '-f' "$@")";
 
+  if [[ -L "$file_path" ]]; then
+     file_path="$(readlink "$file_path")";
+  fi
+
   if [[ ! -f "$file_path" ]]; then
-    echo 'You need go pass an actual file after the -f flag.';
+    echo "You need to pass a file after the -f flag. The resolved file path was: '$file_path'. This path did not appear to exist on the filesystem".;
     return 1;
   fi
+
+  export bxn_file_path="$file_path";
 
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";

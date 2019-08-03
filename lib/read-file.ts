@@ -11,7 +11,11 @@ import {EVCb} from "./bunion";
 import {producer} from "./logger";
 
 const fileFlagIndex = process.argv.indexOf('-f');
-const f = process.argv[fileFlagIndex + 1];
+let fraw = process.env.bxn_file_path || process.argv[fileFlagIndex + 1];
+
+const cwd = process.cwd();
+const f = path.isAbsolute(fraw) ? path.resolve(fraw) : path.resolve(cwd + '/' + fraw);
+
 
 if (!f) {
   throw 'Pass filepath as first arg.';
@@ -29,7 +33,6 @@ const tryReadingInputFile = (): number => {
 
 const fd = tryReadingInputFile();
 const budsFile = '' && process.env.bunion_uds_file || '';
-const cwd = process.cwd();
 
 const udsFile = budsFile ?
   path.resolve(budsFile) :
@@ -90,15 +93,15 @@ const makeConnection = (cb: EVCb<any>) => {
 // }, 200);
 
 w.once('change', ev => {
-
+  
   w.close();
-
+  
   makeConnection(err => {
-
+    
     if (!err) {
       return;
     }
-
+    
     setTimeout(() => {
       makeConnection(err => {
         if (err) {
@@ -106,9 +109,9 @@ w.once('change', ev => {
         }
       })
     }, 20);
-
+    
   });
-
+  
 });
 
 const con = {
