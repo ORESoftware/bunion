@@ -274,7 +274,7 @@ const runTransform = (v: any, t: any): boolean => {
     const c = t.transformToBunionFormat(v);
     
     if (c && typeof c === 'object') {
-      c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
+      // c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
       onStandardizedJSON(c);
       return true;
     }
@@ -363,7 +363,7 @@ const onJSON = (v: Array<any>) => {
     date: v[5],
     fields: v[6],
     value: v[7],
-    [RawJSONBytesSymbol]: v[<any>RawJSONBytesSymbol]
+    // [RawJSONBytesSymbol]: v[<any>RawJSONBytesSymbol]
   });
 };
 
