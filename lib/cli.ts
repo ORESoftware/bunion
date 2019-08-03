@@ -2,22 +2,20 @@
 
 import {createRawParser} from "./json-parser";
 import {BunionJSON, BunionLevelToNum, BunionMode} from "./bunion";
-import JSONParser, {RawJSONBytesSymbol, RawStringSymbol} from "@oresoftware/json-stream-parser";
+import JSONParser, {RawStringSymbol} from "@oresoftware/json-stream-parser";
 import * as util from "util";
 import chalk from "chalk";
 import {getConf, getFields} from "./utils";
 import * as readline from "readline";
 import {consumer} from "./logger";
 import {ReadStream} from "tty";
-import Timer = NodeJS.Timer;
-import uuid = require("uuid");
-import {LinkedQueue} from "@oresoftware/linked-queue";
+import {LinkedQueue, LinkedQueueValue} from "@oresoftware/linked-queue";
 import * as fs from "fs";
 import * as path from "path";
-import * as cp from 'child_process';
-import {LinkedQueueValue} from "@oresoftware/linked-queue";
 import * as net from "net";
 import options from './cli-options';
+import uuid = require("uuid");
+import Timer = NodeJS.Timer;
 
 const dashdash = require('dashdash');
 
@@ -146,7 +144,6 @@ const server = net.createServer(c => {
     writeReq(c);
   }, 5);
   
-  
   c.pipe(new JSONParser())
     .on('error', e => {
       console.error('client conn error:', e);
@@ -160,7 +157,6 @@ const server = net.createServer(c => {
   
 });
 
-
 const writeReq = (c: net.Socket) => {
   c.write(JSON.stringify({
     bunionType: 'read',
@@ -173,7 +169,7 @@ const writeReq = (c: net.Socket) => {
 const sendRequestForData = () => {
   clearTimeout(con.dataTo);
   for (const c of connections) {
-     writeReq(c);
+    writeReq(c);
   }
 };
 
@@ -331,17 +327,17 @@ const getInspected = (v: any): string => {
     return v;
   }
   
-  if(!Array.isArray(v)){
+  if (!Array.isArray(v)) {
     if (true || opts.inspect) {
-      console.log('biggg:',v);
+      console.log('biggg:', v);
       return util.inspect(v, utilInspectOpts);
     }
-  
+    
     return JSON.stringify(v);
   }
   
   return v.map(v => {
-    
+      
       if (typeof v === 'string') {
         return v;
       }
@@ -349,9 +345,9 @@ const getInspected = (v: any): string => {
       if (true || opts.inspect) {
         return util.inspect(v, utilInspectOpts);
       }
-    
+      
       return JSON.stringify(v);
-  })
+    })
     .join(' ');
   
 };
@@ -495,7 +491,6 @@ const onStandardizedJSON = (v: BunionJSON) => {
   const msgVal = getHighlightedString(getInspected(v.value));
   
   // const msgVal = getInspected(v.value);
-  
   
   if (v.fields) {
     fields = getFields(v.fields);
@@ -709,6 +704,10 @@ const ctrlChars = new Set([
   '\u0004', // d
   '\u0003', // c
   '\r',  // m
+  '\u001b[A', // up
+  '\u001b[B', // down
+  '\u001b[C', // left
+  '\u001b[D', // right
   '\u000e', // n
   '\u001a', // z,
   '\u0018',  // x
@@ -1103,7 +1102,7 @@ const handleSearchTermTyping = (d: string) => {
   clearLine();
   
   if (ctrlChars.has(String(d))) {
-    consumer.warn('ctrl command ignored.');
+    writeToStdout('ctrl command ignored. to match a tab, use \\t, to exit use return/tab keys.');
     return;
   }
   
@@ -1310,9 +1309,16 @@ const handleUserInput = () => {
       return;
     }
     
-    if (String(d) === '\r' && con.mode === BunionMode.PAUSED) {
+    if (String(d) === '\t' && con.mode === BunionMode.PAUSED) {
       con.stopOnNextMatch = true;
       doTailing();
+      return;
+    }
+    
+    if (String(d) === '\r' && con.mode === BunionMode.PAUSED) {
+      con.stopOnNextMatch = true;
+      con.mode = BunionMode.SEARCHING;
+      writeStatusToStdout();
       return;
     }
     

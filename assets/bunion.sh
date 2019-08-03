@@ -63,9 +63,16 @@ __bxn_read_file(){
 #  if [[ -L "$file_path" ]]; then
 #     file_path="$(readlink "$file_path")";
 #  fi
-#
+
+ if [[ ! -e "$file_path" ]]; then
+    echo "You need to pass a file after the -f flag. The file path was: '$file_path'."
+    echo 'This path did not appear to exist on the filesystem.';
+    return 1;
+  fi
+
 #  if [[ ! -f "$file_path" ]]; then
-#    echo "You need to pass a file after the -f flag. The resolved file path was: '$file_path'. This path did not appear to exist on the filesystem".;
+#    echo "You need to pass a file after the -f flag. The resolved file path was: '$file_path'."
+#    echo 'This path did not appear to exist on the filesystem.';
 #    return 1;
 #  fi
 
@@ -146,20 +153,6 @@ __bxn_contains(){
 
 
 bxn(){
-
-  echo "$1"
-
-  read "$1"
-
-  if [[ -L "$1" ]]; then
-     echo 'IS SYMLIANK'
-  else
-     echo 'NOT SYMLANK'
-  fi
-
-  foo="$(readlink "$1")"
-  echo "$foo"
-  return 1;
 
  local all_args=( "$@" );
  local bxn_args=();

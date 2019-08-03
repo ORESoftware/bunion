@@ -22,9 +22,9 @@ if (!f) {
 
 const tryReadingInputFile = (): number => {
   
-  if (f.startsWith('/dev/fd/')) {
-    return parseInt(f.split('/').pop());
-  }
+  // if (f.startsWith('/dev/fd/')) {
+  //   return parseInt(f.split('/').pop());
+  // }
   
   try {
     return fs.openSync(f, 'r');
@@ -78,25 +78,6 @@ const makeConnection = (cb: EVCb<any>) => {
   
 };
 
-// setTimeout(() => {
-//
-//   makeConnection(err => {
-//
-//     if (!err) {
-//       return;
-//     }
-//
-//     setTimeout(() => {
-//       makeConnection(err => {
-//         if (err) {
-//           throw err;
-//         }
-//       })
-//     }, 20);
-//
-//   });
-//
-// }, 200);
 
 const con = {
   currentByte: 0,
@@ -106,7 +87,6 @@ const con = {
   changeTo: null as Timer,
   changeCount: 0
 };
-
 
 const handleConn = () => {
   
@@ -130,7 +110,7 @@ w.on('change', (ev, f) => {
   
   con.changeCount++;
   
-  if (con.changeCount > 4) {
+  if (con.changeCount > 5) {
     clearTimeout(con.changeTo);
     handleConn();
     return;
