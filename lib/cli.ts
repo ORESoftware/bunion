@@ -142,6 +142,11 @@ const server = net.createServer(c => {
   
   connections.add(c);
   
+  setTimeout(() => {
+    writeReq(c);
+  }, 5);
+  
+  
   c.pipe(new JSONParser())
     .on('error', e => {
       console.error('client conn error:', e);
@@ -155,15 +160,20 @@ const server = net.createServer(c => {
   
 });
 
+
+const writeReq = (c: net.Socket) => {
+  c.write(JSON.stringify({
+    bunionType: 'read',
+    value: {
+      bytesToRead: 30000
+    }
+  }) + '\n');
+};
+
 const sendRequestForData = () => {
   clearTimeout(con.dataTo);
   for (const c of connections) {
-    c.write(JSON.stringify({
-      bunionType: 'read',
-      value: {
-        bytesToRead: 30000
-      }
-    }) + '\n');
+     writeReq(c);
   }
 };
 

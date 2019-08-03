@@ -23,8 +23,7 @@ if (!f) {
 const tryReadingInputFile = (): number => {
   try {
     return fs.openSync(f, 'r');
-  }
-  catch (err) {
+  } catch (err) {
     log.error('Could not open the following file for reading:', f);
     log.error(err.message || err);
     process.exit(1);
@@ -40,8 +39,7 @@ const udsFile = budsFile ?
 
 try {
   fs.writeFileSync(udsFile, 'null', {flag: 'wx'});
-}
-catch (e) {
+} catch (e) {
   // ignore
 }
 
@@ -57,7 +55,7 @@ const makeConnection = (cb: EVCb<any>) => {
   });
   
   conn.once('connect', () => {
-    console.log('connected');
+    producer.debug('connected');
     cb(null);
   });
   
@@ -91,7 +89,17 @@ const makeConnection = (cb: EVCb<any>) => {
 //
 // }, 200);
 
-w.once('change', (ev,f) => {
+const con = {
+  currentByte: 0,
+  prom: Promise.resolve(null),
+  dataTo: null as Timer,
+  defaultBytesToRead: 50000,
+  changeTo: null as Timer,
+  changeCount: 0
+};
+
+
+const handleConn = () => {
   
   w.close();
   
@@ -102,15 +110,26 @@ w.once('change', (ev,f) => {
       }
     });
   }, 25);
+};
+
+const setChangeTo = () => {
+  clearTimeout(con.changeTo);
+  con.changeTo = setTimeout(handleConn, 15);
+};
+
+w.on('change', (ev, f) => {
   
+  con.changeCount++;
+
+  if(con.changeCount > 4){
+    clearTimeout(con.changeTo);
+    handleConn();
+    return;
+  }
+  
+  setChangeTo();
 });
 
-const con = {
-  currentByte: 0,
-  prom: Promise.resolve(null),
-  dataTo: null as Timer,
-  defaultBytesToRead: 50000
-};
 
 const read = (v: any) => {
   
