@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 'use strict';
 
 import * as net from 'net';
@@ -7,8 +8,10 @@ import * as fs from 'fs';
 import Timer = NodeJS.Timer;
 import log from './logging';
 import {EVCb} from "./bunion";
+import {producer} from "./logger";
 
-const f = process.argv[2];
+const fileFlagIndex = process.argv.indexOf('-f');
+const f = process.argv[fileFlagIndex + 1];
 
 if (!f) {
   throw 'Pass filepath as first arg.';
@@ -17,8 +20,7 @@ if (!f) {
 const tryReadingInputFile = (): number => {
   try {
     return fs.openSync(f, 'r');
-  }
-  catch (err) {
+  } catch (err) {
     log.error('Could not open the following file for reading:', f);
     log.error(err.message || err);
     process.exit(1);
@@ -26,17 +28,17 @@ const tryReadingInputFile = (): number => {
 };
 
 const fd = tryReadingInputFile();
-const budsFile = process.env.bunion_uds_file || '';
+const budsFile = '' && process.env.bunion_uds_file || '';
 const cwd = process.cwd();
 
 const udsFile = budsFile ?
   path.resolve(budsFile) :
   path.resolve(cwd + '/.bunion.sock');
 
+
 try {
   fs.writeFileSync(udsFile, 'null', {flag: 'wx'});
-}
-catch (e) {
+} catch (e) {
   // ignore
 }
 
@@ -46,7 +48,10 @@ const makeConnection = (cb: EVCb<any>) => {
   
   const conn = net.createConnection(udsFile);
   
-  conn.once('error', cb);
+  conn.once('error', e => {
+    producer.error('Could not connect to socket:', '\n', e);
+    cb(null);
+  });
   
   conn.once('connect', () => {
     console.log('connected');
@@ -63,16 +68,37 @@ const makeConnection = (cb: EVCb<any>) => {
   
 };
 
+
+// setTimeout(() => {
+//
+//   makeConnection(err => {
+//
+//     if (!err) {
+//       return;
+//     }
+//
+//     setTimeout(() => {
+//       makeConnection(err => {
+//         if (err) {
+//           throw err;
+//         }
+//       })
+//     }, 20);
+//
+//   });
+//
+// }, 200);
+
 w.once('change', ev => {
-  
+
   w.close();
-  
+
   makeConnection(err => {
-    
+
     if (!err) {
-     return;
+      return;
     }
-  
+
     setTimeout(() => {
       makeConnection(err => {
         if (err) {
@@ -80,9 +106,9 @@ w.once('change', ev => {
         }
       })
     }, 20);
-    
+
   });
-  
+
 });
 
 const con = {

@@ -109,7 +109,7 @@ const con = {
   
 };
 
-const budsFile = process.env.bunion_uds_file || '';
+const budsFile = '' && process.env.bunion_uds_file || '';
 const cwd = process.cwd();
 
 const udsFile = budsFile ?
@@ -151,11 +151,11 @@ try {
   fs.unlinkSync(udsFile);
 }
 catch (e) {
-  consumer.warn(e);
+  // consumer.warn(e);
 }
 
 server.on('error', e => {
-  // consumer.warn(e);
+  consumer.warn(e);
 });
 
 server.listen(udsFile, () => {
@@ -180,7 +180,8 @@ process.once('exit', code => {
   
   tryAndLogErrors(() => fs.closeSync(rawFD));
   tryAndLogErrors(() => fs.closeSync(logFD));
-  tryAndLogErrors(() => con.rsi && con.rsi.destroy());
+  
+  // tryAndLogErrors(() => con.rsi && con.rsi.destroy());
   
   // fs.unlinkSync(logFileId);
   // fs.unlinkSync(rawFileId);
