@@ -478,9 +478,9 @@ const onStandardizedJSON = (v: BunionJSON) => {
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
   }
   
-  // const msgVal = getHighlightedString(getInspected(v.value));
+  const msgVal = getHighlightedString(getInspected(v.value));
   
-  const msgVal = getInspected(v.value);
+  // const msgVal = getInspected(v.value);
   
   
   if (v.fields) {
