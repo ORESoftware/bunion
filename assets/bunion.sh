@@ -26,19 +26,13 @@ __bxn_controlled(){
   declare -a bxn_args=("${!1}")
   shift;
 
-  echo "${bxn_args}"
-  echo "${bxn_args[@]}"
-
   local cmd="$1";
   shift;
 
-  echo "${bxn_args}"
-  echo "${bxn_args[@]}"
-
-  if ! which "$cmd" && ! type cmd &> /dev/null; then
+  if ! which "$cmd"  &> /dev/null && ! type cmd &> /dev/null; then
     echo "The following command is not recognized: $cmd"
     echo "You need to run something like this: 'bxn --controlled your-command'";
-    echo "where 'your-command' is an available program on the system path.";
+    echo "where 'your-command' is an available program on the system path. You can use either -c or --controlled, it is the same flag.";
     return 1;
   fi
 
@@ -51,6 +45,14 @@ __bxn_controlled(){
 }
 
 __bxn_read_file(){
+
+  local file_path="$(__bxn_get_next '-f' "$@")";
+
+  if [[ ! -f "$file_path" ]]; then
+    echo 'You need go pass an actual file after the -f flag.';
+    return 1;
+  fi
+
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
@@ -60,18 +62,48 @@ __bxn_read_file(){
 
 __bunny(){
 
-  echo "bunny: $@"
+  local cmd="$1";
+  shift;
 
-  return;
+  if ! which "$cmd"  &> /dev/null && ! type cmd &> /dev/null; then
+    echo "The following command is not recognized: $cmd"
+    echo "You need to run something like this: 'bxn your-command'";
+    echo "where 'your-command' is an available program on the system path.";
+    return 1;
+  fi
 
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
-  "$@" | bunion
+  "$cmd" "$@" | bunion
   rm "$bunion_uds_file"
 
 }
 
+
+__bxn_get_next(){
+
+   ## get value after a flag, such as -f <file>
+   ## e.g.    __bxn_get_next '-f' "$@"
+
+  local search_key="$1"
+  shift;
+  local stop='false'
+
+  for v in "$@"; do
+
+   if test "$stop" == 'true'; then
+     echo "$v"
+     break;
+   fi
+
+   if test "$v" == "$search_key"; then
+    stop='true'
+   fi
+
+  done;
+
+}
 
 __bxn_contains(){
 
@@ -106,13 +138,6 @@ bxn(){
   done;
 
 
-  # remaining_args_ln="$#";
-  #
-  # if [[ "$remaining_args_ln" == '0' ]]; then
-  #    echo 'No remaining args - you need to pass a command for bunion to run.'
-  #    return 1;
-  # fi
-
 
   if __bxn_contains '-f' "${bxn_args[@]}" ; then
      __bxn_read_file "${all_args[@]}"
@@ -128,6 +153,15 @@ bxn(){
      __bxn_controlled bxn_args[@] "$@"
      return;
   fi
+
+
+  remaining_args_ln="$#";
+
+   if [[ "$remaining_args_ln" == '0' ]]; then
+      echo 'No remaining args - you need to pass a command for bunion to run.'
+      bunion;
+      return;
+   fi
 
 
   __bunny "${all_args[@]}"
