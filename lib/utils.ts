@@ -39,7 +39,7 @@ const getDefaultBunionConf = (): BunionConf => {
       level: BunionLevelInternal.TRACE,
       inspect: {
         array: {
-          length: 5
+          length: 25
         },
         object: {
           depth: 5

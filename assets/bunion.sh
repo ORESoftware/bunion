@@ -28,11 +28,12 @@ bxn_remove_old_runs(){
 
 __bxn_controlled(){
 
-  declare -a bxn_args=("${!1}")
+  local bxn_args_local=( "${!1}" )
   shift;
 
   local cmd="$1";
   shift;
+
 
   if [[ -z "$cmd" ]]; then
       echo 'No command argument - you need to pass a command to run.'
@@ -49,7 +50,7 @@ __bxn_controlled(){
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
-  bunion "${bxn_args[@]}" | "$cmd" "$@" 2>&1 | bunion # --ignore-controlled "${bxn_args[@]}"
+  bunion -c "${bxn_args_local[@]}" | "$cmd" "$@" 2>&1 | bunion # --ignore-controlled "${bxn_args[@]}"
   rm -f "$bunion_uds_file"
 
 }
@@ -155,7 +156,7 @@ __bxn_contains(){
 bxn(){
 
  local all_args=( "$@" );
- local bxn_args=();
+ local bxn_args=( );
 
  for v in "$@"; do
 

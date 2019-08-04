@@ -2,7 +2,6 @@
 
 takes_ary_as_arg(){
 
-
     echo "$1"
 
     declare -a argAry1=("${!1}")

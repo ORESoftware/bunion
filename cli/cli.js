@@ -12,7 +12,6 @@ if (process.argv.indexOf('-c') > 1 || process.argv.indexOf('--controlled') > 1) 
   return;
 }
 
-
 if(process.stdin.isTTY){
   throw 'Cannot run from TTY';
 }
