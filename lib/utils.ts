@@ -15,9 +15,18 @@ const schema = require('../assets/schema/bunion.conf.json');
 
 ///////////////////////////////////////////////////////////////////////////////
 
+const cleanField = (v: any) => {
+  return String(v || '#')
+    .trim()
+    .replace('"', '')
+    .replace("'", '')
+    .replace(')', '')
+    .replace('(', '');
+};
+
 export const getFields = (fields: any) => {
   return Object.keys(fields).reduce(function (s, k) {
-    return s + `(${k}=${String(fields[k])}) `;
+    return s + `(${cleanField(k)}=${cleanField(fields[k])}) `;
   }, '');
 };
 
@@ -58,7 +67,8 @@ export const getConf = (): BunionConf => {
   
   try {
     projectRoot = findProjectRoot(process.cwd());
-  } catch (err) {
+  }
+  catch (err) {
     producer.error('bunion could not find the project root given the current working directory:', process.cwd());
     throw err;
   }
@@ -70,7 +80,8 @@ export const getConf = (): BunionConf => {
   try {
     confPath = path.resolve(projectRoot + '/' + '.bunion.js');
     conftemp = require(confPath);
-  } catch (err) {
+  }
+  catch (err) {
     producer.error('Missing ".bunion.js" file:', err.message);
     conftemp = {};
   }
@@ -90,7 +101,8 @@ export const getConf = (): BunionConf => {
         producer.error(util.inspect(e));
       }
     }
-  } catch (e) {
+  }
+  catch (e) {
     consumer.debug(e.message || e);
   }
   
