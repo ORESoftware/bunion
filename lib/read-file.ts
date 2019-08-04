@@ -98,12 +98,14 @@ const handleConn = () => {
         throw err;
       }
     });
-  }, 25);
+    
+  }, 35);
+  
 };
 
 const setChangeTo = () => {
   clearTimeout(con.changeTo);
-  con.changeTo = setTimeout(handleConn, 15);
+  con.changeTo = setTimeout(handleConn, 25);
 };
 
 w.on('change', (ev, f) => {
