@@ -4,8 +4,6 @@ import readline = require('readline');
 import * as safe from '@oresoftware/safe-stringify';
 import {JSONParser} from "@oresoftware/json-stream-parser";
 
-//////////////////////////////////////////////////
-
 
 export interface ParserOptions {
   onlyParseableOutput: boolean,
