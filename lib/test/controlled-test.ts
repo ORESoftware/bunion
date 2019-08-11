@@ -17,7 +17,6 @@ process.on('unhandledRejection', (e: any) => {
   console.error('Unhandled rejection:', e.message || e);
 });
 
-
 let i = 0;
 
 const getRandomStr = () => {
@@ -34,10 +33,11 @@ const getRandomStr = () => {
 const run = () => {
   
   log.infox({zebra: 'blues', dog: 'not cat'}, i++, 'fanny');
+  log.infox({zebra: 'blues', dog: 'not cat'}, i++, {here: {comes: {the: 'tranny'}}});
   log.info(i++, 'just saying hi.');
   log.warn(i++, 'shit hit the fan');
   
-  log.error({"these": {colors: {do: {not: 'run'}}}});
+  log.error({"these": {has: {do: {not: 'run'}}}});
   
   log.error(new Error('bux'));
   

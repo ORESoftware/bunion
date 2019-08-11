@@ -53,9 +53,8 @@ __bxn_controlled(){
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
-  bunion -c "${bxn_args_local[@]}" | "$cmd" "$@" 2>&1 | bunion # --ignore-controlled "${bxn_args[@]}"
-  rm -f "$bunion_uds_file"
-
+   # --ignore-controlled "${bxn_args[@]}"
+  bunion -c "${bxn_args_local[@]}" | "$cmd" "$@" 2>&1 | bunion || rm -f "$bunion_uds_file" &&  rm -f "$bunion_uds_file"
 }
 
 __bxn_read_file(){
@@ -85,8 +84,7 @@ __bxn_read_file(){
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
-  bunion "$@" | bunion
-  rm -f "$bunion_uds_file"
+  bunion "$@" | bunion || rm -f "$bunion_uds_file" && rm -f "$bunion_uds_file"
 }
 
 __bunny(){
@@ -113,9 +111,7 @@ __bunny(){
   export bunion_socks="$HOME/.bunion/sockets"
   mkdir -p "$bunion_socks";
   export bunion_uds_file="$bunion_socks/$(uuidgen).sock";
-  "$cmd" "$@" | bunion
-  rm -f "$bunion_uds_file"
-
+  "$cmd" "$@" | bunion || rm -f "$bunion_uds_file" && rm -f "$bunion_uds_file"
 }
 
 
