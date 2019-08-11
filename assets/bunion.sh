@@ -40,11 +40,14 @@ __bxn_controlled(){
       return 1;
   fi
 
-  if ! which "$cmd"  &> /dev/null && ! type cmd &> /dev/null; then
-    echo "The following command is not recognized: $cmd"
-    echo "You need to run something like this: 'bxn --controlled your-command'";
-    echo "where 'your-command' is an available program on the system path. You can use either -c or --controlled, it is the same flag.";
-    return 1;
+  if ! command -v "$cmd"  &> /dev/null && ! type cmd &> /dev/null; then
+    if [[ ! -x "$cmd" ]]; then
+      echo "The following command is not recognized: $cmd"
+      echo "You need to run something like this: 'bxn --controlled your-command'";
+      echo "where 'your-command' is an available program on the system path. You can use either -c or --controlled, it is the same flag.";
+      echo 'Also, make sure the file is executable, and has the appropiate hashbang/shebang header.';
+      return 1;
+     fi
   fi
 
   export bunion_socks="$HOME/.bunion/sockets"
@@ -91,17 +94,20 @@ __bunny(){
   local cmd="$1";
   shift;
 
-  if ! which "$cmd"  &> /dev/null && ! type cmd &> /dev/null; then
-    echo "The following command is not recognized: $cmd"
-    local fp="$(readlink "$cmd")"
-    if [[ -f "$fp" ]] || [[ -f "$cmd" ]]; then
-       echo "You passed in a file as the argument: 'bxn <file>'";
-       echo "If you meant to have a controlled tailing of this file, then use the -f flag as in: 'bxn -f <file>'";
-       return 1;
-    fi
-    echo "You need to run something like this: 'bxn your-command'";
-    echo "where 'your-command' is an available program on the system path.";
-    return 1;
+  if ! command -v "$cmd"  &> /dev/null && ! type cmd &> /dev/null; then
+      if [[ ! -x "$cmd" ]]; then
+        echo "The following command is not recognized: $cmd"
+        local fp="$(readlink "$cmd")"
+        if [[ -f "$fp" ]] || [[ -f "$cmd" ]]; then
+           echo "You passed in a file as the argument: 'bxn <file>'";
+           echo "If you meant to have a controlled tailing of this file, then use the -f flag as in: 'bxn -f <file>'";
+           return 1;
+        fi
+        echo "You need to run something like this: 'bxn your-command'";
+        echo "where 'your-command' is an available program on the system path.";
+        echo 'Also, make sure the file is executable, and has the appropiate hashbang/shebang header.';
+        return 1;
+      fi
   fi
 
   export bunion_socks="$HOME/.bunion/sockets"
