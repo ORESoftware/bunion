@@ -76,20 +76,22 @@ const handleConn = () => {
 
 const setChangeTo = () => {
   clearTimeout(con.changeTo);
-  con.changeTo = setTimeout(handleConn, 25);
+  con.changeTo = setTimeout(handleConn, 125);
 };
 
 w.on('change', (ev, f) => {
   
   con.changeCount++;
   
-  if (con.changeCount > 5) {
+  if (con.changeCount > 8) {
+    w.close();
     clearTimeout(con.changeTo);
     handleConn();
     return;
   }
   
   setChangeTo();
+  
 });
 
 const read = (v: any) => {
@@ -104,7 +106,7 @@ const dataRead = () => {
 
 const createTimeout = () => {
   clearTimeout(con.dataTo);
-  con.dataTo = setTimeout(dataRead, 3000);
+  con.dataTo = setTimeout(dataRead, 8000);
 };
 
 createTimeout();

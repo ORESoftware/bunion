@@ -8,4 +8,5 @@ test
 *.json
 *.DS_Store
 lib
+dist/test
 !assets/schema/bunion.conf.json

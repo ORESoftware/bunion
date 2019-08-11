@@ -574,11 +574,11 @@ const writeToFile = (vals: Array<LinkedQueueValue<any>>) => {
 
 let pos = 0, currDel = 0;
 
-const createDataTimeout = () => {
+const createDataTimeout = (v: number) => {
   clearTimeout(con.dataTo);
   con.dataTo = setTimeout(() => {
     sendRequestForData();
-  }, 30);
+  }, v);
 };
 
 const handleIn = (d: any) => {
@@ -587,7 +587,9 @@ const handleIn = (d: any) => {
     throw 'Should always be defined.'
   }
   
-  createDataTimeout();
+  if (con.mode === BunionMode.READING || con.mode === BunionMode.TAILING) {
+    createDataTimeout(20);
+  }
   
   const h = con.head++;
   
@@ -1129,7 +1131,7 @@ const handleUserInput = () => {
   strm.on('data', (d: any) => {
     
     createTimeout();
-    createDataTimeout();
+    createDataTimeout(20);
     
     con.lastUserEvent = Date.now();
     
