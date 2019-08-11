@@ -58,7 +58,8 @@ let opts: any, cliParser = dashdash.createParser({options: options}, {allowUnkno
 
 try {
   opts = cliParser.parse(process.argv);
-} catch (e) {
+}
+catch (e) {
   consumer.error('bunion: error: %s', e.message);
   process.exit(1);
 }
@@ -79,19 +80,22 @@ const rawFileId = path.resolve(runId + '/raw.log');
 
 try {
   fs.mkdirSync(bunionHome);
-} catch (err) {
+}
+catch (err) {
 
 }
 
 try {
   fs.mkdirSync(runs);
-} catch (e) {
+}
+catch (e) {
 
 }
 
 try {
   fs.mkdirSync(runId);
-} catch (e) {
+}
+catch (e) {
 
 }
 
@@ -136,6 +140,10 @@ const server = net.createServer(c => {
   
   connections.add(c);
   
+  c.once('end', () => {
+    connections.delete(c);
+  });
+  
   setTimeout(() => {
     writeReq(c);
   }, 5);
@@ -153,13 +161,17 @@ const server = net.createServer(c => {
   
 });
 
+const writeToConn = (c: net.Socket, m: object) => {
+  return c.write(JSON.stringify(m) + '\n');
+};
+
 const writeReq = (c: net.Socket) => {
-  c.write(JSON.stringify({
+  return writeToConn(c, {
     bunionType: 'read',
     value: {
       bytesToRead: 30000
     }
-  }) + '\n');
+  });
 };
 
 const sendRequestForData = () => {
@@ -171,7 +183,8 @@ const sendRequestForData = () => {
 
 try {
   fs.unlinkSync(udsFile);
-} catch (e) {
+}
+catch (e) {
   // consumer.warn(e);
 }
 
@@ -189,7 +202,8 @@ const logFD = fs.openSync(logFileId, 'w+');
 const tryAndLogErrors = (fn: EVCb<void>) => {
   try {
     fn(null);
-  } catch (err) {
+  }
+  catch (err) {
     consumer.warn(err.message || err);
   }
 };
@@ -208,7 +222,8 @@ process.once('exit', code => {
   
   if (con.keepLogFile) {
     consumer.info('Log file path:', rawFileId);
-  } else {
+  }
+  else {
     tryAndLogErrors(() => fs.unlinkSync(rawFileId));
   }
   
@@ -298,7 +313,8 @@ const runTransform = (v: any, t: any): boolean => {
       onStandardizedJSON(c);
       return true;
     }
-  } catch (err) {
+  }
+  catch (err) {
     
     return false;  // explicit for your pleasure
   }
@@ -363,7 +379,8 @@ const onBunionUnknownJSON = (v: any): void => {
         if (bool && runTransform(v, t)) {
           return;
         }
-      } catch (err) {
+      }
+      catch (err) {
         clearLine();
         consumer.error(err);
         consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
@@ -436,7 +453,7 @@ const getDarkOrlight = (str: string) => {
 
 const makeBold = (str: string) => {
   return chalk.bold(str);
-}
+};
 
 const onStandardizedJSON = (v: BunionJSON) => {
   
@@ -467,11 +484,13 @@ const onStandardizedJSON = (v: BunionJSON) => {
   if (output === 'short') {
     v.d = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  } else if (output === 'medium') {
+  }
+  else if (output === 'medium') {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `app:${chalk.bold(v.appName)}`;
-  } else {
+  }
+  else {
     const d = new Date(v.date);
     v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
@@ -540,7 +559,8 @@ const readFromFile = (pos: number): any => {
     const nnb = Buffer.alloc(v.b);
     fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
     return JSON.parse(String(nnb).trim());
-  } catch (err) {
+  }
+  catch (err) {
     return chalk.red(err.message);
   }
   
@@ -606,13 +626,15 @@ const handleIn = (d: any) => {
   
   try {
     fs.writeSync(rawFD, raw, pos);
-  } catch (err) {
+  }
+  catch (err) {
     consumer.warn(err.message || err);
   }
   
   try {
     fs.writeSync(logFD, JSON.stringify({p: pos, b: byteLen}), h * 50, 'utf-8');
-  } catch (err) {
+  }
+  catch (err) {
     consumer.warn(err.message || err);
   }
   
@@ -819,7 +841,8 @@ const getValFromTransform = (t: any, v: any): string => {
     let bool;
     try {
       bool = t.identifyViaJSObject(v);
-    } catch (err) {
+    }
+    catch (err) {
       clearLine();
       consumer.error(err);
       consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
@@ -830,7 +853,8 @@ const getValFromTransform = (t: any, v: any): string => {
     if (bool && typeof t.getValue === 'function') {
       try {
         val = t.getValue(v);
-      } catch (err) {
+      }
+      catch (err) {
         clearLine();
         consumer.error(err);
         consumer.error('Could not call getValue on value:', v);
@@ -858,7 +882,8 @@ const getValFromTransformAlreadyIdentified = (t: any, v: any): string => {
     if (typeof t.getValue === 'function') {
       val = t.getValue(v);
     }
-  } catch (err) {
+  }
+  catch (err) {
     consumer.error(err);
   }
   
@@ -890,7 +915,8 @@ const getValue = (v: any): string => {
     
     try {
       val = getValFromTransformAlreadyIdentified(t, v);
-    } catch (e) {
+    }
+    catch (e) {
       consumer.warn(e);
     }
     
@@ -905,7 +931,8 @@ const getValue = (v: any): string => {
     
     try {
       val = getValFromTransform(t, v);
-    } catch (e) {
+    }
+    catch (e) {
       consumer.warn(e);
     }
     
@@ -940,7 +967,8 @@ const findLatestMatch = () => {
     
     try {
       val = getValue(v);
-    } catch (err) {
+    }
+    catch (err) {
       // ignore
       console.error(err);
     }
@@ -1092,7 +1120,8 @@ const handleSearchTermTyping = (d: string) => {
   
   try {
     con.searchRegex = new RegExp(newSearchTerm, 'ig');
-  } catch (e) {
+  }
+  catch (e) {
     consumer.warn('Could not create regex from string:', newSearchTerm);
     return;
   }
@@ -1132,6 +1161,10 @@ const handleUserInput = () => {
     
     createTimeout();
     createDataTimeout(20);
+    
+    for (const c of connections) {
+      writeToConn(c, {signal: d});
+    }
     
     con.lastUserEvent = Date.now();
     

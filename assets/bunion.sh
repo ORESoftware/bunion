@@ -42,7 +42,7 @@ __bxn_controlled(){
 
   if ! command -v "$cmd"  &> /dev/null && ! type cmd &> /dev/null; then
     if [[ ! -x "$cmd" ]]; then
-      echo "The following command is not recognized: $cmd"
+      echo "The following command is not recognized: '$cmd'"
       echo "You need to run something like this: 'bxn --controlled your-command'";
       echo "where 'your-command' is an available program on the system path. You can use either -c or --controlled, it is the same flag.";
       echo 'Also, make sure the file is executable, and has the appropiate hashbang/shebang header.';
@@ -96,7 +96,7 @@ __bunny(){
 
   if ! command -v "$cmd"  &> /dev/null && ! type cmd &> /dev/null; then
       if [[ ! -x "$cmd" ]]; then
-        echo "The following command is not recognized: $cmd"
+        echo "The following command is not recognized: '$cmd'"
         local fp="$(readlink "$cmd")"
         if [[ -f "$fp" ]] || [[ -f "$cmd" ]]; then
            echo "You passed in a file as the argument: 'bxn <file>'";
