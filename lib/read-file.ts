@@ -85,7 +85,8 @@ const con = {
   dataTo: null as Timer,
   defaultBytesToRead: 50000,
   changeTo: null as Timer,
-  changeCount: 0
+  changeCount: 0,
+  oto: 125
 };
 
 const handleConn = () => {
@@ -105,14 +106,14 @@ const handleConn = () => {
 
 const setChangeTo = () => {
   clearTimeout(con.changeTo);
-  con.changeTo = setTimeout(handleConn, 125);
+  con.changeTo = setTimeout(handleConn, con.oto -= 10);
 };
 
 w.on('change', (ev, f) => {
   
   con.changeCount++;
   
-  if (con.changeCount > 8) {
+  if (con.changeCount > 5) {
     w.close();
     clearTimeout(con.changeTo);
     handleConn();
@@ -120,6 +121,7 @@ w.on('change', (ev, f) => {
   }
   
   setChangeTo();
+  
 });
 
 
