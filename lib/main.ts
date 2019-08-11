@@ -156,7 +156,7 @@ const getHostName = () => {
   }
   
   if (v && typeof v !== 'string') {
-    throw `hostname should be a string, but was not => ${util.inspect(v)}`;
+    throw `hostname should be a string, but was not => ${util.inspect(v,  {depth:5})}`;
   }
   
   return v || os.hostname() || process.env.HOSTNAME || 'unknown-host';

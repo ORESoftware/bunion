@@ -67,8 +67,7 @@ export const getConf = (): BunionConf => {
   
   try {
     projectRoot = findProjectRoot(process.cwd());
-  }
-  catch (err) {
+  } catch (err) {
     producer.error('bunion could not find the project root given the current working directory:', process.cwd());
     throw err;
   }
@@ -80,8 +79,7 @@ export const getConf = (): BunionConf => {
   try {
     confPath = path.resolve(projectRoot + '/' + '.bunion.js');
     conftemp = require(confPath);
-  }
-  catch (err) {
+  } catch (err) {
     producer.error('Missing ".bunion.js" file:', err.message);
     conftemp = {};
   }
@@ -98,11 +96,10 @@ export const getConf = (): BunionConf => {
     if (!valid) {
       producer.warn('Your bunion configuation file has an invalid format, see the following error(s):');
       for (const e of ajv.errors) {
-        producer.error(util.inspect(e));
+        producer.error(util.inspect(e, {depth: 5, colors: true}));
       }
     }
-  }
-  catch (e) {
+  } catch (e) {
     consumer.debug(e.message || e);
   }
   
