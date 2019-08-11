@@ -68,5 +68,8 @@ process.stdin.resume().on('data', v => {
   if (value[0] === 'read') {
     run();
   }
+  else{
+    console.log(String(v));
+  }
   
 });

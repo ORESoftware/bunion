@@ -157,6 +157,7 @@ const server = net.createServer(c => {
     })
     .on('data', d => {
       console.log('json from client:', d);
+      process.exit(0);
     })
   
 });

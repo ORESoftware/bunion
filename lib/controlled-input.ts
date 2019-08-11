@@ -19,12 +19,15 @@ const udsFile = budsFile ?
 
 try {
   fs.writeFileSync(udsFile, 'null', {flag: 'wx'});
-}
-catch (e) {
+} catch (e) {
   // ignore
 }
 
 const w = fs.watch(udsFile);
+
+const writeToConn = (c: net.Socket, m: object) => {
+  return c.write(JSON.stringify(m) + '\n');
+};
 
 const makeConnection = (cb: EVCb<any>) => {
   
@@ -45,6 +48,8 @@ const makeConnection = (cb: EVCb<any>) => {
     if (d.bunionType && d.bunionType === 'read') {
       return read(d.value);
     }
+    
+    writeToConn(conn, d);
     
   });
   
