@@ -1129,6 +1129,7 @@ const handleUserInput = () => {
   strm.on('data', (d: any) => {
     
     createTimeout();
+    createDataTimeout();
     
     con.lastUserEvent = Date.now();
     
