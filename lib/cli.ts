@@ -1164,7 +1164,7 @@ const handleUserInput = () => {
     createDataTimeout(20);
     
     for (const c of connections) {
-      writeToConn(c, {signal: d});
+      // writeToConn(c, {signal: d});
     }
     
     con.lastUserEvent = Date.now();
