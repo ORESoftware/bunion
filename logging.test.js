@@ -38,7 +38,7 @@ const getRandomStr = () => {
   
   log.error({"these":{colors:{do:{not:'run'}}}});
   
-  log.error(new Error('bux'))
+  log.error(new Error('bux'));
   
   log.debug(i++, getRandomStr());
   log.trace(i++, getRandomStr());

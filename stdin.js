@@ -37,5 +37,35 @@
 //
 // console.log(JSON.stringify(v));
 
-console.error(process.argv[2], 'pid', process.pid);
-console.error(process.argv[2], 'ppid:', process.ppid);
+// console.error(process.argv[2], 'pid', process.pid);
+// console.error(process.argv[2], 'ppid:', process.ppid);
+
+
+const v = new Error('foo');
+
+console.log(typeof v.message);
+console.log(typeof v.stack);
+console.log(typeof v.name, v.name);
+
+console.log(JSON.stringify(v));
+
+
+class Foo extends Error {
+  
+  constructor() {
+    super(...arguments);
+  }
+  
+  toJSON() {
+    return {
+      message: this.message,
+      stack: this.stack
+    }
+  }
+  
+}
+
+const z = new Foo('foo');
+
+console.log(z.name);
+console.log(JSON.stringify());
