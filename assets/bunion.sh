@@ -34,7 +34,6 @@ __bxn_controlled(){
   local cmd="$1";
   shift;
 
-
   if [[ -z "$cmd" ]]; then
       echo 'No command argument - you need to pass a command to run.'
       return 1;
