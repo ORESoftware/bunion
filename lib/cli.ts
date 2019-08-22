@@ -149,16 +149,16 @@ const server = net.createServer(c => {
   }, 5);
   
   c.pipe(new JSONParser())
-    .on('error', e => {
-      console.error('client conn error:', e);
-    })
-    .on('string', s => {
-      console.log('string from client:', s);
-    })
-    .on('data', d => {
-      console.log('json from client:', d);
-      process.exit(0);
-    })
+  .on('error', e => {
+    console.error('client conn error:', e);
+  })
+  .on('string', s => {
+    console.log('string from client:', s);
+  })
+  .on('data', d => {
+    console.log('json from client:', d);
+    process.exit(0);
+  })
   
 });
 
@@ -346,18 +346,18 @@ const getInspected = (v: any): string => {
   }
   
   return v.map(v => {
-      
-      if (typeof v === 'string') {
-        return v;
-      }
-      
-      if (true || opts.inspect) {
-        return util.inspect(v, utilInspectOpts);
-      }
-      
-      return JSON.stringify(v);
-    })
-    .join(' ');
+    
+    if (typeof v === 'string') {
+      return v;
+    }
+    
+    if (true || opts.inspect) {
+      return util.inspect(v, utilInspectOpts);
+    }
+    
+    return JSON.stringify(v);
+  })
+  .join(' ');
   
 };
 
@@ -671,10 +671,10 @@ const onStdinEnd = () => {
 };
 
 const parser = process.stdin.resume()
-  .on('end', onStdinEnd)
-  .pipe(createRawParser())
-  .on('string', handleIn)
-  .on('data', handleIn);
+.on('end', onStdinEnd)
+.pipe(createRawParser())
+.on('string', handleIn)
+.on('data', handleIn);
 
 const onTimeout = () => {
   console.log('TIMED OUT.');
@@ -1155,7 +1155,9 @@ const handleCtrlD = handleShutdown('ctrl-d');
 
 const handleUserInput = () => {
   
-  const strm = con.rsi = new ReadStream(<any>1);   // previously fd =  fs.open('/dev/tty','r+')
+  const fd = fs.openSync('/dev/tty', 'r+');
+  // const strm = con.rsi = new ReadStream(<any>1);
+  const strm = con.rsi = new ReadStream(<any>fd);
   strm.setRawMode(true);
   
   strm.on('data', (d: any) => {
@@ -1356,7 +1358,7 @@ const handleUserInput = () => {
 //   handleUserInput();
 // }
 
-if (process.stdout.isTTY) {
+if (true || process.stdout.isTTY) {
   consumer.debug('handing b/c of stdout.');
   handleUserInput();
 }
