@@ -124,7 +124,6 @@ const con = {
   to: null as Timer,
   searchRegex: null as RegExp,
   timeout: 555500  // 450 seconds
-  
 };
 
 const budsFile = process.env.bunion_uds_file || '';
@@ -217,7 +216,6 @@ process.once('exit', code => {
   tryAndLogErrors(() => fs.closeSync(logFD));
   
   // tryAndLogErrors(() => con.rsi && con.rsi.destroy());
-  
   // fs.unlinkSync(logFileId);
   // fs.unlinkSync(rawFileId);
   
@@ -902,15 +900,22 @@ const getValue = (v: any): string => {
     return typeof v === 'string' ? v : String(v);
   }
   
-  const z = Array.isArray(v) ? v[v.length - 1] : v.value;
+  const isArray = Array.isArray(v);
+  const z = isArray ? v[v.length - 1] : v.value;
   
-  if (typeof z === 'string') {
-    return z;
+  if (isArray && String(v[0]).startsWith('@bunion')) {
+    
+    if (typeof z === 'string') {
+      return z;
+    }
+    
+    if (Array.isArray(z)) {
+      return JSON.stringify(z);
+    }
+    
+    return util.inspect(z);
   }
   
-  if (Array.isArray(z)) {
-    return JSON.stringify(z);
-  }
   
   const t = transformKeys[getId(v)];
   
@@ -947,7 +952,7 @@ const getValue = (v: any): string => {
     
   }
   
-  return '';
+  return '[warning: message could not be parsed]';
   
 };
 
