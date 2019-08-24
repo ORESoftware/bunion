@@ -149,16 +149,16 @@ const server = net.createServer(c => {
   }, 5);
   
   c.pipe(new JSONParser())
-  .on('error', e => {
-    console.error('client conn error:', e);
-  })
-  .on('string', s => {
-    console.log('string from client:', s);
-  })
-  .on('data', d => {
-    console.log('json from client:', d);
-    process.exit(0);
-  })
+    .on('error', e => {
+      console.error('client conn error:', e);
+    })
+    .on('string', s => {
+      console.log('string from client:', s);
+    })
+    .on('data', d => {
+      console.log('json from client:', d);
+      process.exit(0);
+    })
   
 });
 
@@ -253,7 +253,7 @@ const clearLine = () => {
 
 const writeStatusToStdout = (searchTermStr?: string) => {
   
-  if (!process.stdout.isTTY) {
+  if (false && !process.stdout.isTTY) {
     return;
   }
   
@@ -338,7 +338,6 @@ const getInspected = (v: any): string => {
   
   if (!Array.isArray(v)) {
     if (true || opts.inspect) {
-      console.log('biggg:', v);
       return util.inspect(v, utilInspectOpts);
     }
     
@@ -346,18 +345,18 @@ const getInspected = (v: any): string => {
   }
   
   return v.map(v => {
-    
-    if (typeof v === 'string') {
-      return v;
-    }
-    
-    if (true || opts.inspect) {
-      return util.inspect(v, utilInspectOpts);
-    }
-    
-    return JSON.stringify(v);
-  })
-  .join(' ');
+      
+      if (typeof v === 'string') {
+        return v;
+      }
+      
+      if (true || opts.inspect) {
+        return util.inspect(v, utilInspectOpts);
+      }
+      
+      return JSON.stringify(v);
+    })
+    .join(' ');
   
 };
 
@@ -621,8 +620,9 @@ const handleIn = (d: any) => {
   const raw = JSON.stringify(d) + '\n';
   const byteLen = Buffer.byteLength(raw);
   
-  con.fromMemory.set(h, d);
+  const newVal = JSON.parse(raw);
   
+  con.fromMemory.set(h, newVal);
   // q.enqueue(h, d);
   
   try {
@@ -645,7 +645,7 @@ const handleIn = (d: any) => {
   //   writeToFile(q.deq(100));
   // }
   
-  if (con.fromMemory.size > -1) {
+  if (con.fromMemory.size > 4000) {
     con.fromMemory.delete(currDel++);
   }
   
@@ -656,7 +656,7 @@ const handleIn = (d: any) => {
   
   if (con.mode === BunionMode.READING) {
     // console.log(h);
-    onData(d);
+    onData(newVal);
   }
   
   // console.log(process.memoryUsage());
@@ -671,10 +671,10 @@ const onStdinEnd = () => {
 };
 
 const parser = process.stdin.resume()
-.on('end', onStdinEnd)
-.pipe(createRawParser())
-.on('string', handleIn)
-.on('data', handleIn);
+  .on('end', onStdinEnd)
+  .pipe(createRawParser())
+  .on('string', handleIn)
+  .on('data', handleIn);
 
 const onTimeout = () => {
   console.log('TIMED OUT.');
@@ -749,7 +749,7 @@ const createLoggedBreak = (m: string) => {
 
 const gotoLine = (line: number) => {
   
-  const rows = process.stdout.rows;
+  const rows = Math.max(15, (process.stdout.rows || 0) + 1);
   const start = Math.max(line - rows - 1, con.tail);
   
   con.current = start;
@@ -1001,7 +1001,7 @@ const findLatestMatch = () => {
 
 const scrollUpOneLine = () => {
   
-  const rows = process.stdout.rows + 1;
+  const rows = Math.max(15, (process.stdout.rows || 0) + 1);
   const lines: Array<any> = [];
   
   let i = con.current - 1, count = 0;
@@ -1034,7 +1034,7 @@ const scrollUpOneLine = () => {
 
 const scrollUpFive = () => {
   
-  const rows = process.stdout.rows + 1;
+  const rows = Math.max(15, (process.stdout.rows || 0) + 1);
   const lines: Array<any> = [];
   
   let amount = 5;
