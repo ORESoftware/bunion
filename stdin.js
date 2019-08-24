@@ -41,6 +41,12 @@
 // console.error(process.argv[2], 'ppid:', process.ppid);
 
 
+console.log(JSON.parse(JSON.stringify({d:new Date().toUTCString()})));
+
+
+process.exit(0);
+
+
 const v = new Error('foo');
 
 console.log(typeof v.message);

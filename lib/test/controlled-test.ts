@@ -37,9 +37,9 @@ const run = () => {
   log.info(i++, 'just saying hi.');
   log.warn(i++, 'shit hit the fan');
   
-  log.error({"these": {has: {do: {not: 'run'}}}});
+  log.info({"these": {has: {do: {not: 'run'}}}});
   
-  log.error(new Error('bux'));
+  // log.error(new Error('bux'));
   
   log.debug(i++, getRandomStr());
   log.trace(i++, getRandomStr());

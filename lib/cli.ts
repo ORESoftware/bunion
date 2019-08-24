@@ -479,20 +479,22 @@ const onStandardizedJSON = (v: BunionJSON) => {
   
   // since we always log something after this line, we can add it here
   
-  let fields = '';
+  let fields = '', theDate = '';
   
   if (output === 'short') {
-    v.d = '';
+    theDate = '';
     v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
   }
   else if (output === 'medium') {
-    const d = new Date(v.date);
-    v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
+    // const d = new Date(v.date);
+    // v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
+    theDate = v.date;
     v.appName = `app:${chalk.bold(v.appName)}`;
   }
   else {
-    const d = new Date(v.date);
-    v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
+    // const d = new Date(v.date);
+    // v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
+    theDate = v.date;
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
   }
   
@@ -506,37 +508,37 @@ const onStandardizedJSON = (v: BunionJSON) => {
   
   if (v.level === 'FATAL') {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
     );
   }
   
   if (v.level === 'ERROR' && con.logLevel < 6) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
     );
   }
   
   if (v.level === 'WARN' && con.logLevel < 5) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.magentaBright(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.blue.bold.underline.italic(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'INFO' && con.logLevel < 4) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.blueBright(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.blueBright(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'DEBUG' && con.logLevel < 3) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'TRACE' && con.logLevel < 2) {
     process.stdout.write(
-      `${chalk.gray(v.d)} ${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
@@ -622,7 +624,7 @@ const handleIn = (d: any) => {
   
   const newVal = JSON.parse(raw);
   
-  con.fromMemory.set(h, newVal);
+  // con.fromMemory.set(h, newVal);
   // q.enqueue(h, d);
   
   try {
@@ -646,7 +648,7 @@ const handleIn = (d: any) => {
   // }
   
   if (con.fromMemory.size > 4000) {
-    con.fromMemory.delete(currDel++);
+    // con.fromMemory.delete(currDel++);
   }
   
   // while (con.head - con.tail > 9000) {
@@ -658,8 +660,6 @@ const handleIn = (d: any) => {
     // console.log(h);
     onData(newVal);
   }
-  
-  // console.log(process.memoryUsage());
   
 };
 
@@ -749,7 +749,7 @@ const createLoggedBreak = (m: string) => {
 
 const gotoLine = (line: number) => {
   
-  const rows = Math.max(15, (process.stdout.rows || 0) + 1);
+  const rows = Math.max(25, (process.stdout.rows || 0) + 1);
   const start = Math.max(line - rows - 1, con.tail);
   
   con.current = start;
@@ -908,6 +908,10 @@ const getValue = (v: any): string => {
     return z;
   }
   
+  if (Array.isArray(z)) {
+    return JSON.stringify(z);
+  }
+  
   const t = transformKeys[getId(v)];
   
   let val = '';
@@ -947,6 +951,63 @@ const getValue = (v: any): string => {
   
 };
 
+
+const findPreviousMatch = () => {
+  
+  if (con.searchTerm === '') {
+    con.mode = BunionMode.SEARCHING;
+    writeToStdout('No search term.');
+    return;
+  }
+  
+  let i = Math.max(con.current - 1, con.tail), matched = false;
+  const st = con.searchTerm;
+  const r = new RegExp(st, 'i');
+  
+  while (i >= con.tail) {
+    
+    const v = con.fromMemory.get(i) || readFromFile(i);
+    
+    let val = null;
+    
+    try {
+      val = getValue(v);
+    }
+    catch (err) {
+      // ignore
+      console.error('error:', err);
+    }
+    
+    if (!String(val).trim()) {
+      console.log(i, v);
+      throw 'damn'
+    }
+    
+    // clearLine();
+    // writeToStdout('Searching line:', String(i));
+    
+    if (val && r.test(val)) {
+      matched = true;
+      break;
+    }
+    
+    i--;
+  }
+  
+  if (matched) {
+    con.current = i + 5;
+    scrollUpFive();
+    con.mode = BunionMode.SEARCHING;
+    return;
+  }
+  
+  writeToStdout('Could not find anything matching:', con.searchTerm);
+  con.stopOnNextMatch = true;
+  con.mode = BunionMode.SEARCHING;
+  // doTailing(startPoint);
+  
+};
+
 const findLatestMatch = () => {
   
   if (con.searchTerm === '') {
@@ -955,7 +1016,6 @@ const findLatestMatch = () => {
     return;
   }
   
-  const startPoint = con.head;
   let i = con.head, matched = false;
   const st = con.searchTerm;
   const r = new RegExp(st, 'i');
@@ -971,7 +1031,12 @@ const findLatestMatch = () => {
     }
     catch (err) {
       // ignore
-      console.error(err);
+      console.error('error:', err);
+    }
+    
+    if (!String(val).trim()) {
+      console.log(i, v);
+      throw 'damn'
     }
     
     // clearLine();
@@ -1001,7 +1066,7 @@ const findLatestMatch = () => {
 
 const scrollUpOneLine = () => {
   
-  const rows = Math.max(15, (process.stdout.rows || 0) + 1);
+  const rows = Math.max(25, (process.stdout.rows || 0) + 1);
   const lines: Array<any> = [];
   
   let i = con.current - 1, count = 0;
@@ -1034,7 +1099,7 @@ const scrollUpOneLine = () => {
 
 const scrollUpFive = () => {
   
-  const rows = Math.max(15, (process.stdout.rows || 0) + 1);
+  const rows = Math.max(25, (process.stdout.rows || 0) + 1);
   const lines: Array<any> = [];
   
   let amount = 5;
@@ -1237,6 +1302,15 @@ const handleUserInput = () => {
       if (con.mode !== BunionMode.FIND_LAST) {
         con.mode = BunionMode.FIND_LAST;
         findLatestMatch();
+      }
+      return;
+    }
+    
+    
+    if (String(d) === ' ') {  // spacebar not ctrl-z
+      if (con.mode !== BunionMode.FIND_LAST) {
+        con.mode = BunionMode.FIND_LAST;
+        findPreviousMatch();
       }
       return;
     }
