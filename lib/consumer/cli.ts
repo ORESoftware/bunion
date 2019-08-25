@@ -119,7 +119,7 @@ process.once('exit', code => {
     consumer.info('Log file path:', rawFileId);
   }
   else {
-    tryAndLogErrors(() => fs.unlinkSync(rawFileId));
+    tryAndLogErrors(() => fs.unlinkSync(logFileId));
     tryAndLogErrors(() => fs.rmdirSync(runId))
   }
   

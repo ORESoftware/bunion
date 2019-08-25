@@ -3,6 +3,34 @@
 const t = {
   
   keys: {
+  
+    '@bunzo': {
+    
+      identifyViaRawStr() {
+        return true;
+      },
+    
+      identifyViaJSObject(v) {
+        return v && v['@bun'] === true;
+      },
+    
+      getValue(v) {
+        return v.value;
+      },
+    
+      transformToBunionFormat(v) {
+        return {
+          '@bunion': true,
+          appName: v.appName,
+          level: v.level,
+          pid: v.pid,
+          date: v.date,
+          value: this.getValue(v),
+          fields: v.fields,
+          host: v.host
+        }
+      }
+    },
     
     '@truvia': {
       

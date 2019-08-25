@@ -1,13 +1,29 @@
+### folders
+
 node_modules
 scripts
 test
-.idea
-.vscode
-*.log
-*.txt
-*.md
-*.json
-*.DS_Store
+media
 lib
 dist/test
+.idea
+.vscode
+
+### matching
+
+*.log
+*.txt
+*.DS_Store
+*.md
+
+### files
+
+tsconfig.json
 !assets/schema/bunion.conf.json
+
+### dotfiles
+
+.nlu.json
+.travis.yml
+.bunion.js
+

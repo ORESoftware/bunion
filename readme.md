@@ -9,19 +9,17 @@
 
 # Bunion - Bunyan's weird, simpleton cousin. Has more foot-related problems.
 
-This logging module is ~25% faster than Bunyan when used as a part of a complete pipeline.
-This module is still in development, but should reach 1.0.0 by ~May 15, 2018
-
+> This logging module is ~30% more performant than Bunyan when used as a part of a complete pipeline.
 
 ## <i> Installation </i>
 
 ```bash
-$ npm install bunion
+ $ npm install bunion
 ```
 
 ## Usage
 
-```javascript
+```typescript
 
 import log from 'bunion';
 log.info('just saying hi.');
@@ -30,17 +28,15 @@ log.error(new Error('foo'));
 
 ```
 
-and then you can read the logs via:
-
+and then you can read/consume the logs via:
 
 ```bash
 
- $ node foo.js | bunion --level warn
+ $ node foo.js | bunion 
 
 ```
 
 Use the following env value for higher performance:
-
 
 ```bash
 
@@ -50,25 +46,54 @@ Use the following env value for higher performance:
 
 ### Using the bunion config file to setup a default logger
 
-`=> .bunion.json` (TBD)
+`=> .bunion.js`
 
- Will look a little something like this:
+<details>
+<summary>Default logger configuration</summary>
+
+```typescript
+
+const getDefaultBunionConf = (): BunionConf => {
+  return {
+    producer: {
+      name: 'default',
+      appName: 'default',
+      forceRaw: false,
+      level: 'TRACE',
+      inspect: {
+        array: {
+          length: 25
+        },
+        object: {
+          depth: 5
+        }
+      },
+      fields: {}
+    },
+    consumer: {
+      localeDateString: 'en-US',
+      highlightMatches: true,
+      level: 'TRACE',
+      match: [],
+      matchAny: [],
+      matchAll: [],
+      transform: {
+        keys: {}
+      }
+    }
+  }
+};
 
 ```
-
-{
- "producer":{
- 
- },
- "consumer":{
- 
- 
- }
-}
-```
+</details>
 
 
 ### How it works:
+
+> Examples
+>
+<details>
+<summary>Example 1</summary>
 
 Something like this:
 
@@ -79,5 +104,51 @@ echo '{"@bunion":true,"level":"WARN","appName":"my-api","date":"08-22-1984","val
 
 Will display this in your terminal:
 
-// TBD
+```console
+08-22-1984 app:my-api WARN  this is the end 
+```
+
+</details>
+
+----
+
+<details>
+
+<summary>Example 2</summary>
+
+Something like this:
+```bash
+ echo '["@bunion","app","INFO",333,"host","date-str",null,"message1"]' | bunion
+
+```
+
+Will display this in your terminal:
+```console
+date-str app:app INFO message1 
+```
+</details>
+
+-----
+
+<details>
+
+<summary>Example 3</summary>
+
+Something like this:
+```bash
+ echo '["@bunion","app","INFO",333,"host","date-str",null,["message1","message2",{"foo":"bar"}]]' | bunion
+
+```
+
+Will display this in your terminal:
+```console
+date-str app:app INFO  message1 message2 {
+  foo: 'bar'
+} 
+```
+</details>
+
+
+
+
 

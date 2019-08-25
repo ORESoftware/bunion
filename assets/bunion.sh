@@ -206,11 +206,7 @@ bxn(){
 
 }
 
-
-
 # bunion --read makes a tcp/uds connection to bunion_uds_file
-
-
 
 if [[ "$all_export" == "nope" ]]; then
   set +a;
