@@ -7,17 +7,19 @@
 
 <br>
 
-# Bunion - Bunyan's weird, simpleton cousin. Has more foot-related problems.
+----
+
+# | Bunion - Bunyan's weird, simpleton cousin. Has more foot-related problems.
 
 > This logging module is ~30% more performant than Bunyan when used as a part of a complete pipeline.
 
-## <i> Installation </i>
+## | <i> Installation </i>
 
 ```bash
  $ npm install bunion
 ```
 
-## Usage
+## | Usage
 
 ```typescript
 
@@ -44,9 +46,11 @@ Use the following env value for higher performance:
 
 ```
 
-### Using the bunion config file to setup a default logger
+### | Using the bunion config file to setup a default logger
 
-`=> .bunion.js`
+> Use `.bunion.js` in the root of your project or current working directory.
+
+----
 
 <details>
 <summary>Default logger configuration</summary>
@@ -88,10 +92,10 @@ const getDefaultBunionConf = (): BunionConf => {
 </details>
 
 
-### How it works:
+### | How it works:
 
-> Examples
->
+-----
+
 <details>
 <summary>Example 1</summary>
 
