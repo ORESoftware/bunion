@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-import log from '../main';
+import log from '../producer/main';
 
 const os = require('os');
 

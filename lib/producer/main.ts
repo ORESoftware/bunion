@@ -1,11 +1,13 @@
 'use strict';
 
 import util = require('util');
-import {getConf} from "./utils";
-import {producer} from './logger';
+import {getConf} from "../utils";
+import {producer} from '../logger';
 import os = require('os');
 import chalk from "chalk";
 import * as safe from '@oresoftware/safe-stringify';
+import deepMixin from "@oresoftware/deep.mixin";
+import {logTTY} from "./log-tty";
 
 import {
   BunionFields,
@@ -14,12 +16,10 @@ import {
   ordered,
   Level,
   BunionLevel, BunionLevelInternalUnion
-} from "./bunion";
+} from "../bunion";
 
-import deepMixin from "@oresoftware/deep.mixin";
-import {logTTY} from "./log-tty";
 
-export {BunionConf} from './bunion';
+export {BunionConf} from '../bunion';
 
 process.on('SIGINT', s => {
   producer.warn('SIGINT received.', s);

@@ -1,7 +1,7 @@
 'use strict';
 
 import {clearLine, getHighlightedString, getInspected, writeStatusToStdout, writeToStdout} from './bunion-utils';
-import {consumer} from './logger';
+import {consumer} from '../logger';
 import * as util from "util";
 import {ConType} from './con';
 

@@ -1,9 +1,9 @@
 'use strict';
 
-import {BunionJSON, BunionMode} from './bunion';
+import {BunionJSON, BunionMode} from '../bunion';
 import {clearLine, getHighlightedString, getInspected, handleSearchTermMatched} from './bunion-utils';
 import chalk from 'chalk';
-import {getFields} from './utils';
+import {getFields} from '../utils';
 import {ConType} from './con';
 
 

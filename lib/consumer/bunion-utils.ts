@@ -4,7 +4,7 @@ import * as util from "util";
 import chalk from 'chalk';
 import * as readline from "readline";
 import {ConType} from './con';
-import {BunionMode} from './bunion';
+import {BunionMode} from '../bunion';
 
 const utilInspectOpts = {
   showHidden: true,
@@ -38,6 +38,7 @@ export const getInspected = (v: any, opts: any): string => {
         return util.inspect(v, utilInspectOpts);
       }
       
+      //safe to stringify since it's already been serialized
       return JSON.stringify(v);
     })
     .join(' ');

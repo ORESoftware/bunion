@@ -1,6 +1,6 @@
 'use strict';
 
-import {BunionLevelToNum} from './bunion';
+import {BunionLevelToNum} from '../bunion';
 
 export const ctrlChars = new Set([
   '\t', // tab

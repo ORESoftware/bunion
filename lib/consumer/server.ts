@@ -4,7 +4,7 @@ import * as path from "path";
 import * as net from "net";
 import JSONParser from '@oresoftware/json-stream-parser';
 import * as fs from "fs";
-import {consumer} from './logger';
+import {consumer} from '../logger';
 import {ConType} from './con';
 
 export default (budsFile: string, cwd: string, con: ConType) => {

@@ -5,9 +5,9 @@
   },
   "version": "0.0.115",
   "description": "Semver-oriented TypeScript library skeleton.",
-  "main": "dist/main.js",
-  "types": "dist/main.d.ts",
-  "typings": "dist/main.d.ts",
+  "main": "dist/producer/main.js",
+  "types": "dist/producer/main.d.ts",
+  "typings": "dist/producer/main.d.ts",
   "scripts": {
     "test": "suman test"
   },
@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/ORESoftware/bunion#readme",
   "dependencies": {
+    "@oresoftware/cli": "0.0.1002",
     "@oresoftware/deep.mixin": "0.0.107",
     "@oresoftware/json-stream-parser": "0.0.120",
     "@oresoftware/linked-queue": "0.1.106",

@@ -2,19 +2,20 @@
 
 import './handle-exit';
 import {createRawParser} from "./json-parser";
-import {BunionJSON, BunionLevelToNum, BunionMode} from "./bunion";
+import {BunionJSON, BunionLevelToNum, BunionMode} from "../bunion";
 import JSONParser, {RawStringSymbol} from "@oresoftware/json-stream-parser";
 import * as util from "util";
 import chalk from "chalk";
-import {getConf, getFields} from "./utils";
+import {getConf, getFields} from "../utils";
 import * as readline from "readline";
-import {consumer} from "./logger";
+import {consumer} from "../logger";
 import {ReadStream} from "tty";
 import {LinkedQueue, LinkedQueueValue} from "@oresoftware/linked-queue";
 import * as fs from "fs";
 import * as path from "path";
 import * as net from "net";
 import options from './cli-options';
+import log from '../logging'
 import uuid = require("uuid");
 import Timer = NodeJS.Timer;
 import {makeCon} from './con';
@@ -30,6 +31,8 @@ import {
 import {onStandardizedJSON} from './on-std-json';
 import {getValue, onBunionUnknownJSON} from './transforms';
 import {ctrlChars, levelMap} from './constants';
+import {ConType} from "./con";
+
 const dashdash = require('dashdash');
 const allowUnknown = process.argv.indexOf('--allow-unknown') > 1;
 let opts: any, cliParser = dashdash.createParser({options: options}, {allowUnknown});
@@ -81,7 +84,7 @@ const maxIndex = 1;
 const output = opts.output = 'medium' || 'short';
 const highlight = opts.highlight = Boolean(true);
 const darkBackground = Boolean(true);
-const con = makeCon(maxIndex);
+const con: ConType = makeCon(maxIndex);
 
 const budsFile = process.env.bunion_uds_file || '';
 const cwd = process.cwd();
@@ -298,7 +301,6 @@ const resume = () => {
 };
 
 
-
 const createLoggedBreak = (m: string) => {
   
   let rawColumns = Number.isInteger(process.stdout.columns) ? process.stdout.columns : null;
@@ -420,17 +422,8 @@ const findPreviousMatch = () => {
       val = getValue(v, con, opts);
     }
     catch (err) {
-      // ignore
-      console.error('error:', err);
+      log.error('error getting value:', err);
     }
-    
-    if (!String(val).trim()) {
-      console.log(i, v);
-      throw 'damn'
-    }
-    
-    // clearLine();
-    // writeToStdout('Searching line:', String(i));
     
     if (val && r.test(val)) {
       matched = true;
@@ -450,7 +443,6 @@ const findPreviousMatch = () => {
   writeToStdout('Could not find anything matching:', con.searchTerm);
   con.stopOnNextMatch = true;
   con.mode = BunionMode.SEARCHING;
-  // doTailing(startPoint);
   
 };
 
@@ -476,17 +468,8 @@ const findLatestMatch = () => {
       val = getValue(v, con, opts);
     }
     catch (err) {
-      // ignore
-      console.error('error:', err);
+      consumer.error('error getting value:', err);
     }
-    
-    if (!String(val).trim()) {
-      console.log(i, v);
-      throw 'damn'
-    }
-    
-    // clearLine();
-    // writeToStdout('Searching line:', String(i));
     
     if (val && r.test(val)) {
       matched = true;
@@ -506,7 +489,6 @@ const findLatestMatch = () => {
   writeToStdout('Could not find anything matching:', con.searchTerm);
   con.stopOnNextMatch = true;
   con.mode = BunionMode.SEARCHING;
-  // doTailing(startPoint);
   
 };
 
@@ -518,7 +500,6 @@ const scrollUpOneLine = () => {
   let i = con.current - 1, count = 0;
   
   if (i < con.tail) {
-    // console.log('head:', con.head, 'tail:', con.tail, 'current:', con.current);
     writeToStdout('(beginning of file)');
     return;
   }
@@ -557,7 +538,6 @@ const scrollUpFive = () => {
   }
   
   if (i >= con.current) {
-    // console.log('head:', con.head, 'tail:', con.tail, 'current:', con.current);
     writeToStdout('(beginning of file)');
     return;
   }
@@ -591,10 +571,8 @@ const scrollDown = () => {
     return;
   }
   
-  // if (con.fromMemory.has(next)) {
   con.current = next;
   onData(con.fromMemory.get(next) || readFromFile(next));
-  // }
   
 };
 
@@ -691,13 +669,6 @@ const handleUserInput = () => {
       writeToStdout(':');
       return;
     }
-    
-    // if (String(d) === '\r' && con.mode === BunionMode.SEARCHING) {
-    //   unpipePiper();
-    //   clearLine();
-    //   startReading();
-    //   return;
-    // }
     
     if (String(d) === '\u000e') {
       con.logChars = !con.logChars;

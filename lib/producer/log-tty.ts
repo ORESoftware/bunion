@@ -1,8 +1,8 @@
 'use strict';
 
 import chalk from "chalk";
-import {BunionJSON} from "./bunion";
-import {getFields} from "./utils";
+import {BunionJSON} from "../bunion";
+import {getFields} from "../utils";
 
 export const logTTY = (logLevel: number, output: string, v: BunionJSON) => {
   

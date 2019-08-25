@@ -1,6 +1,6 @@
 'use strict';
 
-import {consumer} from './logger';
+import {consumer} from '../logger';
 
 process.on('uncaughtException', (e: any) => {
   console.error();

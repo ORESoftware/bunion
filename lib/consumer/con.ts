@@ -1,5 +1,7 @@
+'use strict';
+
 import {ReadStream} from "tty";
-import {BunionMode} from './bunion';
+import {BunionMode} from '../bunion';
 import Timer = NodeJS.Timer;
 
 export type ConType = ReturnType<typeof makeCon>;

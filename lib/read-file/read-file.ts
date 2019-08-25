@@ -6,11 +6,40 @@ import * as path from 'path';
 import {JSONParser} from "@oresoftware/json-stream-parser";
 import * as fs from 'fs';
 import Timer = NodeJS.Timer;
-import log from './logging';
-import {EVCb} from "./bunion";
-import {producer} from "./logger";
+import log from '../logging';
+import {EVCb} from "../bunion";
+import {producer} from "../logger";
+
+const fileFlagIndex = process.argv.indexOf('-f');
+let fraw = process.env.bxn_file_path || process.argv[fileFlagIndex + 1];
 
 const cwd = process.cwd();
+const f = path.isAbsolute(fraw) ? path.resolve(fraw) : path.resolve(cwd + '/' + fraw);
+
+if (!f) {
+  throw 'Pass filepath as first arg.';
+}
+
+const tryReadingInputFile = (): number => {
+  
+  // if (f.startsWith('/dev/fd/')) {
+  //   return parseInt(f.split('/').pop());
+  // }
+  
+  try {
+    return fs.openSync(f, 'r');
+  } catch (err) {
+    log.error('Could not open the following file for reading:', f);
+    log.error(err.message || err);
+    process.exit(1);
+  }
+};
+
+const fd = tryReadingInputFile();
+
+// console.log({fd});
+// process.exit(0);
+
 const budsFile = process.env.bunion_uds_file || '';
 
 const udsFile = budsFile ?
@@ -25,43 +54,7 @@ try {
 
 const w = fs.watch(udsFile);
 
-const writeToConn = (c: net.Socket, m: object) => {
-  return c.write(JSON.stringify(m) + '\n');
-};
-
-
-/*
- 
- TODO: https://github.com/nodejs/help/issues/2091
-
-net.createConnection creates a new net.Socket and instantly invokes socket.connect():
-
-https://nodejs.org/docs/latest-v10.x/api/net.html#net_net_createconnection
-
-So if you want to make something that you're describing, you should do it like this:
-
-const socket = new net.Socket();  // create a socket instead of conneciton
-
-setTimeout(()=> {
-   socket.connect(udsFile); // and then connect
-}, 400);
-
-socket.once('connect', () => {
-    console.log('connected');
-});
-
-socket.pipe(new JSONParser()).on('data', (d: any) => {
-     // ...
-});
-Not sure that it would work, but looks a bit better than your example.
-
-
-*/
-
-
 const makeConnection = (cb: EVCb<any>) => {
-  
-  //TODO: https://github.com/nodejs/help/issues/2091
   
   const conn = net.createConnection(udsFile);
   
@@ -81,11 +74,10 @@ const makeConnection = (cb: EVCb<any>) => {
       return read(d.value);
     }
     
-    writeToConn(conn, d);
-    
   });
   
 };
+
 
 const con = {
   currentByte: 0,
@@ -121,7 +113,7 @@ w.on('change', (ev, f) => {
   
   con.changeCount++;
   
-  if (con.changeCount > 8) {
+  if (con.changeCount > 5) {
     w.close();
     clearTimeout(con.changeTo);
     handleConn();
@@ -132,10 +124,27 @@ w.on('change', (ev, f) => {
   
 });
 
+
 const read = (v: any) => {
-  createTimeout();
-  const bytesToRead = v.bytesToRead || con.defaultBytesToRead;
-  console.log('read:' + bytesToRead);
+  
+  con.prom = con.prom.then(_ => new Promise((resolve) => {
+    
+    const bytesToRead = v.bytesToRead || con.defaultBytesToRead;
+    const curr = con.currentByte;
+    const b = Buffer.alloc(bytesToRead);
+    
+    fs.read(fd, b, 0, bytesToRead, curr, (e, v) => {
+      
+      const i = b.indexOf(0x00);
+      const shortb = b.slice(0, i);
+      con.currentByte = curr + shortb.length;
+      process.stdout.write(shortb);
+      resolve(null);
+      
+    });
+    
+  }));
+  
 };
 
 const dataRead = () => {
@@ -144,7 +153,12 @@ const dataRead = () => {
 
 const createTimeout = () => {
   clearTimeout(con.dataTo);
-  con.dataTo = setTimeout(dataRead, 8000);
+  con.dataTo = setTimeout(dataRead, 25);
 };
 
-createTimeout();
+fs.watch(f, ev => {
+  createTimeout();
+});
+
+
+
