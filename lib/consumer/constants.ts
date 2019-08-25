@@ -2,6 +2,15 @@
 
 import {BunionLevelToNum} from '../bunion';
 
+
+export const utilInspectOpts = {
+  showHidden: true,
+  colors: true,
+  depth: 5,
+  compact: false,
+  sorted: true
+};
+
 export const ctrlChars = new Set([
   '\t', // tab
   '\u0001', //a

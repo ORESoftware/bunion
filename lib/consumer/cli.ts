@@ -81,6 +81,7 @@ catch (e) {
 }
 
 const maxIndex = 1;
+const inspect = opts.inspect = true;
 const output = opts.output = 'medium' || 'short';
 const highlight = opts.highlight = Boolean(true);
 const darkBackground = Boolean(true);

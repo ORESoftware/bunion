@@ -4,6 +4,7 @@ import {clearLine, getHighlightedString, getInspected, writeStatusToStdout, writ
 import {consumer} from '../logger';
 import * as util from "util";
 import {ConType} from './con';
+import {utilInspectOpts} from './constants';
 
 import {transformers, bunionConf, transformKeys} from './conf';
 import {onStandardizedJSON} from './on-std-json';
@@ -38,7 +39,6 @@ const runTransform = (v: any, t: any, con: ConType, opts: any): boolean => {
   }
   
 };
-
 
 export const onBunionUnknownJSON = (con: ConType, opts: any, v: any): void => {
   
@@ -79,7 +79,6 @@ export const onBunionUnknownJSON = (con: ConType, opts: any, v: any): void => {
   
 };
 
-
 export const getValFromTransform = (t: any, v: any, con: ConType, opts: any): string => {
   
   let val = '';
@@ -114,15 +113,11 @@ export const getValFromTransform = (t: any, v: any, con: ConType, opts: any): st
     
   }
   
-  if (typeof val === 'string') {
-    return val;
-  }
-  
-  return util.inspect(val, {depth: 5});
+  return getInspected(val, opts);
   
 };
 
-export const getValFromTransformAlreadyIdentified = (t: any, v: any): string => {
+export const getValFromTransformAlreadyIdentified = (t: any, v: any, opts: any): string => {
   
   let val = '';
   
@@ -135,15 +130,13 @@ export const getValFromTransformAlreadyIdentified = (t: any, v: any): string => 
     consumer.error(err);
   }
   
-  if (typeof val === 'string') {
-    return val;
-  }
+  return getInspected(val, opts);
   
-  if(val && val['@bunion-error'] === true){
-    return getErrorString(1, val);
-  }
-  
-  return util.inspect(v, {depth: 5});
+  // if(val && val['@bunion-error'] === true){
+  //   return getErrorString(1, val);
+  // }
+  //
+  // return util.inspect(v, utilInspectOpts);
   
 };
 
@@ -157,18 +150,8 @@ export const getValue = (v: any, con: ConType, opts: any): string => {
   const z = isArray ? v[v.length - 1] : v.value;
   
   if (isArray && String(v[0]).startsWith('@bunion')) {
-    
-    if (typeof z === 'string') {
-      return z;
-    }
-    
-    if (Array.isArray(z)) {
-      return JSON.stringify(z);
-    }
-    
-    return util.inspect(z);
+    return getInspected(z, opts);
   }
-  
   
   const t = transformKeys[getId(v)];
   
@@ -177,7 +160,7 @@ export const getValue = (v: any, con: ConType, opts: any): string => {
   if (t) {
     
     try {
-      val = getValFromTransformAlreadyIdentified(t, v);
+      val = getValFromTransformAlreadyIdentified(t, v, opts);
     }
     catch (e) {
       consumer.warn(e);
@@ -206,5 +189,4 @@ export const getValue = (v: any, con: ConType, opts: any): string => {
   }
   
   return '[warning: message could not be parsed]';
-  
 };

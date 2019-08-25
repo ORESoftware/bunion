@@ -6,14 +6,7 @@ import * as readline from "readline";
 import {ConType} from './con';
 import {BunionMode} from '../bunion';
 import {getErrorString} from '../utils';
-
-const utilInspectOpts = {
-  showHidden: true,
-  colors: true,
-  depth: 5,
-  compact: false,
-  sorted: true
-};
+import {utilInspectOpts} from './constants';
 
 export const getInspected = (v: any, opts: any): string => {
   

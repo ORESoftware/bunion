@@ -13,11 +13,29 @@
 
 > This logging module is ~30% more performant than Bunyan when used as a part of a complete pipeline.
 
-> Advantages over other loggers like Bunyan
+> | Advantages over other loggers like Bunyan
 > 1. Has a default logger, configured by `.bunion.js`
 > 2. Uses array format instead of object format by default - more readable and more performant
 > 3. Has CLI tools for navigating log files
 
+> | Basic API
+> 1. Only writes to stdout, not stderr
+> 2. Uses an array format by default:
+>
+>```typescript
+>  return safe.stringify([
+>    '@bunion',  // the format of the logging line
+>    appName,    // your app name
+>    level,      // the logging level
+>    process.pid,  // the process pid
+>    host,         // the hostname where the log originated
+>    new Date().toUTCString(),  // a UTC date string
+>    fields,     // custom metadata - useful for filtering logs - fields is best used as an object {"xyz":"foo","filter":"on this"}
+>    message      // your message, which is an array
+>  ]);
+> 
+>```
+>
 
 ## | <i> Installation </i>
 
@@ -31,17 +49,17 @@
 
 import log from 'bunion';
 log.info('just saying hi.');
-log.warn('shit hit the fan');
-log.error(new Error('foo'));
+log.warn('shit hit the fan', 'part 2');
+log.debug('boop', {yep:'this property is on an object'}, {'we can log': {'nested':["objects, also"]}});
 
 ```
 
-the above will log this raw string to stdout:
+the above will log this raw data to stdout:
 
 ```console
-["@bunion","foobar","INFO",10613,"foobarx","Sun, 25 Aug 2019 23:05:42 GMT",null,["just saying hi."]]
-["@bunion","foobar","WARN",10613,"foobarx","Sun, 25 Aug 2019 23:05:42 GMT",null,["shit hit the fan","part 2"]]
-["@bunion","foobar","DEBUG",10613,"foobarx","Sun, 25 Aug 2019 23:05:42 GMT",null,["boop",{"yep":"this property is on an object"},{"we can log":{"nested":["objects, also"]}}]]
+["@bunion","foobar","INFO",10613,"host@you","Sun, 25 Aug 2019 23:05:42 GMT",null,["just saying hi."]]
+["@bunion","foobar","WARN",10613,"host@you","Sun, 25 Aug 2019 23:05:42 GMT",null,["shit hit the fan","part 2"]]
+["@bunion","foobar","DEBUG",10613,"host@you","Sun, 25 Aug 2019 23:05:42 GMT",null,["boop",{"yep":"this property is on an object"},{"we can log":{"nested":["objects, also"]}}]]
 
 ```
 
