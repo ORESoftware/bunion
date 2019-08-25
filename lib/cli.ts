@@ -1,5 +1,6 @@
 'use strict';
 
+import './handle-exit';
 import {createRawParser} from "./json-parser";
 import {BunionJSON, BunionLevelToNum, BunionMode} from "./bunion";
 import JSONParser, {RawStringSymbol} from "@oresoftware/json-stream-parser";
@@ -16,43 +17,19 @@ import * as net from "net";
 import options from './cli-options';
 import uuid = require("uuid");
 import Timer = NodeJS.Timer;
-
+import {makeCon} from './con';
+import makeServer from './server';
+import {
+  getInspected,
+  clearLine,
+  getHighlightedString,
+  replacer,
+  writeToStdout,
+  writeStatusToStdout, handleSearchTermMatched
+} from './bunion-utils';
+import {onStandardizedJSON} from './on-std-json';
+import {getValue, onBunionUnknownJSON} from './transforms';
 const dashdash = require('dashdash');
-
-process.on('uncaughtException', (e: any) => {
-  console.error();
-  consumer.error('Uncaught exception:', e || e);
-  console.error();
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (e: any) => {
-  console.error();
-  consumer.error('Unhandled rejection:', e || e);
-  console.error();
-  process.exit(1);
-});
-
-process.on('SIGINT', function () {
-  console.error();
-  consumer.warn('SIGINT received. Current pid:', process.pid);
-});
-
-process.on('SIGHUP', function () {
-  console.error();
-  consumer.warn('SIGHUP received. Current pid:', process.pid);
-});
-
-process.on('SIGTERM', function () {
-  console.error();
-  consumer.warn('SIGTERM received. Current pid:', process.pid);
-});
-
-process.on('SIGPIPE', () => {
-  console.error();
-  consumer.warn('SIGPIPE received. Current pid:', process.pid);
-});
-
 const allowUnknown = process.argv.indexOf('--allow-unknown') > 1;
 let opts: any, cliParser = dashdash.createParser({options: options}, {allowUnknown});
 
@@ -101,100 +78,13 @@ catch (e) {
 
 const maxIndex = 1;
 const output = 'medium' || 'short';
-const highlight = Boolean(true);
+const highlight = opts.highlight = Boolean(true);
 const darkBackground = Boolean(true);
-
-const con = {
-  rsi: null as ReadStream,
-  fullTrace: false,
-  tail: 0,
-  keepLogFile: false,
-  fromMemory: new Map<number, any>(),
-  fromFile: new Map<number, any>(),
-  current: 0 as number,
-  head: 0 as number,
-  mode: BunionMode.READING,
-  searchTerm: '',
-  logLevel: maxIndex,
-  stopOnNextMatch: true,
-  logChars: false,
-  sigCount: 0,
-  lastUserEvent: null as number,
-  dataTo: null as Timer,
-  to: null as Timer,
-  searchRegex: null as RegExp,
-  timeout: 555500  // 450 seconds
-};
+const con = makeCon(maxIndex);
 
 const budsFile = process.env.bunion_uds_file || '';
 const cwd = process.cwd();
-
-const udsFile = budsFile ?
-  path.resolve(budsFile) :
-  path.resolve(cwd + '/.bunion.sock');
-
-const connections = new Set<net.Socket>();
-
-const server = net.createServer(c => {
-  
-  connections.add(c);
-  
-  c.once('end', () => {
-    connections.delete(c);
-  });
-  
-  setTimeout(() => {
-    writeReq(c);
-  }, 5);
-  
-  c.pipe(new JSONParser())
-    .on('error', e => {
-      console.error('client conn error:', e);
-    })
-    .on('string', s => {
-      console.log('string from client:', s);
-    })
-    .on('data', d => {
-      console.log('json from client:', d);
-      process.exit(0);
-    })
-  
-});
-
-const writeToConn = (c: net.Socket, m: object) => {
-  return c.write(JSON.stringify(m) + '\n');
-};
-
-const writeReq = (c: net.Socket) => {
-  return writeToConn(c, {
-    bunionType: 'read',
-    value: {
-      bytesToRead: 30000
-    }
-  });
-};
-
-const sendRequestForData = () => {
-  clearTimeout(con.dataTo);
-  for (const c of connections) {
-    writeReq(c);
-  }
-};
-
-try {
-  fs.unlinkSync(udsFile);
-}
-catch (e) {
-  // consumer.warn(e);
-}
-
-server.on('error', e => {
-  consumer.warn(e);
-});
-
-server.listen(udsFile, () => {
-  consumer.debug('Listening on unix domain socket:', udsFile);
-});
+const {sendRequestForData, connections} = makeServer(budsFile, cwd, con);
 
 const rawFD = fs.openSync(rawFileId, 'w+');
 const logFD = fs.openSync(logFileId, 'w+');
@@ -230,181 +120,15 @@ process.once('exit', code => {
   process.exit(code);
 });
 
-const replacer = function (match: any) {
-  // p1 is nondigits, p2 digits, and p3 non-alphanumerics
-  return chalk.redBright.bold(match);
-};
-
-const getHighlightedString = (match: string) => {
-  
-  if (highlight && con.searchTerm !== '') {
-    match = match.replace(new RegExp(con.searchTerm, 'ig'), replacer);
-  }
-  
-  return match;
-};
-
-const clearLine = () => {
-  readline.clearLine(process.stdout, 0);  // clear current text
-  readline.cursorTo(process.stdout, 0);   // move cursor to beginning of line
-};
-
-const writeStatusToStdout = (searchTermStr?: string) => {
-  
-  if (false && !process.stdout.isTTY) {
-    return;
-  }
-  
-  // console.log();
-  
-  searchTermStr = searchTermStr || ' ';
-  
-  const stopMsg = (con.stopOnNextMatch && con.searchTerm !== '' && con.mode !== BunionMode.SEARCHING) ?
-    ' Stopping on next match.' :
-    '';
-  
-  const currentSearchTerm = con.searchTerm === '' ?
-    ` no search term. ` :
-    `current search term: '${con.searchTerm}' `;
-  
-  writeToStdout(
-    chalk.bgBlack.whiteBright(
-      ` Line # ${con.current}, mode: ${con.mode},${searchTermStr}Log level: ${con.logLevel}, ${currentSearchTerm} ${stopMsg}`
-    )
-  );
-  
-};
-
-const writeToStdout = (...args: string[]) => {
-  clearLine();
-  for (let v of args) {
-    process.stdout.write(v + ' ');
-  }
-};
-
-const bunionConf = getConf();
-
-const transformKeys = bunionConf.consumer.transform && bunionConf.consumer.transform.keys;
-const transformers = Object.keys(transformKeys || {});
-
-const getId = (v: any): string => {
-  
-  if (v && typeof v[0] === 'string') {
-    return v[0].split(':')[0];  //   ["@app:version", x,y,z]
-  }
-  
-  if (v && v.id && typeof v.id === 'string') {
-    return v.id.split(':')[0]
-  }
-  
-  // return <any>sym;
-  return '';
-  
-};
-
-const runTransform = (v: any, t: any): boolean => {
-  
-  try {
-    const c = t.transformToBunionFormat(v);
-    
-    if (c && typeof c === 'object') {
-      // c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
-      onStandardizedJSON(c);
-      return true;
-    }
-  }
-  catch (err) {
-    
-    return false;  // explicit for your pleasure
-  }
-  
-};
-
-const utilInspectOpts = {
-  showHidden: true,
-  colors: true,
-  depth: 5,
-  compact: false,
-  sorted: true
-};
-
-const getInspected = (v: any): string => {
-  
-  if (typeof v === 'string') {
-    return v;
-  }
-  
-  if (!Array.isArray(v)) {
-    if (true || opts.inspect) {
-      return util.inspect(v, utilInspectOpts);
-    }
-    
-    return JSON.stringify(v);
-  }
-  
-  return v.map(v => {
-      
-      if (typeof v === 'string') {
-        return v;
-      }
-      
-      if (true || opts.inspect) {
-        return util.inspect(v, utilInspectOpts);
-      }
-      
-      return JSON.stringify(v);
-    })
-    .join(' ');
-  
-};
-
-const onBunionUnknownJSON = (v: any): void => {
-  
-  const t = transformKeys[getId(v)];
-  
-  if (t && runTransform(v, t)) {
-    return;
-  }
-  
-  for (let k of transformers) {
-    
-    const t = transformKeys[k];
-    
-    if (t && typeof t.identifyViaJSObject === 'function') {
-      
-      try {
-        let bool = t.identifyViaJSObject(v);
-        if (bool && runTransform(v, t)) {
-          return;
-        }
-      }
-      catch (err) {
-        clearLine();
-        consumer.error(err);
-        consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
-        consumer.error('The function body is:', t.identifyViaJSObject.toString());
-      }
-      
-    }
-    
-  }
-  
-  // util.inspect(v, utilInspectOpts)
-  // JSON.stringify(v))
-  
-  writeToStdout(getHighlightedString(getInspected(v)), '\n');
-  writeStatusToStdout();
-  
-};
 
 const onData = (d: any) => {
   
   if (typeof d === 'string') {
     if (d) {
       clearLine();
-      console.log(getHighlightedString(d));
+      console.log(getHighlightedString(d, con, opts));
       const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(d);
-      handleSearchTermMatched(isMatched)
+      handleSearchTermMatched(con, isMatched)
     }
     return;
   }
@@ -414,12 +138,12 @@ const onData = (d: any) => {
     return;
   }
   
-  onBunionUnknownJSON(d);
+  onBunionUnknownJSON(con, opts, d);
   
 };
 
 const onJSON = (v: Array<any>) => {
-  return onStandardizedJSON({
+  return onStandardizedJSON(con, opts, {
     '@bunion': true,
     appName: v[1],
     level: v[2],
@@ -432,119 +156,8 @@ const onJSON = (v: Array<any>) => {
   });
 };
 
-const handleSearchTermMatched = (isMatched: boolean) => {
-  
-  let searchTermStr = ' ';
-  
-  if (con.stopOnNextMatch && isMatched) {
-    con.mode = BunionMode.SEARCHING;
-    searchTermStr = ` Stopped on match. `;
-  }
-  
-  writeStatusToStdout(searchTermStr);
-  
-};
 
-const getDarkOrlight = (str: string) => {
-  return darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;
-};
 
-const makeBold = (str: string) => {
-  return chalk.bold(str);
-};
-
-const onStandardizedJSON = (v: BunionJSON) => {
-  
-  if (con.mode === BunionMode.CLOSED) {
-    return;
-  }
-  
-  if (con.mode === BunionMode.PAUSED) {
-    return;
-  }
-  
-  if (!(v && v['@bunion'] === true)) {
-    throw 'we should not have non-bunion-json at this point in the program.'
-  }
-  
-  clearLine();
-  
-  const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(v.value);
-  
-  // if (!(v as any)[RawJSONBytesSymbol]) {
-  //   throw new Error('Bunion JSON should have raw json bytes property: ' + util.inspect(v));
-  // }
-  
-  // since we always log something after this line, we can add it here
-  
-  let fields = '', theDate = '';
-  
-  if (output === 'short') {
-    theDate = '';
-    v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
-  }
-  else if (output === 'medium') {
-    // const d = new Date(v.date);
-    // v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
-    theDate = v.date;
-    v.appName = `app:${chalk.bold(v.appName)}`;
-  }
-  else {
-    // const d = new Date(v.date);
-    // v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
-    theDate = v.date;
-    v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
-  }
-  
-  const msgVal = getHighlightedString(getInspected(v.value));
-  
-  // const msgVal = getInspected(v.value);
-  
-  if (v.fields) {
-    fields = getFields(v.fields);
-  }
-  
-  if (v.level === 'FATAL') {
-    process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
-    );
-  }
-  
-  if (v.level === 'ERROR' && con.logLevel < 6) {
-    process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
-    );
-  }
-  
-  if (v.level === 'WARN' && con.logLevel < 5) {
-    process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.blue.bold.underline.italic(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
-    );
-  }
-  
-  if (v.level === 'INFO' && con.logLevel < 4) {
-    process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.blueBright(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
-    );
-  }
-  
-  if (v.level === 'DEBUG' && con.logLevel < 3) {
-    process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
-    );
-  }
-  
-  if (v.level === 'TRACE' && con.logLevel < 2) {
-    process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
-    );
-  }
-  
-  handleSearchTermMatched(isMatched);
-  
-};
-
-const q = new LinkedQueue();
 
 const readFromFile = (pos: number): any => {
   
@@ -566,31 +179,6 @@ const readFromFile = (pos: number): any => {
   
 };
 
-const writeToFile = (vals: Array<LinkedQueueValue<any>>) => {
-  
-  const val = vals.map(lqv => {
-    
-    const v = lqv.value;
-    
-    if (v && v[RawStringSymbol]) {
-      return String(v[RawStringSymbol]).trim();
-    }
-    
-    if (typeof v === 'string') {
-      return v.trim();
-    }
-    
-    return util.inspect(v);
-    
-  });
-  
-  const raw = val.join('\n');
-  
-  fs.appendFile(logFileId, raw, (e) => {
-    e && consumer.warn(e.message || e);
-  });
-  
-};
 
 let pos = 0, currDel = 0;
 
@@ -665,7 +253,7 @@ const onStdinEnd = () => {
   con.mode = BunionMode.SEARCHING;
   clearLine();
   consumer.info('stdin end');
-  writeStatusToStdout();
+  writeStatusToStdout(con);
 };
 
 const parser = process.stdin.resume()
@@ -702,7 +290,7 @@ const resume = () => {
       return;
     
     default:
-      writeStatusToStdout();
+      writeStatusToStdout(con);
   }
   
 };
@@ -767,7 +355,7 @@ const gotoLine = (line: number) => {
   }
   
   con.mode = BunionMode.SEARCHING;
-  writeStatusToStdout();
+  writeStatusToStdout(con);
   
 };
 
@@ -817,7 +405,7 @@ const doTailing = (startPoint?: number) => {
     con.mode = BunionMode.READING;
     clearLine();   // remove later, do not need
     createLoggedBreak('[ctrl-p]');  // remove later, do not need
-    writeStatusToStdout();
+    writeStatusToStdout(con);
     
   });
   
@@ -828,132 +416,7 @@ const startReading = () => {
   con.mode = BunionMode.READING;
   clearLine();
   createLoggedBreak('[ctrl-p]');
-  writeStatusToStdout();
-};
-
-const getValFromTransform = (t: any, v: any): string => {
-  
-  let val = '';
-  
-  if (typeof t.identifyViaJSObject === 'function') {
-    
-    let bool;
-    try {
-      bool = t.identifyViaJSObject(v);
-    }
-    catch (err) {
-      clearLine();
-      consumer.error(err);
-      consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
-      consumer.error('The function body is:', t.identifyViaJSObject.toString());
-      writeStatusToStdout();
-    }
-    
-    if (bool && typeof t.getValue === 'function') {
-      try {
-        val = t.getValue(v);
-      }
-      catch (err) {
-        clearLine();
-        consumer.error(err);
-        consumer.error('Could not call getValue on value:', v);
-        consumer.error('The function body is:', t.getValue.toString());
-        writeStatusToStdout();
-      }
-      
-    }
-    
-  }
-  
-  if (typeof val === 'string') {
-    return val;
-  }
-  
-  return util.inspect(val, {depth: 5});
-  
-};
-
-const getValFromTransformAlreadyIdentified = (t: any, v: any): string => {
-  
-  let val = '';
-  
-  try {
-    if (typeof t.getValue === 'function') {
-      val = t.getValue(v);
-    }
-  }
-  catch (err) {
-    consumer.error(err);
-  }
-  
-  if (typeof val === 'string') {
-    return val;
-  }
-  
-  return util.inspect(v, {depth: 5});
-  
-};
-
-const getValue = (v: any): string => {
-  
-  if (!(v && typeof v === 'object')) {
-    return typeof v === 'string' ? v : String(v);
-  }
-  
-  const isArray = Array.isArray(v);
-  const z = isArray ? v[v.length - 1] : v.value;
-  
-  if (isArray && String(v[0]).startsWith('@bunion')) {
-    
-    if (typeof z === 'string') {
-      return z;
-    }
-    
-    if (Array.isArray(z)) {
-      return JSON.stringify(z);
-    }
-    
-    return util.inspect(z);
-  }
-  
-  
-  const t = transformKeys[getId(v)];
-  
-  let val = '';
-  
-  if (t) {
-    
-    try {
-      val = getValFromTransformAlreadyIdentified(t, v);
-    }
-    catch (e) {
-      consumer.warn(e);
-    }
-    
-    if (val) {
-      return val;
-    }
-  }
-  
-  for (let k of transformers) {
-    
-    const t = transformKeys[k];
-    
-    try {
-      val = getValFromTransform(t, v);
-    }
-    catch (e) {
-      consumer.warn(e);
-    }
-    
-    if (val) {
-      return val;
-    }
-    
-  }
-  
-  return '[warning: message could not be parsed]';
-  
+  writeStatusToStdout(con);
 };
 
 
@@ -976,7 +439,7 @@ const findPreviousMatch = () => {
     let val = null;
     
     try {
-      val = getValue(v);
+      val = getValue(v, con, opts);
     }
     catch (err) {
       // ignore
@@ -1032,7 +495,7 @@ const findLatestMatch = () => {
     let val = null;
     
     try {
-      val = getValue(v);
+      val = getValue(v, con, opts);
     }
     catch (err) {
       // ignore
@@ -1343,7 +806,7 @@ const handleUserInput = () => {
     
     if (con.mode !== BunionMode.PAUSED && levelMap.has(String(d))) {
       con.logLevel = levelMap.get(String(d));
-      writeStatusToStdout();
+      writeStatusToStdout(con);
       return;
     }
     
@@ -1356,7 +819,7 @@ const handleUserInput = () => {
     if (String(d) === 's' && con.mode !== BunionMode.PAUSED) {
       if (con.mode !== BunionMode.SEARCHING) {
         con.mode = BunionMode.SEARCHING;
-        writeStatusToStdout();
+        writeStatusToStdout(con);
       }
       return;
     }
@@ -1385,7 +848,7 @@ const handleUserInput = () => {
       con.mode = BunionMode.PAUSED;
       clearLine();
       // writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${con.mode} - use ctrl+p to return to reading mode. `));
-      writeStatusToStdout();
+      writeStatusToStdout(con);
       return;
     }
     
@@ -1415,7 +878,7 @@ const handleUserInput = () => {
     if (String(d) === '\r' && con.mode === BunionMode.PAUSED) {
       con.stopOnNextMatch = true;
       con.mode = BunionMode.SEARCHING;
-      writeStatusToStdout();
+      writeStatusToStdout(con);
       return;
     }
     

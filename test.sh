@@ -12,7 +12,6 @@ takes_ary_as_arg(){
 }
 
 
-
 try_with_local_arys(){
     # array variables could have local scope
     local descTable=(
