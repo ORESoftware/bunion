@@ -29,6 +29,7 @@ import {
 } from './bunion-utils';
 import {onStandardizedJSON} from './on-std-json';
 import {getValue, onBunionUnknownJSON} from './transforms';
+import {ctrlChars, levelMap} from './constants';
 const dashdash = require('dashdash');
 const allowUnknown = process.argv.indexOf('--allow-unknown') > 1;
 let opts: any, cliParser = dashdash.createParser({options: options}, {allowUnknown});
@@ -77,7 +78,7 @@ catch (e) {
 }
 
 const maxIndex = 1;
-const output = 'medium' || 'short';
+const output = opts.output = 'medium' || 'short';
 const highlight = opts.highlight = Boolean(true);
 const darkBackground = Boolean(true);
 const con = makeCon(maxIndex);
@@ -155,8 +156,6 @@ const onJSON = (v: Array<any>) => {
     // [RawJSONBytesSymbol]: v[<any>RawJSONBytesSymbol]
   });
 };
-
-
 
 
 const readFromFile = (pos: number): any => {
@@ -295,31 +294,7 @@ const resume = () => {
   
 };
 
-const ctrlChars = new Set([
-  '\t', // tab
-  '\u0001', //a
-  '\u0004', // d
-  '\u0003', // c
-  '\r',  // m
-  '\u001b[A', // up
-  '\u001b[B', // down
-  '\u001b[C', // left
-  '\u001b[D', // right
-  '\u000e', // n
-  '\u001a', // z,
-  '\u0018',  // x
-  '\u0012',  // r
-  '\u001b\r'  // alt-return (might need to be \u001b\\r with escaped slash
-]);
 
-const levelMap = new Map([
-  ['6', BunionLevelToNum.FATAL],
-  ['5', BunionLevelToNum.ERROR],
-  ['4', BunionLevelToNum.WARN],
-  ['3', BunionLevelToNum.INFO],
-  ['2', BunionLevelToNum.DEBUG],
-  ['1', BunionLevelToNum.TRACE],
-]);
 
 const createLoggedBreak = (m: string) => {
   
