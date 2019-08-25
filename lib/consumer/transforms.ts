@@ -7,6 +7,7 @@ import {ConType} from './con';
 
 import {transformers, bunionConf, transformKeys} from './conf';
 import {onStandardizedJSON} from './on-std-json';
+import {getErrorString} from '../utils';
 
 const getId = (v: any): string => {
   
@@ -27,15 +28,12 @@ const runTransform = (v: any, t: any, con: ConType, opts: any): boolean => {
   
   try {
     const c = t.transformToBunionFormat(v);
-    
     if (c && typeof c === 'object') {
-      // c[RawJSONBytesSymbol] = v[RawJSONBytesSymbol];
       onStandardizedJSON(con, opts, c);
       return true;
     }
   }
   catch (err) {
-    
     return false;  // explicit for your pleasure
   }
   
@@ -139,6 +137,10 @@ export const getValFromTransformAlreadyIdentified = (t: any, v: any): string => 
   
   if (typeof val === 'string') {
     return val;
+  }
+  
+  if(val && val['@bunion-error'] === true){
+    return getErrorString(1, val);
   }
   
   return util.inspect(v, {depth: 5});

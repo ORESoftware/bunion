@@ -9,9 +9,15 @@
 
 ----
 
-# | Bunion - Bunyan's weird, simpleton cousin. Has more foot-related problems.
+# Bunion / BXN / B4N
 
 > This logging module is ~30% more performant than Bunyan when used as a part of a complete pipeline.
+
+> Advantages over other loggers like Bunyan
+> 1. Has a default logger, configured by `.bunion.js`
+> 2. Uses array format instead of object format by default - more readable and more performant
+> 3. Has CLI tools for navigating log files
+
 
 ## | <i> Installation </i>
 
@@ -29,6 +35,17 @@ log.warn('shit hit the fan');
 log.error(new Error('foo'));
 
 ```
+
+the above will log this raw string to stdout:
+
+```console
+["@bunion","foobar","INFO",10613,"foobarx","Sun, 25 Aug 2019 23:05:42 GMT",null,["just saying hi."]]
+["@bunion","foobar","WARN",10613,"foobarx","Sun, 25 Aug 2019 23:05:42 GMT",null,["shit hit the fan","part 2"]]
+["@bunion","foobar","DEBUG",10613,"foobarx","Sun, 25 Aug 2019 23:05:42 GMT",null,["boop",{"yep":"this property is on an object"},{"we can log":{"nested":["objects, also"]}}]]
+
+```
+
+----
 
 and then you can read/consume the logs via:
 

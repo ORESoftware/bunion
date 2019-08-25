@@ -1,7 +1,7 @@
 'use strict';
 
 import util = require('util');
-import {getConf} from "../utils";
+import {getConf, getErrorString} from "../utils";
 import {producer} from '../logger';
 import os = require('os');
 import chalk from "chalk";
@@ -87,29 +87,35 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     throw new Error(chalk.red('Fields object can have no more than 8 keys.'));
   }
   
-  const clean = args.map((a, i): string => {
+  const isLogTTY = !forceRaw && process.stdout.isTTY && !opt;
+  
+  const clean = args.map((a, i): any => {
     
     if (typeof a === 'string') {
       return a;
     }
     
-    if (a && a.message && a.stack && typeof a.stack === 'string') {
-      return (i > 0 ? '' : ' (see below ⬃ )') + ' \n\n' + a.stack.split('\n')
-        .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v)).join('\n') + '\n';
+    if (a && typeof a.message === 'string' && a.stack && typeof a.stack === 'string') {
+      
+      if (isLogTTY) {
+        return getErrorString(i, a);
+      }
+      
+      return {
+        ['@bunion-error']: true,
+        message: a.message,
+        stack: a.stack
+      }
     }
     
-    try {
-      // we can only JSON.parse a message on the receiving end, if there is one object
-      return a;  // leave it as an object
-    }
-    catch (err) {
-      // ignore
+    if (isLogTTY) {
+      return util.inspect(a, utilOpts); //+ '\n';
     }
     
-    return util.inspect(a, utilOpts); //+ '\n';
+    return a;  // leave it as an object
   });
   
-  if (!forceRaw && process.stdout.isTTY && !opt) {
+  if (isLogTTY) {
     return logTTY(3, 'short', {
       appName,
       level: level as BunionLevelInternal,
@@ -157,12 +163,11 @@ const getHostName = () => {
   }
   
   if (v && typeof v !== 'string') {
-    throw `hostname should be a string, but was not => ${util.inspect(v,  {depth:5})}`;
+    throw `hostname should be a string, but was not => ${util.inspect(v, {depth: 5})}`;
   }
   
   return v || os.hostname() || process.env.HOSTNAME || 'unknown-host';
 };
-
 
 export class BunionLogger {
   
@@ -228,7 +233,7 @@ export class BunionLogger {
       throw new Error(chalk.red('Object has more than the maximum 8 keys.'));
     }
     
-   for(const k of keys){
+    for (const k of keys) {
       if (typeof v[k] !== 'string') {
         throw new Error(chalk.red('Object must have key/value pairs that are all strings.'));
       }
@@ -278,52 +283,72 @@ export class BunionLogger {
   }
   
   error(...args: any[]): void {
-    if (this.getCurrentMaxIndex() > 4) return;
+    if (this.getCurrentMaxIndex() > 4) {
+      return;
+    }
     process.stdout.write(getJSON('ERROR', args, this.appName, this.fields, this.hostname));
   }
   
   errorx(v: object, ...args: any[]): void {
-    if (this.getCurrentMaxIndex() > 4) return;
+    if (this.getCurrentMaxIndex() > 4) {
+      return;
+    }
     process.stdout.write(getJSON('ERROR', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   
   warn(...args: any[]): void {
-    if (this.getCurrentMaxIndex() > 3) return;
+    if (this.getCurrentMaxIndex() > 3) {
+      return;
+    }
     process.stdout.write(getJSON('WARN', args, this.appName, this.fields, this.hostname));
   }
   
   warnx(v: object, ...args: any[]): void {
-    if (this.getCurrentMaxIndex() > 3) return;
+    if (this.getCurrentMaxIndex() > 3) {
+      return;
+    }
     process.stdout.write(getJSON('WARN', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   
   info(...args: any[]): void {
-    if (this.getCurrentMaxIndex() > 2) return;
+    if (this.getCurrentMaxIndex() > 2) {
+      return;
+    }
     process.stdout.write(getJSON('INFO', args, this.appName, this.fields, this.hostname));
   }
   
   infox(v: object, ...args: any[]): void {
-    if (this.getCurrentMaxIndex() > 2) return;
+    if (this.getCurrentMaxIndex() > 2) {
+      return;
+    }
     process.stdout.write(getJSON('INFO', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   
   debug(...args: any[]): void {
-    if (this.getCurrentMaxIndex() > 1) return;
+    if (this.getCurrentMaxIndex() > 1) {
+      return;
+    }
     process.stdout.write(getJSON('DEBUG', args, this.appName, this.fields, this.hostname));
   }
   
   debugx(v: object, ...args: any[]): void {
-    if (this.getCurrentMaxIndex() > 1) return;
+    if (this.getCurrentMaxIndex() > 1) {
+      return;
+    }
     process.stdout.write(getJSON('DEBUG', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   
   trace(...args: any[]): void {
-    if (this.getCurrentMaxIndex() > 0) return;
+    if (this.getCurrentMaxIndex() > 0) {
+      return;
+    }
     process.stdout.write(getJSON('TRACE', args, this.appName, this.fields, this.hostname));
   }
   
   tracex(v: object, ...args: any[]): void {
-    if (this.getCurrentMaxIndex() > 0) return;
+    if (this.getCurrentMaxIndex() > 0) {
+      return;
+    }
     process.stdout.write(getJSON('TRACE', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
   }
   

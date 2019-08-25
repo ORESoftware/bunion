@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import * as readline from "readline";
 import {ConType} from './con';
 import {BunionMode} from '../bunion';
+import {getErrorString} from '../utils';
 
 const utilInspectOpts = {
   showHidden: true,
@@ -21,11 +22,17 @@ export const getInspected = (v: any, opts: any): string => {
   }
   
   if (!Array.isArray(v)) {
-    if (true || opts.inspect) {
-      return util.inspect(v, utilInspectOpts);
+    
+    if (v && v['@bunion-error'] === true) {
+      return getErrorString(0, v);
     }
     
-    return JSON.stringify(v);
+    if (opts.inspect) {
+      return util.inspect(v, utilInspectOpts);
+    }
+  
+    //safe to stringify since it's already been serialized
+    return JSON.stringify(v, null, 2);
   }
   
   return v.map(v => {
@@ -33,18 +40,22 @@ export const getInspected = (v: any, opts: any): string => {
       if (typeof v === 'string') {
         return v;
       }
+    
+      if (v && v['@bunion-error'] === true) {
+        // since it's part of an array we don't wan the "see below" part of the error string
+        return getErrorString(1, v);
+      }
       
-      if (true || opts.inspect) {
+      if (opts.inspect) {
         return util.inspect(v, utilInspectOpts);
       }
       
       //safe to stringify since it's already been serialized
-      return JSON.stringify(v);
+      return JSON.stringify(v, null, 2);
     })
     .join(' ');
   
 };
-
 
 export const replacer = function (match: any) {
   // p1 is nondigits, p2 digits, and p3 non-alphanumerics
@@ -71,7 +82,6 @@ export const writeToStdout = (...args: string[]) => {
     process.stdout.write(v + ' ');
   }
 };
-
 
 export const handleSearchTermMatched = (con: ConType, isMatched: boolean) => {
   

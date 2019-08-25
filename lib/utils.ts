@@ -1,7 +1,7 @@
 'use strict';
 
 import path = require('path');
-import {BunionConf, BunionLevelInternal} from "./bunion";
+import {BunionConf, BunionLevel, BunionLevelInternal} from "./bunion";
 import {findProjectRoot} from "residence";
 import AJV = require('ajv');
 import * as util from "util";
@@ -9,6 +9,7 @@ import {producer} from "./logger";
 import chalk from "chalk";
 import deepMixin from '@oresoftware/deep.mixin';
 import {consumer} from "./logger";
+import * as os from 'os';
 
 const ajv = new AJV();
 const schema = require('../assets/schema/bunion.conf.json');
@@ -30,13 +31,17 @@ export const getFields = (fields: any) => {
   }, '');
 };
 
+export const getErrorString = (i: number, a: any) => {
+  return (i > 0 ? '' : ' (see below ⬃ )') + ' \n\n' + a.stack.split('\n')
+    .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v)).join('\n') + '\n';
+};
+
 const getDefaultBunionConf = (): BunionConf => {
   return {
     producer: {
-      name: 'default',
-      appName: 'default',
-      forceRaw: false,
-      level: BunionLevelInternal.TRACE,
+      appName: process.env.bunion_app_name || 'default-app-name',
+      forceRaw: process.env.bunion_force_raw === 'yes',
+      level: <BunionLevel>process.env.bunion_producer_max_level || BunionLevelInternal.TRACE,
       inspect: {
         array: {
           length: 25
@@ -45,12 +50,18 @@ const getDefaultBunionConf = (): BunionConf => {
           depth: 5
         }
       },
-      fields: {}
+      fields: {},
+      getHostNameSync(){
+        return os.hostname();
+      },
+      getDateStringSync(d: Date){
+        return d.toUTCString();
+      }
     },
     consumer: {
       localeDateString: 'en-US',
       highlightMatches: true,
-      level: BunionLevelInternal.TRACE,
+      level: <BunionLevel>process.env.bunion_consumer_max_level || BunionLevelInternal.TRACE,
       match: [],
       matchAny: [],
       matchAll: [],
@@ -67,7 +78,8 @@ export const getConf = (): BunionConf => {
   
   try {
     projectRoot = findProjectRoot(process.cwd());
-  } catch (err) {
+  }
+  catch (err) {
     producer.error('bunion could not find the project root given the current working directory:', process.cwd());
     throw err;
   }
@@ -79,7 +91,8 @@ export const getConf = (): BunionConf => {
   try {
     confPath = path.resolve(projectRoot + '/' + '.bunion.js');
     conftemp = require(confPath);
-  } catch (err) {
+  }
+  catch (err) {
     producer.warn('Missing ".bunion.js" file:', String(err.message || err).split('\n')[0]);
     conftemp = {};
   }
@@ -99,7 +112,8 @@ export const getConf = (): BunionConf => {
         producer.error(util.inspect(e, {depth: 5, colors: true}));
       }
     }
-  } catch (e) {
+  }
+  catch (e) {
     consumer.debug(e.message || e);
   }
   

@@ -68,7 +68,7 @@ const t = {
 exports.default = {
   
   producer: {
-    forceRaw: true,
+    forceRaw: process.env.bunion_force_raw === 'yes',
     name: 'bob',
     appName: 'foobar',
     level: 'TRACE',

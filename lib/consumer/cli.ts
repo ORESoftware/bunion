@@ -158,8 +158,7 @@ const onJSON = (v: Array<any>) => {
     host: v[4],
     date: v[5],
     fields: v[6],
-    value: v[7],
-    // [RawJSONBytesSymbol]: v[<any>RawJSONBytesSymbol]
+    value: v[7]
   });
 };
 

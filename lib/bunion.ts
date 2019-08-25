@@ -82,7 +82,8 @@ export interface BunionConf {
       }
     },
     fields: { [key: string]: any },
-    getHostNameSync?: () => string
+    getHostNameSync?: () => string,
+    getDateStringSync?: (d: Date) => string
   },
   consumer: {
     localeDateString?: string
