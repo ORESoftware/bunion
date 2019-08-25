@@ -3,7 +3,7 @@
   "bin": {
     "bunion": "cli/cli.js"
   },
-  "version": "0.0.114",
+  "version": "0.0.115",
   "description": "Semver-oriented TypeScript library skeleton.",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
