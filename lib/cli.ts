@@ -110,11 +110,14 @@ process.once('exit', code => {
   // fs.unlinkSync(logFileId);
   // fs.unlinkSync(rawFileId);
   
+  tryAndLogErrors(() => fs.unlinkSync(rawFileId));
+  
   if (con.keepLogFile) {
     consumer.info('Log file path:', rawFileId);
   }
   else {
     tryAndLogErrors(() => fs.unlinkSync(rawFileId));
+    tryAndLogErrors(() => fs.rmdirSync(runId))
   }
   
   consumer.info('exiting with code:', code);
