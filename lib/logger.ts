@@ -1,7 +1,6 @@
 'use strict';
 
 import chalk from 'chalk';
-
 const isDebug = process.argv.indexOf('--debug') > 1 || process.env.is_bxn_debug == 'yes';
 
 export const producer = {
@@ -14,7 +13,6 @@ export const producer = {
     }
   }
 };
-
 
 export const consumer = {
   info: console.log.bind(console, chalk.bold('bunion consumer info:')),
