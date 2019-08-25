@@ -29,7 +29,39 @@ const writeToConn = (c: net.Socket, m: object) => {
   return c.write(JSON.stringify(m) + '\n');
 };
 
+
+/*
+ 
+ TODO: https://github.com/nodejs/help/issues/2091
+
+net.createConnection creates a new net.Socket and instantly invokes socket.connect():
+
+https://nodejs.org/docs/latest-v10.x/api/net.html#net_net_createconnection
+
+So if you want to make something that you're describing, you should do it like this:
+
+const socket = new net.Socket();  // create a socket instead of conneciton
+
+setTimeout(()=> {
+   socket.connect(udsFile); // and then connect
+}, 400);
+
+socket.once('connect', () => {
+    console.log('connected');
+});
+
+socket.pipe(new JSONParser()).on('data', (d: any) => {
+     // ...
+});
+Not sure that it would work, but looks a bit better than your example.
+
+
+*/
+
+
 const makeConnection = (cb: EVCb<any>) => {
+  
+  //TODO: https://github.com/nodejs/help/issues/2091
   
   const conn = net.createConnection(udsFile);
   

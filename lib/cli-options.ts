@@ -12,7 +12,7 @@ export default [
     help: 'Force raw JSON output.'
   },
   {
-    names: ['inspect','pretty'],
+    names: ['inspect', 'pretty'],
     type: 'bool',
     help: 'Make objects pretty - using util.inspect.'
   },
