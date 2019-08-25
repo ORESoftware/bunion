@@ -2,8 +2,7 @@
 'use strict';
 
 import log from '../producer/main';
-
-const os = require('os');
+import os = require('os');
 
 process.on('SIGINT', s => {
   process.exit(1);

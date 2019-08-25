@@ -18,7 +18,8 @@ import {
   BunionLevel, BunionLevelInternalUnion
 } from "../bunion";
 
-
+export {BunionLevel};
+export {Level};
 export {BunionConf} from '../bunion';
 
 process.on('SIGINT', s => {
@@ -162,8 +163,6 @@ const getHostName = () => {
   return v || os.hostname() || process.env.HOSTNAME || 'unknown-host';
 };
 
-export {BunionLevel};
-export {Level};
 
 export class BunionLogger {
   
@@ -218,6 +217,7 @@ export class BunionLogger {
   }
   
   private validateFields(v: BunionFields): void {
+    
     if (!(v && typeof v === 'object')) {
       throw new Error(chalk.red('Value must be an object.'));
     }
@@ -228,14 +228,14 @@ export class BunionLogger {
       throw new Error(chalk.red('Object has more than the maximum 8 keys.'));
     }
     
-    keys.forEach(function (k) {
+   for(const k of keys){
       if (typeof v[k] !== 'string') {
         throw new Error(chalk.red('Object must have key/value pairs that are all strings.'));
       }
       if (!v[k]) {
         throw new Error(chalk.red(`Object has a key ("${k}") that points to an empty string. See this object: ${util.inspect(v)}`));
       }
-    });
+    }
   }
   
   addFields(v: BunionFields): this {
