@@ -44,6 +44,7 @@ export enum BunionMode {
 
 export interface BunionJSON {
   '@bunion'?: true,
+  '@version'?: number,
   level: BunionLevelInternal
   value: string
   date: string,

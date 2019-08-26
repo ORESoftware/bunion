@@ -32,7 +32,8 @@ export const onStandardizedJSON = (con: ConType, opts: any, v: BunionJSON) => {
   
   clearLine();
   
-  const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(v.value);
+  const msgVal = getHighlightedString(getInspected(v.value, opts), con, opts);
+  const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(msgVal);
   
   // if (!(v as any)[RawJSONBytesSymbol]) {
   //   throw new Error('Bunion JSON should have raw json bytes property: ' + util.inspect(v));
@@ -59,7 +60,6 @@ export const onStandardizedJSON = (con: ConType, opts: any, v: BunionJSON) => {
     v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
   }
   
-  const msgVal = getHighlightedString(getInspected(v.value, opts), con, opts);
   
   // const msgVal = getInspected(v.value);
   

@@ -128,14 +128,22 @@ process.once('exit', code => {
   process.exit(code);
 });
 
-
 const onData = (d: any) => {
   
   if (typeof d === 'string') {
-    if (d) {
+    if (d.length > 0) {
       clearLine();
       console.log(getHighlightedString(d, con, opts));
-      const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(d);
+      
+      let val = '';
+      try {
+        val = getValue(d, con, opts);
+      }
+      catch (err) {
+        log.error('error getting value:', err);
+      }
+      
+      const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(val);
       handleSearchTermMatched(con, isMatched)
     }
     return;
@@ -146,13 +154,21 @@ const onData = (d: any) => {
     return;
   }
   
+  if (d && d['@bunion'] === true) {
+    onStandardizedJSON(con, opts, d);
+    return;
+  }
+  
   onBunionUnknownJSON(con, opts, d);
   
 };
 
 const onJSON = (v: Array<any>) => {
+  const indx = String(v[0]).indexOf(':');
+  const vers = parseInt(String(v[0]).slice(indx).trim());
   return onStandardizedJSON(con, opts, {
     '@bunion': true,
+    '@version': Number.isInteger(vers) ? vers : -1,
     appName: v[1],
     level: v[2],
     pid: v[3],
@@ -162,7 +178,6 @@ const onJSON = (v: Array<any>) => {
     value: v[7]
   });
 };
-
 
 const readFromFile = (pos: number): any => {
   
@@ -179,11 +194,10 @@ const readFromFile = (pos: number): any => {
     return JSON.parse(String(nnb).trim());
   }
   catch (err) {
-    return chalk.red(err.message);
+    return chalk.red(err.message || (typeof err === 'string' ? err : util.inspect(err)));
   }
   
 };
-
 
 let pos = 0, currDel = 0;
 
@@ -214,9 +228,7 @@ const handleIn = (d: any) => {
   const byteLen = Buffer.byteLength(raw);
   
   const newVal = JSON.parse(raw);
-  
-  // con.fromMemory.set(h, newVal);
-  // q.enqueue(h, d);
+  con.fromMemory.set(h, newVal);
   
   try {
     fs.writeSync(rawFD, raw, pos);
@@ -234,21 +246,11 @@ const handleIn = (d: any) => {
   
   pos += byteLen;
   
-  // if (q.length > 100) {
-  //   writeToFile(q.deq(100));
-  // }
-  
   if (con.fromMemory.size > 4000) {
-    // con.fromMemory.delete(currDel++);
+    con.fromMemory.delete(currDel++);
   }
   
-  // while (con.head - con.tail > 9000) {
-  //   con.fromMemory.delete(con.tail);
-  //   con.current = Math.max(con.current, ++con.tail);
-  // }
-  
   if (con.mode === BunionMode.READING) {
-    // console.log(h);
     onData(newVal);
   }
   
@@ -300,7 +302,6 @@ const resume = () => {
   
 };
 
-
 const createLoggedBreak = (m: string) => {
   
   let rawColumns = Number.isInteger(process.stdout.columns) ? process.stdout.columns : null;
@@ -321,10 +322,6 @@ const gotoLine = (line: number) => {
   con.current = start;
   
   for (let i = start; i < rows + start; i++) {
-    
-    // if (!con.fromMemory.has(i)) {
-    //   break;
-    // }
     
     if (i > con.head) {
       break;
@@ -398,7 +395,6 @@ const startReading = () => {
   createLoggedBreak('[ctrl-p]');
   writeStatusToStdout(con);
 };
-
 
 const findPreviousMatch = () => {
   
@@ -722,7 +718,6 @@ const handleUserInput = () => {
       }
       return;
     }
-    
     
     if (String(d) === ' ') {  // spacebar not ctrl-z
       if (con.mode !== BunionMode.FIND_LAST) {
