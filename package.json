@@ -13,6 +13,7 @@
     "tsc": "tsc",
     "postinstall": "assets/postinstall.sh"
   },
+  "foo": 3,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ORESoftware/bunion.git"
