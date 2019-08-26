@@ -9,7 +9,9 @@
   "types": "dist/producer/main.d.ts",
   "typings": "dist/producer/main.d.ts",
   "scripts": {
-    "test": "suman test"
+    "test": "suman test",
+    "tsc": "tsc",
+    "postinstall": "assets/postinstall.sh"
   },
   "repository": {
     "type": "git",
@@ -42,7 +44,8 @@
   },
   "devDependencies": {
     "@types/node": "^12.6.8",
-    "@types/uuid": "^3.4.5"
+    "@types/uuid": "^3.4.5",
+    "typescript": "^3.5.3"
   },
   "r2g": {
     "test": "echo 'r2g test noop'"
