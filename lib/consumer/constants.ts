@@ -1,10 +1,11 @@
 'use strict';
 
 import {BunionLevelToNum} from '../bunion';
+import * as util from 'util';
+import {InspectOptions} from "util";
 
-
-export const utilInspectOpts = {
-  showHidden: true,
+export const utilInspectOpts : Partial<InspectOptions> = {
+  showHidden: false,
   colors: true,
   depth: 5,
   compact: false,
