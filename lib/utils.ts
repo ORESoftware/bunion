@@ -2,7 +2,7 @@
 
 import path = require('path');
 import {BunionConf, BunionLevel, BunionLevelInternal} from "./bunion";
-import {findProjectRoot} from "residence";
+import {findRootDir} from "residence";
 import AJV = require('ajv');
 import * as util from "util";
 import {producer} from "./logger";
@@ -42,14 +42,6 @@ const getDefaultBunionConf = (): BunionConf => {
       appName: process.env.bunion_app_name || 'default-app-name',
       forceRaw: process.env.bunion_force_raw === 'yes',
       level: <BunionLevel>process.env.bunion_producer_max_level || BunionLevelInternal.TRACE,
-      inspect: {
-        array: {
-          length: 25
-        },
-        object: {
-          depth: 5
-        }
-      },
       fields: {},
       getHostNameSync(){
         return os.hostname();
@@ -65,6 +57,14 @@ const getDefaultBunionConf = (): BunionConf => {
       match: [],
       matchAny: [],
       matchAll: [],
+      inspect: {
+        array: {
+          length: 25
+        },
+        object: {
+          depth: 5
+        }
+      },
       transform: {
         keys: {}
       }
@@ -74,22 +74,22 @@ const getDefaultBunionConf = (): BunionConf => {
 
 export const getConf = (): BunionConf => {
   
-  let projectRoot: string;
+  let bunionConfFolder: string;
   
   try {
-    projectRoot = findProjectRoot(process.cwd());
+    bunionConfFolder = findRootDir(process.cwd(), '.bunion.js');
   }
   catch (err) {
     producer.error('bunion could not find the project root given the current working directory:', process.cwd());
     throw err;
   }
   
-  projectRoot = projectRoot || process.cwd();
+  bunionConfFolder = bunionConfFolder || process.cwd();
   
   let confPath, conftemp;
   
   try {
-    confPath = path.resolve(projectRoot + '/' + '.bunion.js');
+    confPath = path.resolve(bunionConfFolder + '/' + '.bunion.js');
     conftemp = require(confPath);
   }
   catch (err) {
@@ -103,8 +103,6 @@ export const getConf = (): BunionConf => {
   
   try {
     const valid = ajv.validate(schema, conf);
-    
-    // console.log({conf});
     
     if (!valid) {
       producer.warn('Your bunion configuation file has an invalid format, see the following error(s):');

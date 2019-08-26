@@ -13,18 +13,18 @@
 
 > This logging module is ~30% more performant than Bunyan when used as a part of a complete pipeline.
 
-> | Advantages over other loggers like Bunyan
+> Advantages over other loggers like Bunyan
 > 1. Has a default logger, configured by `.bunion.js`
 > 2. Uses array format instead of object format by default - more readable and more performant
 > 3. Has CLI tools for navigating log files
 
-> | Basic API
+> Basic API
 > 1. Only writes to stdout, not stderr
 > 2. Uses an array format by default:
 >
 >```typescript
 >  return safe.stringify([
->    '@bunion',  // the format of the logging line
+>    '@bunion:1',  // the format of the logging line, with version number
 >    appName,    // your app name
 >    level,      // the logging level
 >    process.pid,  // the process pid
@@ -37,7 +37,7 @@
 >```
 >
 
-## | <i> Installation </i>
+## <i> Installation </i>
 
 ```bash
  $ npm install bunion
@@ -81,7 +81,7 @@ Use the following env value for higher performance:
 
 ```
 
-### | Using the bunion config file to setup a default logger
+### Using the bunion config file to setup a default logger
 
 > Use `.bunion.js` in the root of your project or current working directory.
 
@@ -99,14 +99,6 @@ const getDefaultBunionConf = (): BunionConf => {
       appName: 'default',
       forceRaw: false,
       level: 'TRACE',
-      inspect: {
-        array: {
-          length: 25
-        },
-        object: {
-          depth: 5
-        }
-      },
       fields: {}
     },
     consumer: {
@@ -116,6 +108,14 @@ const getDefaultBunionConf = (): BunionConf => {
       match: [],
       matchAny: [],
       matchAll: [],
+      inspect: {
+        array: {
+          length: 25
+        },
+        object: {
+          depth: 5
+        }
+      },
       transform: {
         keys: {}
       }
@@ -127,7 +127,7 @@ const getDefaultBunionConf = (): BunionConf => {
 </details>
 
 
-### | How it works:
+### How it works:
 
 -----
 

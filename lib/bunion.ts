@@ -74,14 +74,6 @@ export interface BunionConf {
     appName?: string
     forceRaw?: boolean,
     level?: BunionLevel
-    inspect?: {
-      array?: {
-        length?: number
-      },
-      object?: {
-        depth?: number
-      }
-    },
     fields: { [key: string]: any },
     getHostNameSync?: () => string,
     getDateStringSync?: (d: Date) => string
@@ -93,6 +85,14 @@ export interface BunionConf {
     match?: Array<string>
     matchAny?: Array<string>
     matchAll?: Array<string>,
+    inspect?: {
+      array?: {
+        length?: number
+      },
+      object?: {
+        depth?: number
+      }
+    },
     transform?: {
       keys?: {
         [key: string]: {
