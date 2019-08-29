@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/ORESoftware/bunion#readme",
   "dependencies": {
-    "@oresoftware/cli": "0.0.1002",
+    "@oresoftware/cli": "0.0.1003",
     "@oresoftware/deep.mixin": "0.0.107",
     "@oresoftware/json-stream-parser": "0.0.120",
     "@oresoftware/linked-queue": "0.1.106",

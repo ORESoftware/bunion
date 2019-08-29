@@ -14,6 +14,7 @@ export const producer = {
   }
 };
 
+
 export const consumer = {
   info: console.log.bind(console, chalk.bold('bunion consumer info:')),
   error: console.error.bind(console, chalk.red.bold.underline('bunion consumer error:')),

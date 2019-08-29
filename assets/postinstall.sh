@@ -20,10 +20,37 @@ mkdir -p "$HOME/.oresoftware/bin" || {
   exit 1;
 }
 
+is_file_older_than() {
+
+  seconds="$1"
+  file="$2"
+
+  echo "The file $file"
+
+  modified_secs="$(date -r "$file" +%s)"
+  current_secs="$(date +%s)"
+
+  diff="$(expr "$current_secs" - "$modified_secs")"
+
+  if [[ "$diff" -gt "$seconds" ]]; then
+    return 0
+  fi
+
+  return 1
+
+}
+
 (
-  echo 'Installing run-tsc-if on your system.';
-  curl  -H 'Cache-Control: no-cache' -s -S -o- https://raw.githubusercontent.com/oresoftware/run-tsc-if/master/install.sh | bash || {
+
+  curl_url='https://raw.githubusercontent.com/oresoftware/run-tsc-if/master/install.sh'
+
+  if ! is_file_older_than 50000; then
+       exit 0;
+  fi
+
+  curl  -H 'Cache-Control: no-cache' -s -S -o- "$curl_url" | bash || {
      echo 'Could not install run-tsc-if on your system. That is a problem.';
      exit 1;
   }
+
 ) 2> /dev/null
