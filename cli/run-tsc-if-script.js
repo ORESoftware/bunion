@@ -1,8 +1,8 @@
-
+'use strict';
 
 exports.run = (projectRoot) => {
   
-  return    `
+  return  `
   
       set -e
       
@@ -27,5 +27,4 @@ exports.run = (projectRoot) => {
       "$HOME/.oresoftware/bin/run-tsc-if" '${projectRoot}'
     
     `
-  
 };
