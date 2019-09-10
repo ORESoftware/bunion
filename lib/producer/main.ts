@@ -71,8 +71,8 @@ export const setGlobalLogLevel = (v: BunionLevelInternal) => {
 };
 
 const utilOpts = {
-  depth: 4,
-  maxArrayLength: 10
+  depth: 44,
+  maxArrayLength: 89
 };
 
 const getJSON = (level: string, args: any[], appName: string, fields: object, host: string, opt?: boolean): string => {

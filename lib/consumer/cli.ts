@@ -32,24 +32,8 @@ import {onStandardizedJSON} from './on-std-json';
 import {getValue, onBunionUnknownJSON} from './transforms';
 import {ctrlChars, levelMap} from './constants';
 import {ConType} from "./con";
+import {opts} from './opts';
 
-const dashdash = require('dashdash');
-const allowUnknown = process.argv.indexOf('--allow-unknown') > 1;
-let opts: any, cliParser = dashdash.createParser({options: options}, {allowUnknown});
-
-try {
-  opts = cliParser.parse(process.argv);
-}
-catch (e) {
-  consumer.error('bunion: error: %s', e.message);
-  process.exit(1);
-}
-
-if (opts.help) {
-  const help = cliParser.help({includeEnv: true}).trimRight();
-  consumer.info('usage: node foo.js [OPTIONS]\n' + 'options:\n' + help);
-  process.exit(0);
-}
 
 const dirId = uuid.v4();
 const bunionHome = path.resolve(process.env.HOME + '/.bunion');

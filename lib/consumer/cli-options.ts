@@ -32,6 +32,12 @@ export default [
     default: ''
   },
   {
+    names: ['key', 'k'],
+    type: 'string',
+    help: 'which key to use from consumer.transform.keys',
+    default: ''
+  },
+  {
     names: ['show'],
     type: 'string',
     default: 'thpalf'  // time, host, process/pid, appname, level, fields

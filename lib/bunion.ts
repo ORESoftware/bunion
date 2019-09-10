@@ -42,6 +42,13 @@ export enum BunionMode {
   TAILING = 'TAILING'
 }
 
+export interface Transformer {
+  getValue: (v: any) => string;
+  identifyViaRawStr?: (v: string) => boolean,
+  identifyViaJSObject: (v: any) => boolean;
+  transformToBunionFormat: (v: any) => BunionJSON;
+}
+
 export interface BunionJSON {
   '@bunion'?: true,
   '@version'?: number,
@@ -95,12 +102,7 @@ export interface BunionConf {
     },
     transform?: {
       keys?: {
-        [key: string]: {
-          getValue: (v: any) => string;
-          identifyViaRawStr?: (v: string) => boolean,
-          identifyViaJSObject: (v: any) => boolean;
-          transformToBunionFormat: (v: any) => BunionJSON;
-        }
+        [key: string]: Transformer
       }
     }
   }
