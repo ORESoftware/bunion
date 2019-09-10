@@ -3,7 +3,7 @@
   "bin": {
     "bunion": "cli/cli.js"
   },
-  "version": "0.0.121",
+  "version": "0.0.122",
   "description": "Semver-oriented TypeScript library skeleton.",
   "main": "dist/producer/main.js",
   "types": "dist/producer/main.d.ts",
@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/ORESoftware/bunion#readme",
   "dependencies": {
-    "@oresoftware/cli": "0.0.1003",
+    "@oresoftware/cli": "0.0.104",
     "@oresoftware/deep.mixin": "0.0.108",
     "@oresoftware/json-stream-parser": "0.0.120",
     "@oresoftware/linked-queue": "0.1.106",
