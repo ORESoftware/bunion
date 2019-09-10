@@ -31,10 +31,10 @@
   "homepage": "https://github.com/ORESoftware/bunion#readme",
   "dependencies": {
     "@oresoftware/cli": "0.0.1003",
-    "@oresoftware/deep.mixin": "0.0.107",
+    "@oresoftware/deep.mixin": "0.0.108",
     "@oresoftware/json-stream-parser": "0.0.120",
     "@oresoftware/linked-queue": "0.1.106",
-    "@oresoftware/safe-stringify": "0.0.1006",
+    "@oresoftware/safe-stringify": "0.0.108",
     "ajv": "^6.4.0",
     "chalk": "2.4.2",
     "dashdash": "^1.14.1",
