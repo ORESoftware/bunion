@@ -6,7 +6,7 @@ exports.run = (projectRoot) => {
   
       set -e
       
-      export root_dir='dist'
+      export out_dir='dist'
       export root_dir='lib'
       
       (

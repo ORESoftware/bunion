@@ -1,13 +1,13 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 set -e;
 
-if [[ "$skip_postinstall" == "yes" ]]; then
+if [ "$skip_postinstall" = "yes" ]; then
     echo "skipping postinstall routine.";
     exit 0;
 fi
 
-if [[ "$skip_postinstall" == "yes" ]]; then
+if [ "$skip_postinstall" = "yes" ]; then
     echo "skipping postinstall routine.";
     exit 0;
 fi
@@ -25,14 +25,12 @@ is_file_older_than() {
   seconds="$1"
   file="$2"
 
-  echo "The file $file"
-
   modified_secs="$(date -r "$file" +%s)"
   current_secs="$(date +%s)"
 
   diff="$(expr "$current_secs" - "$modified_secs")"
 
-  if [[ "$diff" -gt "$seconds" ]]; then
+  if [ "$diff" -gt "$seconds" ]; then
     return 0
   fi
 
@@ -48,7 +46,7 @@ is_file_older_than() {
        exit 0;
   fi
 
-  curl  -H 'Cache-Control: no-cache' -s -S -o- "$curl_url" | bash || {
+  curl  -H 'Cache-Control: no-cache' -s -S -o- "$curl_url" | sh || {
      echo 'Could not install run-tsc-if on your system. That is a problem.';
      exit 1;
   }
