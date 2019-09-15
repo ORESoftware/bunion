@@ -7,7 +7,7 @@ import {InspectOptions} from "util";
 export const utilInspectOpts : Partial<InspectOptions> = {
   showHidden: false,
   colors: true,
-  depth: 5,
+  depth: 15,
   compact: false,
   sorted: true
 };

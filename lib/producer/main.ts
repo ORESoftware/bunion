@@ -17,6 +17,7 @@ import {
   Level,
   BunionLevel, BunionLevelInternalUnion
 } from "../bunion";
+import {InspectOptions} from "util";
 
 export {BunionLevel};
 export {Level};
@@ -72,7 +73,11 @@ export const setGlobalLogLevel = (v: BunionLevelInternal) => {
 
 const utilOpts = {
   depth: 44,
-  maxArrayLength: 89
+  maxArrayLength: 89,
+  showHidden: false,
+  colors: true,
+  compact: false,
+  sorted: true
 };
 
 const getJSON = (level: string, args: any[], appName: string, fields: object, host: string, opt?: boolean): string => {

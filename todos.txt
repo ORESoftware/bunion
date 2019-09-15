@@ -6,6 +6,8 @@ If we pass:
 if it finds JSON objects, it will log them with colors and stuff
 
 
+this is just a test 123
+
 
 1,2,3,4,5 --> log levels
 in regular mode, when user hits these keys, it changes the log level
