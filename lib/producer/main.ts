@@ -103,8 +103,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
       
       return {
         ['@bunion-error']: true,
-        message: a.message,
-        stack: a.stack
+        ['@error']: a
       }
     }
     

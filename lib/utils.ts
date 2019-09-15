@@ -18,11 +18,11 @@ const schema = require('../assets/schema/bunion.conf.json');
 
 const cleanField = (v: any) => {
   return String(v || '#')
-    .trim()
-    .replace('"', '')
-    .replace("'", '')
-    .replace(')', '')
-    .replace('(', '');
+  .trim()
+  .replace('"', '')
+  .replace("'", '')
+  .replace(')', '')
+  .replace('(', '');
 };
 
 export const getFields = (fields: any) => {
@@ -32,8 +32,11 @@ export const getFields = (fields: any) => {
 };
 
 export const getErrorString = (i: number, a: any) => {
-  return (i > 0 ? '' : ' (see below ⬃ )') + ' \n\n' + a.stack.split('\n')
-    .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v)).join('\n') + '\n';
+  return (i > 0 ? '' : ' (see below ⬃ )')
+    + ' \n\n' + a.stack.split('\n')
+                 .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v))
+                 .join('\n') + '\n' + util.inspect(a, {depth: 33});
+  
 };
 
 const getDefaultBunionConf = (): BunionConf => {
@@ -43,10 +46,10 @@ const getDefaultBunionConf = (): BunionConf => {
       forceRaw: process.env.bunion_force_raw === 'yes',
       level: <BunionLevel>process.env.bunion_producer_max_level || BunionLevelInternal.TRACE,
       fields: {},
-      getHostNameSync(){
+      getHostNameSync() {
         return os.hostname();
       },
-      getDateStringSync(d: Date){
+      getDateStringSync(d: Date) {
         return d.toUTCString();
       }
     },
