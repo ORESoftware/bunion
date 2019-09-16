@@ -278,6 +278,31 @@ export class BunionLogger {
     });
   }
   
+  times(i: number, ...args: any[]) {
+    
+    const argz = args.map(v => typeof v === 'string' ? v : util.inspect(v, {depth: 5, colors: true}));
+    
+    while (i > 0) {
+      i--;
+      for (const v of argz) {
+        process.stdout.write(v);
+      }
+      
+    }
+  }
+  
+  newline() {
+    process.stdout.write('\n');
+  }
+  
+  newlineToStdout() {
+    process.stdout.write('\n');
+  }
+  
+  newlineToStderr() {
+    process.stderr.write('\n');
+  }
+  
   fatal(...args: any[]): void {
     process.stdout.write(getJSON('FATAL', args, this.appName, this.fields, this.hostname));
   }

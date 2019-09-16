@@ -14,35 +14,32 @@ import * as os from 'os';
 const ajv = new AJV();
 const schema = require('../assets/schema/bunion.conf.json');
 
-///////////////////////////////////////////////////////////////////////////////
-
 const cleanField = (v: any) => {
   return String(v || '#')
-  .trim()
-  .replace('"', '')
-  .replace("'", '')
-  .replace(')', '')
-  .replace('(', '');
+    .trim()
+    .replace('"', '')
+    .replace("'", '')
+    .replace(')', '')
+    .replace('(', '');
 };
 
 export const getFields = (fields: any) => {
-  return Object.keys(fields).reduce(function (s, k) {
-    return s + `(${cleanField(k)}=${cleanField(fields[k])}) `;
-  }, '');
+  return Object.keys(fields)
+               .reduce((s, k) => s + `(${cleanField(k)}=${cleanField(fields[k])}) `, '');
 };
 
 export const getErrorString = (i: number, a: any) => {
   return (i > 0 ? '' : ' (see below ⬃ )')
     + ' \n\n' + a.stack.split('\n')
                  .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v))
-                 .join('\n') + '\n' + util.inspect(a, {depth: 33});
+                 .join('\n') + '\n' + util.inspect(a, {depth: 33, colors: true});
   
 };
 
 const getDefaultBunionConf = (): BunionConf => {
   return {
     producer: {
-      appName: process.env.bunion_app_name || 'default-app-name',
+      appName: process.env.bunion_app_name || 'default',
       forceRaw: process.env.bunion_force_raw === 'yes',
       level: <BunionLevel>process.env.bunion_producer_max_level || BunionLevelInternal.TRACE,
       fields: {},
@@ -50,6 +47,9 @@ const getDefaultBunionConf = (): BunionConf => {
         return os.hostname();
       },
       getDateStringSync(d: Date) {
+        if (!(d && d instanceof Date)) {
+          return new Date().toUTCString();
+        }
         return d.toUTCString();
       }
     },
@@ -62,10 +62,10 @@ const getDefaultBunionConf = (): BunionConf => {
       matchAll: [],
       inspect: {
         array: {
-          length: 25
+          length: 69
         },
         object: {
-          depth: 5
+          depth: 22
         }
       },
       transform: {
