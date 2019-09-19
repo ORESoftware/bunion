@@ -33,6 +33,10 @@ process.on('SIGHUP', s => {
   producer.warn('SIGHUP received.', s);
 });
 
+process.on('SIGPIPE', s => {
+  producer.warn('SIGPIPE received.', s);
+});
+
 process.on('SIGTERM', s => {
   producer.warn('SIGTERM received.', s);
 });
@@ -139,6 +143,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
   
   if (isOptimized) {
     return safe.stringify([
+      '@bunion',
       level,
       new Date().toUTCString(),
       fields,

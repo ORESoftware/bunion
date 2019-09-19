@@ -51,10 +51,10 @@ export const convertToBunionJSONFromArray = (v: Array<any>): BunionJSON => {
       appName: appName,
       pid: bSettings.producerPID,
       host: hstname,
-      level: v[0],
-      date: v[1],
-      fields: v[2],
-      value: v[3]
+      level: v[1],
+      date: v[2],
+      fields: v[3],
+      value: v[4]
     }
   }
   

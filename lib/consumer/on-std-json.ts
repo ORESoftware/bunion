@@ -27,7 +27,7 @@ export const onStandardizedJSON = (con: ConType, opts: any, v: BunionJSON) => {
   }
   
   if (!(v && v['@bunion'] === true)) {
-    throw 'we should not have non-bunion-json at this point in the program.'
+    throw 'Internal bunion error - we should not have non-bunion-json at this point in the program. Please report this problem.';
   }
   
   clearLine();
