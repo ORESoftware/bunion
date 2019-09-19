@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 
-// console.log('process argv:', process.argv);
+const path = require('path');
+const cp = require('child_process');
+
 
 if (process.env.oresoftware_dev === 'yes') {
-  console.log('We are transpiling via tsc');
-  const path = require('path');
-  const cp = require('child_process');
   const projectRoot = path.dirname(__dirname);
   const {run} = require('./run-tsc-if-script');
   cp.execSync(run(projectRoot));
