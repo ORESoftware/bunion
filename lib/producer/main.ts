@@ -22,6 +22,7 @@ import {InspectOptions} from "util";
 export {BunionLevel};
 export {Level};
 export {BunionConf} from '../bunion';
+export {bunionConf} from '../conf';
 
 process.on('SIGINT', s => {
   producer.warn('SIGINT received.', s);
@@ -36,6 +37,12 @@ process.on('SIGTERM', s => {
 });
 
 const bunionConf = getConf();
+
+const isOptimized = process.env.bunion_optimized === 'yes';
+
+if (isOptimized) {
+  console.log(JSON.stringify({'@bunion': true, producer_pid: process.pid}));
+}
 
 const getDefaultAppName = () => {
   return bunionConf.producer.appName || bunionConf.producer.name || '';
@@ -152,6 +159,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     fields,
     clean
   ]) + '\n';
+  
 };
 
 const getCombinedFields = function (v: object, fields: object) {

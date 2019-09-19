@@ -79,6 +79,7 @@ export interface BunionConf {
   producer: {
     name?: string
     appName?: string
+    optimizedForConsumer?: boolean,
     forceRaw?: boolean,
     level?: BunionLevel
     fields: { [key: string]: any },

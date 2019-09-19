@@ -6,7 +6,7 @@ import * as util from "util";
 import {ConType} from './con';
 import {utilInspectOpts} from './constants';
 
-import {transformers, bunionConf, transformKeys} from './conf';
+import {transformers, bunionConf, transformKeys} from '../conf';
 import {onStandardizedJSON} from './on-std-json';
 import {getErrorString} from '../utils';
 import {opts} from "./opts";

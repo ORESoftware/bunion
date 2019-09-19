@@ -33,6 +33,7 @@ import {getValue, onBunionUnknownJSON} from './transforms';
 import {ctrlChars, levelMap} from './constants';
 import {ConType} from "./con";
 import {opts} from './opts';
+import {convertToBunionJSONFromArray} from "../utils";
 
 
 const dirId = uuid.v4();
@@ -148,19 +149,7 @@ const onData = (d: any) => {
 };
 
 const onJSON = (v: Array<any>) => {
-  const indx = String(v[0]).indexOf(':');
-  const vers = parseInt(String(v[0]).slice(indx).trim());
-  return onStandardizedJSON(con, opts, {
-    '@bunion': true,
-    '@version': Number.isInteger(vers) ? vers : -1,
-    appName: v[1],
-    level: v[2],
-    pid: v[3],
-    host: v[4],
-    date: v[5],
-    fields: v[6],
-    value: v[7]
-  });
+  return onStandardizedJSON(con, opts, convertToBunionJSONFromArray(v));
 };
 
 const readFromFile = (pos: number): any => {
