@@ -1,13 +1,14 @@
 'use strict';
 
 import util = require('util');
-import {getConf, getErrorString} from "../utils";
+import {getErrorString} from "../utils";
 import {producer} from '../logger';
 import os = require('os');
 import chalk from "chalk";
 import * as safe from '@oresoftware/safe-stringify';
 import deepMixin from "@oresoftware/deep.mixin";
 import {logTTY} from "./log-tty";
+import {bunionConf} from '../conf';
 
 import {
   BunionFields,
@@ -36,7 +37,6 @@ process.on('SIGTERM', s => {
   producer.warn('SIGTERM received.', s);
 });
 
-const bunionConf = getConf();
 
 const isOptimized = process.env.bunion_optimized === 'yes';
 

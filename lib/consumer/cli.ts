@@ -6,7 +6,6 @@ import {BunionJSON, BunionLevelToNum, BunionMode} from "../bunion";
 import JSONParser, {RawStringSymbol} from "@oresoftware/json-stream-parser";
 import * as util from "util";
 import chalk from "chalk";
-import {getConf, getFields} from "../utils";
 import * as readline from "readline";
 import {consumer} from "../logger";
 import {ReadStream} from "tty";
