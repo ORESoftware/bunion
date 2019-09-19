@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import Timer = NodeJS.Timer;
 import log from '../logging';
 import {EVCb} from "../bunion";
-import {producer} from "../logger";
+import {producer} from "../loggers";
 
 const fileFlagIndex = process.argv.indexOf('-f');
 let fraw = process.env.bxn_file_path || process.argv[fileFlagIndex + 1];

@@ -7,7 +7,7 @@ import JSONParser, {RawStringSymbol} from "@oresoftware/json-stream-parser";
 import * as util from "util";
 import chalk from "chalk";
 import * as readline from "readline";
-import {consumer} from "../logger";
+import {consumer} from "../loggers";
 import {ReadStream} from "tty";
 import {LinkedQueue, LinkedQueueValue} from "@oresoftware/linked-queue";
 import * as fs from "fs";

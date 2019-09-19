@@ -1,10 +1,9 @@
 'use strict';
 
 import * as os from "os";
-import {producer} from "./logger";
+import {producer,consumer} from "./loggers";
 import deepMixin from "@oresoftware/deep.mixin";
 import * as util from "util";
-import {consumer} from "./logger";
 import path = require('path');
 import AJV = require('ajv');
 import {BunionConf, BunionLevel, BunionLevelInternal} from "./bunion";

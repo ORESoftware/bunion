@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import Timer = NodeJS.Timer;
 import log from '../logging';
 import {EVCb} from "../bunion";
-import {producer} from "../logger";
+import {producer} from "../loggers";
 
 const cwd = process.cwd();
 const budsFile = process.env.bunion_uds_file || '';

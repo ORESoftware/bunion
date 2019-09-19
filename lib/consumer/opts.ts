@@ -1,7 +1,7 @@
 'use strict';
 
 import options from "./cli-options";
-import {consumer} from "../logger";
+import {consumer} from "../loggers";
 
 const dashdash = require('dashdash');
 const allowUnknown = process.argv.indexOf('--allow-unknown') > 1;

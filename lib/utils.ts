@@ -1,15 +1,11 @@
 'use strict';
 
 import * as util from "util";
-import {producer} from "./logger";
-import chalk from "chalk";
-import deepMixin from '@oresoftware/deep.mixin';
-import {consumer} from "./logger";
-import * as os from 'os';
 import {BunionJSON} from "./bunion";
 import {bunionConf} from './conf';
 import {pkg} from './pkg-json';
 import {bSettings} from "./settings";
+import log from './logging';
 
 const hstname = bunionConf.producer.getHostNameSync();
 const appName = bunionConf.producer.appName;

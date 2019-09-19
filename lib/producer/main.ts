@@ -2,7 +2,7 @@
 
 import util = require('util');
 import {getErrorString} from "../utils";
-import {producer} from '../logger';
+import {producer} from '../loggers';
 import os = require('os');
 import chalk from "chalk";
 import * as safe from '@oresoftware/safe-stringify';
