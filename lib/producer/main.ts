@@ -19,6 +19,7 @@ import {
   BunionLevel, BunionLevelInternalUnion
 } from "../bunion";
 import {InspectOptions} from "util";
+import {pkg} from "../pkg-json";
 
 export {BunionLevel};
 export {Level};
@@ -131,6 +132,8 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
   
   if (isLogTTY) {
     return logTTY(3, 'short', {
+      '@bunion': true,
+      '@version': pkg.version,
       appName,
       level: level as BunionLevelInternal,
       fields: fields as BunionFields,
@@ -424,6 +427,8 @@ export const getNewLogger = function (opts?: BunionOpts): BunionLogger {
 export const createLogger = getNewLogger;
 export const log = getNewLogger();
 export default log;
+
+export {convertToBunionMap} from '../utils';
 
 export const r2gSmokeTest = () => {
   return true;

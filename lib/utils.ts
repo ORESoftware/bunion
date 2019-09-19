@@ -1,7 +1,5 @@
 'use strict';
 
-
-
 import * as util from "util";
 import {producer} from "./logger";
 import chalk from "chalk";
@@ -38,11 +36,38 @@ export const getErrorString = (i: number, a: any) => {
   
 };
 
-
 const isOptimized = process.env.bunion_optimized === 'yes';
 const pkgVersion = pkg.version.split('.')[0];
 
-export const convertToBunionJSONFromArray = (v: Array<any>): BunionJSON => {
+export const convertToBunionMap = (v: any): BunionJSON => {
+  
+  if (!v) {
+    throw 'Falsy/null/undefined value passed. Object/Array required.';
+  }
+  
+  if (!Array.isArray(v)) {
+    
+    if (v['@bunion'] !== true) {
+      log.warn('Object did not have a "@bunion" property pointing to true.');
+    }
+    
+    return v;
+  }
+  
+  const elems = String(v[0]).split(':');
+  
+  let vers = -1;
+  
+  try {
+    vers = parseInt(elems.pop().trim());
+  }
+  catch (err) {
+    log.warn(err);
+  }
+  
+  if (elems[0] !== '@bunion') {
+    log.warn('First element of array was not a string that started with "@bunion".');
+  }
   
   if (isOptimized) {
     return {
@@ -57,9 +82,6 @@ export const convertToBunionJSONFromArray = (v: Array<any>): BunionJSON => {
       value: v[4]
     }
   }
-  
-  const indx = String(v[0]).indexOf(':');
-  const vers = parseInt(String(v[0]).slice(indx).trim());
   
   return {
     '@bunion': true,

@@ -50,8 +50,8 @@ export interface Transformer {
 }
 
 export interface BunionJSON {
-  '@bunion'?: true,
-  '@version'?: number,
+  '@bunion': true,
+  '@version': number,
   level: BunionLevelInternal
   value: string
   date: string,

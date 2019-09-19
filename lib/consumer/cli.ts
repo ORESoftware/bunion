@@ -33,7 +33,7 @@ import {getValue, onBunionUnknownJSON} from './transforms';
 import {ctrlChars, levelMap} from './constants';
 import {ConType} from "./con";
 import {opts} from './opts';
-import {convertToBunionJSONFromArray} from "../utils";
+import {convertToBunionMap} from "../utils";
 
 const dirId = uuid.v4();
 const bunionHome = path.resolve(process.env.HOME + '/.bunion');
@@ -148,7 +148,7 @@ const onData = (d: any) => {
 };
 
 const onJSON = (v: Array<any>) => {
-  return onStandardizedJSON(con, opts, convertToBunionJSONFromArray(v));
+  return onStandardizedJSON(con, opts, convertToBunionMap(v));
 };
 
 const readFromFile = (pos: number): any => {
