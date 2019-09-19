@@ -37,7 +37,6 @@ process.on('SIGTERM', s => {
   producer.warn('SIGTERM received.', s);
 });
 
-
 const isOptimized = process.env.bunion_optimized === 'yes';
 
 if (isOptimized) {
@@ -136,6 +135,15 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
       date: new Date().toUTCString(),
       value: clean.join(' '),
     });
+  }
+  
+  if (isOptimized) {
+    return safe.stringify([
+      level,
+      new Date().toUTCString(),
+      fields,
+      clean
+    ]) + '\n';
   }
   
   // return safe.stringify({
