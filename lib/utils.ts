@@ -11,7 +11,7 @@ import * as os from 'os';
 import {BunionJSON} from "./bunion";
 import {bunionConf} from './conf';
 import {pkg} from './pkg-json';
-
+import {bSettings} from "./settings";
 
 const hstname = bunionConf.producer.getHostNameSync();
 const appName = bunionConf.producer.appName;
@@ -44,15 +44,12 @@ const pkgVersion = pkg.version.split('.')[0];
 
 export const convertToBunionJSONFromArray = (v: Array<any>): BunionJSON => {
   
-  const indx = String(v[0]).indexOf(':');
-  const vers = parseInt(String(v[0]).slice(indx).trim());
-  
   if (isOptimized) {
     return {
       '@bunion': true,
       '@version': pkgVersion,
       appName: appName,
-      pid: process.pid,
+      pid: bSettings.producerPID,
       host: hstname,
       level: v[0],
       date: v[1],
@@ -60,6 +57,9 @@ export const convertToBunionJSONFromArray = (v: Array<any>): BunionJSON => {
       value: v[3]
     }
   }
+  
+  const indx = String(v[0]).indexOf(':');
+  const vers = parseInt(String(v[0]).slice(indx).trim());
   
   return {
     '@bunion': true,

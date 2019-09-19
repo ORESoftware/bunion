@@ -19,6 +19,7 @@ import uuid = require("uuid");
 import Timer = NodeJS.Timer;
 import {makeCon} from './con';
 import makeServer from './server';
+import {bSettings} from "../settings";
 import {
   getInspected,
   clearLine,
@@ -33,7 +34,6 @@ import {ctrlChars, levelMap} from './constants';
 import {ConType} from "./con";
 import {opts} from './opts';
 import {convertToBunionJSONFromArray} from "../utils";
-
 
 const dirId = uuid.v4();
 const bunionHome = path.resolve(process.env.HOME + '/.bunion');
@@ -183,7 +183,13 @@ const createDataTimeout = (v: number) => {
 const handleIn = (d: any) => {
   
   if (!d) {
-    throw 'Should always be defined.'
+    log.error('Internal error: object should always be defined.');
+    return;
+  }
+  
+  if (d['@bunion'] === true && Number.isInteger(d.producer_pid)) {
+    bSettings.producerPID = d.producer_pid;
+    return;
   }
   
   if (con.mode === BunionMode.READING || con.mode === BunionMode.TAILING) {
@@ -236,10 +242,10 @@ const onStdinEnd = () => {
 };
 
 const parser = process.stdin.resume()
-  .on('end', onStdinEnd)
-  .pipe(createRawParser())
-  .on('string', handleIn)
-  .on('data', handleIn);
+                      .on('end', onStdinEnd)
+                      .pipe(createRawParser())
+                      .on('string', handleIn)
+                      .on('data', handleIn);
 
 const onTimeout = () => {
   console.log('TIMED OUT.');
@@ -816,7 +822,7 @@ const handleUserInput = () => {
 //   handleUserInput();
 // }
 
-if (true || process.stdout.isTTY) {
-  consumer.debug('handing b/c of stdout.');
+if (process.stdout.isTTY) {
+  consumer.debug('handing user keyboard input b/c stdout is a TTY.');
   handleUserInput();
 }

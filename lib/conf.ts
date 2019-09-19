@@ -18,7 +18,7 @@ const getDefaultBunionConf = (): BunionConf => {
       appName: process.env.bunion_app_name || 'default',
       optimizedForConsumer: process.env.bunion_optimized === 'yes',
       forceRaw: process.env.bunion_force_raw === 'yes',
-      level: <BunionLevel>process.env.bunion_producer_max_level || BunionLevelInternal.TRACE,
+      level: <BunionLevel>process.env.bunion_producer_level || BunionLevelInternal.TRACE,
       fields: {},
       getHostNameSync() {
         return os.hostname();
