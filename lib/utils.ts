@@ -2,6 +2,7 @@
 
 import * as util from "util";
 import {BunionJSON} from "./bunion";
+import {BunionLevelInternal} from "./bunion";
 import {bunionConf} from './conf';
 import {pkg} from './pkg-json';
 import {bSettings} from "./settings";
@@ -35,6 +36,36 @@ export const getErrorString = (i: number, a: any) => {
 const isOptimized = process.env.bunion_optimized === 'yes';
 const pkgVersion = pkg.version.split('.')[0];
 
+export const fromStringToBunionMap = (v: string): BunionJSON => {
+  
+  if (isOptimized) {
+    return {
+      '@bunion': true,
+      '@version': pkgVersion,
+      appName: appName,
+      pid: bSettings.producerPID,
+      host: hstname,
+      level: BunionLevelInternal.WARN,
+      date: new Date().toUTCString(),
+      fields: null,
+      value: v
+    }
+  }
+  
+  return {
+    '@bunion': true,
+    '@version': -1,
+    appName: 'unknown',
+    level: BunionLevelInternal.WARN,
+    pid: -1,
+    host: 'unknown',
+    date: 'unknown',
+    fields: null,
+    value: v
+  }
+  
+};
+
 export const convertToBunionMap = (v: any): BunionJSON => {
   
   if (!v) {
@@ -52,17 +83,10 @@ export const convertToBunionMap = (v: any): BunionJSON => {
   
   const elems = String(v[0]).split(':');
   
-  let vers = -1;
   
-  try {
-    vers = parseInt(elems.pop().trim());
-  }
-  catch (err) {
-    log.warn(err);
-  }
-  
-  if (elems[0] !== '@bunion') {
+  if (!elems[0].startsWith('@bunion')) {
     log.warn('First element of array was not a string that started with "@bunion".');
+    log.warn('That array was:', v);
   }
   
   if (isOptimized) {
@@ -77,6 +101,16 @@ export const convertToBunionMap = (v: any): BunionJSON => {
       fields: v[3],
       value: v[4]
     }
+  }
+  
+  
+  let vers = -1;
+  
+  try {
+    vers = parseInt(String(elems[elems.length - 1]).trim());
+  }
+  catch (err) {
+    log.warn(err);
   }
   
   return {

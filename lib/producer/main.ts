@@ -45,7 +45,9 @@ process.on('SIGTERM', s => {
 const isOptimized = process.env.bunion_optimized === 'yes';
 
 if (isOptimized) {
-  console.log(JSON.stringify({'@bunion': true, producer_pid: process.pid}));
+  if (!process.stdout.isTTY) {
+    console.log(JSON.stringify({'@bunion': true, producer_pid: process.pid}));
+  }
 }
 
 const getDefaultAppName = () => {
@@ -428,7 +430,7 @@ export const createLogger = getNewLogger;
 export const log = getNewLogger();
 export default log;
 
-export {convertToBunionMap} from '../utils';
+export {convertToBunionMap, fromStringToBunionMap} from '../utils';
 
 export const r2gSmokeTest = () => {
   return true;
