@@ -16,37 +16,37 @@ export const getInspected = (v: any, opts: any): string => {
   
   if (!Array.isArray(v)) {
     
-    if (v && v['@bunion-error'] === true) {
-      return getErrorString(0, v);
+    if (v && v['@bunion-error'] === true && v['@error']) {
+      return getErrorString(0, v['@error']);
     }
     
     if (opts.inspect) {
       return util.inspect(v, utilInspectOpts);
     }
-  
+    
     //safe to stringify since it's already been serialized
     return JSON.stringify(v, null, 2);
   }
   
   return v.map(v => {
-      
-      if (typeof v === 'string') {
-        return v;
-      }
     
-      if (v && v['@bunion-error'] === true) {
-        // since it's part of an array we don't wan the "see below" part of the error string
-        return getErrorString(1, v);
-      }
-      
-      if (opts.inspect) {
-        return util.inspect(v, utilInspectOpts);
-      }
-      
-      //safe to stringify since it's already been serialized
-      return JSON.stringify(v, null, 2);
-    })
-    .join(' ');
+            if (typeof v === 'string') {
+              return v;
+            }
+    
+            if (v && v['@bunion-error'] === true && v['@error']) {
+              // since it's part of an array we don't wan the "see below" part of the error string
+              return getErrorString(1, v['@error']);
+            }
+    
+            if (opts.inspect) {
+              return util.inspect(v, utilInspectOpts);
+            }
+    
+            //safe to stringify since it's already been serialized
+            return JSON.stringify(v, null, 2);
+          })
+          .join(' ');
   
 };
 

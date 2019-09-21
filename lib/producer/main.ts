@@ -93,6 +93,24 @@ const utilOpts = {
   sorted: true
 };
 
+const copyObj = (o: object) => {
+  
+  const v = {};
+  
+  for (const k of Object.getOwnPropertyNames(o)) {
+    Object.defineProperty(v, k, {
+      value: (o as any)[k],
+      writable: false,
+      configurable: true,
+      enumerable: true
+    })
+    
+  }
+  
+  return v;
+  
+};
+
 const getJSON = (level: string, args: any[], appName: string, fields: object, host: string, opt?: boolean): string => {
   
   fields = fields || null;
@@ -113,15 +131,18 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
       return a;
     }
     
-    if (a && typeof a.message === 'string' && a.stack && typeof a.stack === 'string') {
+    if (a && typeof a === 'object' && a.hasOwnProperty('message') && a.hasOwnProperty('stack')
+      && typeof a.message === 'string' && a.stack && typeof a.stack === 'string') {
       
       if (isLogTTY) {
         return getErrorString(i, a);
       }
       
+      const val = copyObj(a);
+      
       return {
         ['@bunion-error']: true,
-        ['@error']: a
+        ['@error']: val
       }
     }
     

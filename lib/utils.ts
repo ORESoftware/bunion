@@ -26,10 +26,27 @@ export const getFields = (fields: any) => {
 };
 
 export const getErrorString = (i: number, a: any) => {
-  return (i > 0 ? '' : ' (see below ⬃ )')
-    + ' \n\n' + a.stack.split('\n')
-                 .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v))
-                 .join('\n') + '\n' + util.inspect(a, {depth: 33, colors: true});
+  
+  try {
+    
+    const ownProps = Object.getOwnPropertyNames(a);
+    
+    const nonStackMessageProps = ownProps.length < 3 ? '' :
+      'full inspection of extra props:' + util.inspect(a, {
+                                                depth: 33,
+                                                colors: true
+                                              })
+                                              .split('\n').map(v => '     ' + v).join('\n');
+    
+    return (i > 0 ? '' : ' (see below ⬃ )')
+      + ' \n\n' + a.stack.split('\n')
+                   .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v))
+                   .join('\n') + '\n\n ' + nonStackMessageProps;
+    
+  }
+  catch (err) {
+    return util.inspect(a, {depth: 33, colors: true});
+  }
   
 };
 
@@ -83,7 +100,6 @@ export const convertToBunionMap = (v: any): BunionJSON => {
   
   const elems = String(v[0]).split(':');
   
-  
   if (!elems[0].startsWith('@bunion')) {
     log.warn('First element of array was not a string that started with "@bunion".');
     log.warn('That array was:', v);
@@ -102,7 +118,6 @@ export const convertToBunionMap = (v: any): BunionJSON => {
       value: v[4]
     }
   }
-  
   
   let vers = -1;
   
