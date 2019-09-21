@@ -27,19 +27,19 @@ export {BunionConf} from '../bunion';
 export {bunionConf} from '../conf';
 
 process.on('SIGINT', s => {
-  producer.warn('SIGINT received.', s);
+  producer.debug('SIGINT received.', s);
 });
 
 process.on('SIGHUP', s => {
-  producer.warn('SIGHUP received.', s);
+  producer.debug('SIGHUP received.', s);
 });
 
 process.on('SIGPIPE', s => {
-  producer.warn('SIGPIPE received.', s);
+  producer.debug('SIGPIPE received.', s);
 });
 
 process.on('SIGTERM', s => {
-  producer.warn('SIGTERM received.', s);
+  producer.debug('SIGTERM received.', s);
 });
 
 const isOptimized = process.env.bunion_optimized === 'yes';
@@ -342,6 +342,10 @@ export class BunionLogger {
     process.stdout.write('\n');
   }
   
+  pid() {
+    process.stdout.write(JSON.stringify({'@bunion': true, '@pid': true, pid: process.pid}) + '\n');
+  }
+  
   newlineToStdout() {
     process.stdout.write('\n');
   }
@@ -450,6 +454,10 @@ export const getNewLogger = function (opts?: BunionOpts): BunionLogger {
 export const createLogger = getNewLogger;
 export const log = getNewLogger();
 export default log;
+
+if (!process.stdout.isTTY) {
+  log.pid();
+}
 
 export {convertToBunionMap, fromStringToBunionMap} from '../utils';
 

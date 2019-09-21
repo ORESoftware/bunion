@@ -108,7 +108,7 @@ process.once('exit', code => {
     tryAndLogErrors(() => fs.rmdirSync(runId))
   }
   
-  consumer.info('exiting with code:', code);
+  consumer.debug('exiting with code:', code);
   process.exit(code);
 });
 
@@ -182,6 +182,10 @@ const createDataTimeout = (v: number) => {
 
 const handleIn = (d: any) => {
   
+  if (con.exiting) {
+    return;
+  }
+  
   if (!d) {
     log.error('Internal error: object should always be defined.');
     return;
@@ -189,6 +193,11 @@ const handleIn = (d: any) => {
   
   if (d['@bunion'] === true && Number.isInteger(d.producer_pid)) {
     bSettings.producerPID = d.producer_pid;
+    return;
+  }
+  
+  if (d['@bunion'] === true && d['@pid'] === true && Number.isInteger(d.pid)) {
+    con.siblingProducerPID = d.pid;
     return;
   }
   
@@ -237,7 +246,7 @@ const handleIn = (d: any) => {
 const onStdinEnd = () => {
   con.mode = BunionMode.SEARCHING;
   clearLine();
-  consumer.info('stdin end');
+  consumer.debug('stdin end');
   writeStatusToStdout(con);
 };
 
@@ -601,15 +610,34 @@ const handleShutdown = (signal: string) => () => {
   clearLine();
   
   if (con.sigCount++ === 1) {
-    consumer.warn(`User hit ${signal} again, now exiting.`);
+    
+    con.exiting = true;
+    
+    consumer.debug(`User hit ${signal} again, now exiting.`);
+    
     if (signal === 'ctrl-d') {
       con.keepLogFile = true;
     }
-    process.exit(1);
+    
+    if (con.siblingProducerPID < 1) {
+      process.exit(1);
+      return;
+    }
+    
+    process.kill(con.siblingProducerPID, 'SIGINT');
+    
+    clearLine();
+    
+    setTimeout(() => {
+      clearLine();
+      process.exit(1);
+    }, 200);
+    
     return;
+    
   }
   
-  consumer.info(`User hit ${signal}.`);
+  consumer.debug(`User hit ${signal}.`);
   consumer.info('Hit ctrl-d/ctrl-c again to exit. Use ctrl-d to keep the log file, ctrl-c will delete it.');
 };
 
@@ -618,7 +646,7 @@ const handleCtrlD = handleShutdown('ctrl-d');
 
 const handleUserInput = () => {
   
-  const fd = fs.openSync('/dev/tty', 'r+');
+  const fd = fs.openSync('/dev/tty', 'r');
   // const strm = con.rsi = new ReadStream(<any>1);
   const strm = con.rsi = new ReadStream(<any>fd);
   strm.setRawMode(true);

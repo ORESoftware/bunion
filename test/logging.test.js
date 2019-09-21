@@ -1,21 +1,31 @@
 'use strict';
 
+const fs = require('fs');
+const {ReadStream} = require("tty");
 
 const {log} = require('bunion');
 const os = require('os');
 
 process.on('SIGINT', s => {
+  log.warn('sigint received by producer.');
   process.exit(1);
 });
 
 process.on('uncaughtException', (e) => {
-  console.error('Uncaught exception:', e.message || e);
+  console.error('Uncaught exception:', e);
 });
 
 process.on('unhandledRejection', (e) => {
-  console.error('Unhandled rejection:', e.message || e);
+  console.error('Unhandled rejection:', e);
 });
 
+// const fd = fs.openSync('/dev/tty', 'r');
+// const strm  = new ReadStream(fd);
+// strm.setRawMode(true);
+
+// strm.on('data', (d) => {
+//   console.log('logger.!!!');
+// });
 
 let i = 0;
 
@@ -61,7 +71,6 @@ const getRandomStr = () => {
   setTimeout(run, Math.floor(10 + Math.random() * 10));
   
 })();
-
 
 // const fs = require('fs');
 // const {ReadStream} = require("tty");

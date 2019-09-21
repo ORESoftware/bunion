@@ -7,6 +7,8 @@ import Timer = NodeJS.Timer;
 export type ConType = ReturnType<typeof makeCon>;
 
 export const makeCon = (maxIndex: number) => ({
+  exiting: false,
+  siblingProducerPID: -1,
   rsi: null as ReadStream,
   fullTrace: false,
   tail: 0,

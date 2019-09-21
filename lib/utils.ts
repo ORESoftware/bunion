@@ -38,10 +38,10 @@ export const getErrorString = (i: number, a: any) => {
                                               })
                                               .split('\n').map(v => '     ' + v).join('\n');
     
-    return (i > 0 ? '' : ' (see below ⬃ )')
-      + ' \n\n' + a.stack.split('\n')
-                   .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v))
-                   .join('\n') + '\n\n ' + nonStackMessageProps;
+    return i > 0 ? '' : ' (see below ⬃ )' + ' \n\n' +
+      a.stack.split('\n')
+       .map((v: string, i: number) => (i === 0 ? '      ' + v : '  ' + v))
+       .join('\n') + '\n\n ' + nonStackMessageProps;
     
   }
   catch (err) {

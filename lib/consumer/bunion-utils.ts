@@ -91,7 +91,11 @@ export const handleSearchTermMatched = (con: ConType, isMatched: boolean) => {
 
 export const writeStatusToStdout = (con: ConType, searchTermStr?: string) => {
   
-  if (false && !process.stdout.isTTY) {
+  if (con.exiting) {
+    return;
+  }
+  
+  if (!process.stdout.isTTY) {
     return;
   }
   
