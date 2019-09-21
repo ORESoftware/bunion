@@ -8,6 +8,7 @@ export type ConType = ReturnType<typeof makeCon>;
 
 export const makeCon = (maxIndex: number) => ({
   exiting: false,
+  stdinEnd: false,
   siblingProducerPID: -1,
   rsi: null as ReadStream,
   fullTrace: false,

@@ -245,6 +245,7 @@ const handleIn = (d: any) => {
 
 const onStdinEnd = () => {
   con.mode = BunionMode.SEARCHING;
+  con.stdinEnd = true;
   clearLine();
   consumer.debug('stdin end');
   writeStatusToStdout(con);
@@ -609,7 +610,13 @@ const handleShutdown = (signal: string) => () => {
   
   clearLine();
   
-  if (con.sigCount++ === 1) {
+  con.sigCount++;
+  
+  if (con.sigCount > 2) {
+    return;
+  }
+  
+  if (con.sigCount === 2) {
     
     con.exiting = true;
     
@@ -628,13 +635,19 @@ const handleShutdown = (signal: string) => () => {
     
     clearLine();
     
+    // process.removeAllListeners('SIGINT');
+    
+    if (con.stdinEnd) {
+      process.exit(1);
+      return;
+    }
+    
     setTimeout(() => {
       clearLine();
       process.exit(1);
     }, 200);
     
     return;
-    
   }
   
   consumer.debug(`User hit ${signal}.`);
