@@ -56,7 +56,8 @@ export interface BunionJSON {
   value: string
   date: string,
   [RawJSONBytesSymbol]?: Symbol
-  appName: string
+  appName: string,
+  appNameDisplay?: string
   fields: BunionFields,
   pid: number,
   host: string // hostname

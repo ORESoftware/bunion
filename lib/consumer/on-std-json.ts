@@ -6,7 +6,6 @@ import chalk from 'chalk';
 import {getFields} from '../utils';
 import {ConType} from './con';
 
-
 const getDarkOrlight = (str: string, opts: any) => {
   return opts.darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;
 };
@@ -15,6 +14,9 @@ const makeBold = (str: string) => {
   return chalk.bold(str);
 };
 
+const getCleanAppName = (v: {appName: string}): string => {
+  return String(v.appName).startsWith('app:') ? v.appName : `app:${chalk.bold(v.appName)}`;
+};
 
 export const onStandardizedJSON = (con: ConType, opts: any, v: BunionJSON) => {
   
@@ -45,21 +47,20 @@ export const onStandardizedJSON = (con: ConType, opts: any, v: BunionJSON) => {
   
   if (opts.output === 'short') {
     theDate = '';
-    v.appName && (v.appName = `app:${chalk.bold(v.appName)}`);
+    v.appName && (v.appNameDisplay = getCleanAppName(v));
   }
   else if (opts.output === 'medium') {
     // const d = new Date(v.date);
     // v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     theDate = v.date;
-    v.appName = `app:${chalk.bold(v.appName)}`;
+    v.appNameDisplay = getCleanAppName(v);
   }
   else {
     // const d = new Date(v.date);
     // v.d = chalk.bold(`${d.toLocaleTimeString()}.${String(d.getMilliseconds()).padStart(3, '0')}`);
     theDate = v.date;
-    v.appName = `${v.host} ${v.pid} app:${chalk.bold(v.appName)}`;
+    v.appNameDisplay = `${v.host} ${v.pid} ${getCleanAppName(v)}`;
   }
-  
   
   // const msgVal = getInspected(v.value);
   
@@ -69,37 +70,37 @@ export const onStandardizedJSON = (con: ConType, opts: any, v: BunionJSON) => {
   
   if (v.level === 'FATAL') {
     process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appNameDisplay)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
     );
   }
   
   if (v.level === 'ERROR' && con.logLevel < 6) {
     process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appNameDisplay)} ${chalk.redBright.bold(v.level)} ${chalk.gray(fields)} ${makeBold(msgVal)} \n`
     );
   }
   
   if (v.level === 'WARN' && con.logLevel < 5) {
     process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.blue.bold.underline.italic(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appNameDisplay)} ${chalk.blue.bold.underline.italic(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'INFO' && con.logLevel < 4) {
     process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.blueBright(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appNameDisplay)} ${chalk.blueBright(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'DEBUG' && con.logLevel < 3) {
     process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appNameDisplay)} ${chalk.cyan(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   
   if (v.level === 'TRACE' && con.logLevel < 2) {
     process.stdout.write(
-      `${chalk.gray(theDate)} ${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
+      `${chalk.gray(theDate)} ${chalk.gray(v.appNameDisplay)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
   }
   

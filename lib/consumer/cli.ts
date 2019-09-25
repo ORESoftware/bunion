@@ -112,7 +112,8 @@ process.once('exit', code => {
   process.exit(code);
 });
 
-const onData = (d: any) => {
+
+export const onData = (d: any) => {
   
   if (typeof d === 'string') {
     if (d.length > 0) {
@@ -180,9 +181,10 @@ const createDataTimeout = (v: number) => {
   }, v);
 };
 
-const handleIn = (d: any) => {
+export const handleIn = (d: any) => {
   
   if (con.exiting) {
+    consumer.debug('Exiting switch has flipped.');
     return;
   }
   
@@ -258,9 +260,11 @@ const parser = process.stdin.resume()
                       .on('data', handleIn);
 
 const onTimeout = () => {
-  console.log('TIMED OUT.');
-  parser.destroy();
-  process.exit(1);
+  con.paused = true;
+  clearLine();
+  writeStatusToStdout(con, 'Paused');
+  // parser.destroy();
+  // process.exit(1);
 };
 
 const createTimeout = () => {
@@ -666,6 +670,7 @@ const handleUserInput = () => {
   
   strm.on('data', (d: any) => {
     
+    con.paused = false;
     createTimeout();
     createDataTimeout(20);
     
@@ -863,7 +868,12 @@ const handleUserInput = () => {
 //   handleUserInput();
 // }
 
-if (process.stdout.isTTY) {
-  consumer.debug('handing user keyboard input b/c stdout is a TTY.');
+if (process.stdout.isTTY || process.env.bunion_force_tty === 'yes') {
+  consumer.info('Handing user keyboard input b/c stdout is a TTY.');
   handleUserInput();
 }
+else{
+  consumer.warn('Not connected to stdin.')
+}
+
+

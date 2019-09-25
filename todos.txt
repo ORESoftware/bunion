@@ -1,4 +1,7 @@
 
+full inspection of extra props: should use a custom inspect function, and ignore stack/message properties
+
+
 If we pass:
 
 --inspect / --pretty

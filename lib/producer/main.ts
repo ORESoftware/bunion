@@ -20,6 +20,7 @@ import {
 } from "../bunion";
 import {InspectOptions} from "util";
 import {pkg} from "../pkg-json";
+import {fdatasync} from "fs";
 
 export {BunionLevel};
 export {Level};
@@ -460,6 +461,24 @@ if (!process.stdout.isTTY) {
 }
 
 export {convertToBunionMap, fromStringToBunionMap} from '../utils';
+
+const con = {
+  forceCli: false
+};
+
+export const onData = (d: any) => {
+  throw new Error('You must use the "bunion_force_cli=yes" env var to call the onData pseudo handler.');
+};
+
+export const handleIn = (d: any) => {
+  throw new Error('You must use the "bunion_force_cli=yes" env var to call the handleIn pseudo handler.');
+};
+
+if(process.env.bunion_force_cli === 'yes'){
+  producer.warn('Using cli to read from stdin.');
+  exports.onData = require('../consumer/cli').onData;
+  exports.handleIn = require('../consumer/cli').handleIn;
+}
 
 export const r2gSmokeTest = () => {
   return true;

@@ -10,6 +10,7 @@ export const makeCon = (maxIndex: number) => ({
   exiting: false,
   stdinEnd: false,
   siblingProducerPID: -1,
+  paused: false,
   rsi: null as ReadStream,
   fullTrace: false,
   tail: 0,
