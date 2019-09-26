@@ -1,26 +1,17 @@
 'use strict';
 
 import util = require('util');
+import os = require('os');
 import {getErrorString} from "../utils";
 import {producer} from '../loggers';
-import os = require('os');
 import chalk from "chalk";
 import * as safe from '@oresoftware/safe-stringify';
 import deepMixin from "@oresoftware/deep.mixin";
 import {logTTY} from "./log-tty";
 import {bunionConf} from '../conf';
 
-import {
-  BunionFields,
-  BunionLevelInternal,
-  BunionOpts,
-  ordered,
-  Level,
-  BunionLevel, BunionLevelInternalUnion
-} from "../bunion";
-import {InspectOptions} from "util";
+import {BunionFields, BunionLevel, BunionLevelInternal, BunionOpts, Level, ordered} from "../bunion";
 import {pkg} from "../pkg-json";
-import {fdatasync} from "fs";
 
 export {BunionLevel};
 export {Level};
@@ -229,6 +220,7 @@ export class BunionLogger {
   private level: BunionLevel;
   private maxIndex: number;
   private hostname: string;
+  private calledOnce = new Set<BunionLevelInternal>();
   
   constructor(opts?: BunionOpts) {
     this.appName = String((opts && (opts.appName || opts.name)) || getDefaultAppName());
@@ -365,6 +357,11 @@ export class BunionLogger {
   
   error(...args: any[]): void {
     if (this.getCurrentMaxIndex() > 4) {
+      if (!this.calledOnce.has(BunionLevelInternal.ERROR)) {
+        this.calledOnce.add(BunionLevelInternal.ERROR);
+        process.stdout.write(getJSON('WARN', ['the ERROR logging level is not available in this process'],
+          this.appName, this.fields, this.hostname));
+      }
       return;
     }
     process.stdout.write(getJSON('ERROR', args, this.appName, this.fields, this.hostname));
@@ -372,13 +369,23 @@ export class BunionLogger {
   
   errorx(v: object, ...args: any[]): void {
     if (this.getCurrentMaxIndex() > 4) {
+      if (!this.calledOnce.has(BunionLevelInternal.ERROR)) {
+        this.calledOnce.add(BunionLevelInternal.ERROR);
+        process.stdout.write(getJSON('WARN', ['the ERROR logging level is not available in this process'],
+          this.appName, getCombinedFields(v, this.fields), this.hostname));
+      }
       return;
     }
-    process.stdout.write(getJSON('ERROR', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
+    process.stdout.write(getJSON('ERROR', args, this.appName, this.fields, this.hostname));
   }
   
   warn(...args: any[]): void {
     if (this.getCurrentMaxIndex() > 3) {
+      if (!this.calledOnce.has(BunionLevelInternal.WARN)) {
+        this.calledOnce.add(BunionLevelInternal.WARN);
+        process.stdout.write(getJSON('WARN', ['the WARN logging level is not available in this process'],
+          this.appName, this.fields, this.hostname));
+      }
       return;
     }
     process.stdout.write(getJSON('WARN', args, this.appName, this.fields, this.hostname));
@@ -386,6 +393,11 @@ export class BunionLogger {
   
   warnx(v: object, ...args: any[]): void {
     if (this.getCurrentMaxIndex() > 3) {
+      if (!this.calledOnce.has(BunionLevelInternal.WARN)) {
+        this.calledOnce.add(BunionLevelInternal.WARN);
+        process.stdout.write(getJSON('WARN', ['the WARN logging level is not available in this process'],
+          this.appName, getCombinedFields(v, this.fields), this.hostname));
+      }
       return;
     }
     process.stdout.write(getJSON('WARN', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
@@ -393,6 +405,11 @@ export class BunionLogger {
   
   info(...args: any[]): void {
     if (this.getCurrentMaxIndex() > 2) {
+      if (!this.calledOnce.has(BunionLevelInternal.INFO)) {
+        this.calledOnce.add(BunionLevelInternal.INFO);
+        process.stdout.write(getJSON('WARN', ['the INFO logging level is not available in this process'],
+          this.appName, this.fields, this.hostname));
+      }
       return;
     }
     process.stdout.write(getJSON('INFO', args, this.appName, this.fields, this.hostname));
@@ -400,6 +417,11 @@ export class BunionLogger {
   
   infox(v: object, ...args: any[]): void {
     if (this.getCurrentMaxIndex() > 2) {
+      if (!this.calledOnce.has(BunionLevelInternal.INFO)) {
+        this.calledOnce.add(BunionLevelInternal.INFO);
+        process.stdout.write(getJSON('WARN', ['the INFO logging level is not available in this process'],
+          this.appName, getCombinedFields(v, this.fields), this.hostname));
+      }
       return;
     }
     process.stdout.write(getJSON('INFO', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
@@ -407,6 +429,11 @@ export class BunionLogger {
   
   debug(...args: any[]): void {
     if (this.getCurrentMaxIndex() > 1) {
+      if (!this.calledOnce.has(BunionLevelInternal.DEBUG)) {
+        this.calledOnce.add(BunionLevelInternal.DEBUG);
+        process.stdout.write(getJSON('WARN', ['the DEBUG logging level is not available in this process'],
+          this.appName, this.fields, this.hostname));
+      }
       return;
     }
     process.stdout.write(getJSON('DEBUG', args, this.appName, this.fields, this.hostname));
@@ -414,6 +441,11 @@ export class BunionLogger {
   
   debugx(v: object, ...args: any[]): void {
     if (this.getCurrentMaxIndex() > 1) {
+      if (!this.calledOnce.has(BunionLevelInternal.DEBUG)) {
+        this.calledOnce.add(BunionLevelInternal.DEBUG);
+        process.stdout.write(getJSON('WARN', ['the DEBUG logging level is not available in this process'],
+          this.appName, getCombinedFields(v, this.fields), this.hostname));
+      }
       return;
     }
     process.stdout.write(getJSON('DEBUG', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
@@ -421,6 +453,11 @@ export class BunionLogger {
   
   trace(...args: any[]): void {
     if (this.getCurrentMaxIndex() > 0) {
+      if (!this.calledOnce.has(BunionLevelInternal.TRACE)) {
+        this.calledOnce.add(BunionLevelInternal.TRACE);
+        process.stdout.write(getJSON('WARN', ['the TRACE logging level is not available in this process'],
+          this.appName, this.fields, this.hostname));
+      }
       return;
     }
     process.stdout.write(getJSON('TRACE', args, this.appName, this.fields, this.hostname));
@@ -428,6 +465,11 @@ export class BunionLogger {
   
   tracex(v: object, ...args: any[]): void {
     if (this.getCurrentMaxIndex() > 0) {
+      if (!this.calledOnce.has(BunionLevelInternal.TRACE)) {
+        this.calledOnce.add(BunionLevelInternal.TRACE);
+        process.stdout.write(getJSON('WARN', ['the TRACE logging level is not available in this process'],
+          this.appName, getCombinedFields(v, this.fields), this.hostname));
+      }
       return;
     }
     process.stdout.write(getJSON('TRACE', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
@@ -474,7 +516,7 @@ export const handleIn = (d: any) => {
   throw new Error('You must use the "bunion_force_cli=yes" env var to call the handleIn pseudo handler.');
 };
 
-if(process.env.bunion_force_cli === 'yes'){
+if (process.env.bunion_force_cli === 'yes') {
   producer.warn('Using cli to read from stdin.');
   exports.onData = require('../consumer/cli').onData;
   exports.handleIn = require('../consumer/cli').handleIn;
