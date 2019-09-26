@@ -146,7 +146,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
   });
   
   if (isLogTTY) {
-    return logTTY(3, 'short', {
+    return logTTY(6, 'short', {
       '@bunion': true,
       '@version': pkg.version,
       appName,
