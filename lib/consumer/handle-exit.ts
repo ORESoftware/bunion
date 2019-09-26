@@ -4,16 +4,16 @@ import {consumer} from '../loggers';
 
 process.on('uncaughtException', (e: any) => {
   console.error();
-  consumer.error('Uncaught exception:', e || e);
+  consumer.error('Uncaught exception:', e );
   console.error();
-  process.exit(1);
+  // process.exit(1);
 });
 
 process.on('unhandledRejection', (e: any) => {
   console.error();
-  consumer.error('Unhandled rejection:', e || e);
+  consumer.error('Unhandled rejection:', e);
   console.error();
-  process.exit(1);
+  // process.exit(1);
 });
 
 process.on('SIGINT', function () {
