@@ -15,15 +15,14 @@ dist/test
 *.txt
 *.DS_Store
 *.md
+*.yaml
+*.yml
+*.json
 
 ### files
 
-tsconfig.json
 !assets/schema/bunion.conf.json
 
 ### dotfiles
-
-.nlu.json
-.travis.yml
 .bunion.js
 
