@@ -61,6 +61,6 @@ export const logTTY = (logLevel: number, output: string, v: BunionJSON) => {
     return `${chalk.gray(v.appName)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${insp(v)}\n`
   }
 
-  return '';
+  return '(bunion internal error: fall-through in switch, please report this problem.)';
 
 };
