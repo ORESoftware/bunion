@@ -12,6 +12,7 @@ import {bunionConf} from '../conf';
 
 import {BunionFields, BunionLevel, BunionLevelInternal, BunionOpts, Level, ordered} from "../bunion";
 import {pkg} from "../pkg-json";
+import {getErrorStringSameProc} from "../utils";
 
 export {BunionLevel};
 export {Level};
@@ -127,10 +128,14 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
       && typeof a.message === 'string' && a.stack && typeof a.stack === 'string') {
       
       if (isLogTTY) {
-        return getErrorString(i, a);
+        return getErrorStringSameProc(a);
       }
       
       const val = copyObj(a);
+  
+      // if (isLogTTY) {
+      //   return util.inspect(val, {depth: 55, colors: true});
+      // }
       
       return {
         ['@bunion-error']: true,

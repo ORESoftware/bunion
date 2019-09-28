@@ -7,6 +7,7 @@ import {bunionConf} from './conf';
 import {pkg} from './pkg-json';
 import {bSettings} from "./settings";
 import log from './logging';
+import chalk from "chalk";
 
 const hstname = bunionConf.producer.getHostNameSync();
 const appName = bunionConf.producer.appName;
@@ -23,6 +24,33 @@ const cleanField = (v: any) => {
 export const getFields = (fields: any) => {
   return Object.keys(fields)
                .reduce((s, k) => s + `(${cleanField(k)}=${cleanField(fields[k])}) `, '');
+};
+
+const copyError = (o: any) => {
+  
+  const v = {};
+  
+  for (const k of Object.keys(o)) {
+    Object.defineProperty(v, k, {
+      value: (o as any)[k],
+      writable: false,
+      configurable: true,
+      enumerable: true
+    });
+    
+  }
+  
+  return v;
+  
+};
+
+const getInspectedErrString = (o: object): string => {
+  const v = copyError(o);
+  return Object.keys(v).length > 0 ? util.inspect(v, {depth: 55}) + '\n' : '';
+};
+
+export const getErrorStringSameProc = (a: any) => {
+  return '\n\n' + chalk.redBright.italic(a.message) + '\n\n' + a.stack + '\n\n' + getInspectedErrString(a);
 };
 
 export const getErrorString = (i: number, a: any) => {
