@@ -110,8 +110,8 @@ process.once('exit', code => {
   
   consumer.debug('exiting with code:', code);
   process.exit(code);
+  
 });
-
 
 export const onData = (d: any) => {
   
@@ -246,7 +246,9 @@ export const handleIn = (d: any) => {
 };
 
 const onStdinEnd = () => {
-  con.mode = BunionMode.SEARCHING;
+  if (process.env.bunion_force_read_on_stdin_end !== 'yes') {
+    con.mode = BunionMode.SEARCHING;
+  }
   con.stdinEnd = true;
   clearLine();
   consumer.debug('stdin end');
@@ -254,7 +256,7 @@ const onStdinEnd = () => {
 };
 
 const parser = process.stdin.resume()
-                      .on('end', onStdinEnd)
+                      .once('end', onStdinEnd)
                       .pipe(createRawParser())
                       .on('string', handleIn)
                       .on('data', handleIn);
@@ -606,6 +608,7 @@ const handleSearchTermTyping = (d: string) => {
   
   con.searchTerm = newSearchTerm;
   writeToStdout('Search term:', con.searchTerm);
+  
 };
 
 const handleShutdown = (signal: string) => () => {
@@ -872,7 +875,7 @@ if (process.stdout.isTTY || process.env.bunion_force_tty === 'yes') {
   consumer.info('Handing user keyboard input b/c stdout is a TTY.');
   handleUserInput();
 }
-else{
+else {
   consumer.warn('Not connected to stdin.')
 }
 
