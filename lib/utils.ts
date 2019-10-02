@@ -165,7 +165,7 @@ export const convertToBunionMap = (v: any): BunionJSON => {
     host: v[4],
     date: v[5],
     fields: v[6],
-    value: v[7]
+    value: v[7] || v
   }
   
 };
