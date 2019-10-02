@@ -53,7 +53,7 @@ export interface BunionJSON {
   '@bunion': true,
   '@version': number,
   level: BunionLevelInternal
-  value: string
+  value: string,
   date: string,
   [RawJSONBytesSymbol]?: Symbol
   appName: string,

@@ -121,6 +121,17 @@ export const convertToBunionMap = (v: any): BunionJSON => {
     
     if (v['@bunion'] !== true) {
       log.warn('Object did not have a "@bunion" property pointing to true.');
+      return {
+        '@bunion': true,
+        '@version': -1,
+        appName: 'unknown',
+        level: BunionLevelInternal.WARN,
+        pid: bSettings.producerPID,
+        host: hstname,
+        date: new Date().toUTCString(),
+        fields: null,
+        value: v
+      }
     }
     
     return v;
