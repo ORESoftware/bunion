@@ -1,7 +1,8 @@
 {
   "linkToItself": true,
   "searchRoots": [
-    ".."
+    "$HOME/codes",
+    "$HOME/interos/repos"
   ],
   "ignore": [
     "/node_modules/",
