@@ -5,6 +5,7 @@ import {clearLine, getHighlightedString, getInspected, handleSearchTermMatched} 
 import chalk from 'chalk';
 import {getFields} from '../utils';
 import {ConType} from './con';
+import {consumer} from '../loggers';
 
 const getDarkOrlight = (str: string, opts: any) => {
   return opts.darkBackground ? `${chalk.white.bold(str)}` : `${chalk.black.bold(str)}`;
@@ -14,9 +15,13 @@ const makeBold = (str: string) => {
   return chalk.bold(str);
 };
 
-const getCleanAppName = (v: {appName: string}): string => {
+const getCleanAppName = (v: { appName: string }): string => {
   return String(v.appName).startsWith('app:') ? v.appName : `app:${chalk.bold(v.appName)}`;
 };
+
+const acceptableLevels = new Set([
+  'WARN', 'ERROR', 'FATAL', 'DEBUG', 'TRACE', 'INFO'
+]);
 
 export const onStandardizedJSON = (con: ConType, opts: any, v: BunionJSON) => {
   
@@ -102,6 +107,10 @@ export const onStandardizedJSON = (con: ConType, opts: any, v: BunionJSON) => {
     process.stdout.write(
       `${chalk.gray(theDate)} ${chalk.gray(v.appNameDisplay)} ${chalk.gray(v.level)} ${chalk.gray(fields)} ${msgVal} \n`
     );
+  }
+  
+  if (!acceptableLevels.has(v.level)) {
+    consumer.warn('The following object does not have a valid level property:', v);
   }
   
   handleSearchTermMatched(con, isMatched);

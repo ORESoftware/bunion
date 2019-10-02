@@ -134,6 +134,8 @@ export const convertToBunionMap = (v: any): BunionJSON => {
       }
     }
     
+    v.level = v.level || 'WARN';
+    
     return v;
   }
   
@@ -151,7 +153,7 @@ export const convertToBunionMap = (v: any): BunionJSON => {
       appName: appName,
       pid: bSettings.producerPID,
       host: hstname,
-      level: v[1],
+      level: v[1] || 'WARN',
       date: v[2],
       fields: v[3],
       value: v[4]
@@ -171,7 +173,7 @@ export const convertToBunionMap = (v: any): BunionJSON => {
     '@bunion': true,
     '@version': Number.isInteger(vers) ? vers : -1,
     appName: v[1],
-    level: v[2],
+    level: v[2] || 'WARN',
     pid: v[3],
     host: v[4],
     date: v[5],

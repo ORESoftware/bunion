@@ -116,21 +116,26 @@ process.once('exit', code => {
 export const onData = (d: any) => {
   
   if (typeof d === 'string') {
-    if (d.length > 0) {
-      clearLine();
-      console.log(getHighlightedString(d, con, opts));
-      
-      let val = '';
-      try {
-        val = getValue(d, con, opts);
-      }
-      catch (err) {
-        log.error('error getting value:', err);
-      }
-      
-      const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(val);
-      handleSearchTermMatched(con, isMatched)
+    
+    if (d.length < 1) {
+      consumer.warn('Line had length less than 1.');
+      return;
     }
+    
+    clearLine();
+    console.log(getHighlightedString(d, con, opts));
+    
+    let val = '';
+    try {
+      val = getValue(d, con, opts);
+    }
+    catch (err) {
+      log.error('error getting value:', err);
+    }
+    
+    const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(val);
+    handleSearchTermMatched(con, isMatched);
+    
     return;
   }
   
