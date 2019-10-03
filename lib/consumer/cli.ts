@@ -34,6 +34,7 @@ import {ctrlChars, levelMap} from './constants';
 import {ConType} from "./con";
 import {opts} from './opts';
 import {convertToBunionMap} from "../utils";
+import {NOT_PARSED_SYMBOL} from "./transforms";
 
 const dirId = uuid.v4();
 const bunionHome = path.resolve(process.env.HOME + '/.bunion');
@@ -411,6 +412,8 @@ const findPreviousMatch = () => {
   while (i >= con.tail) {
     
     const v = con.fromMemory.get(i) || readFromFile(i);
+  
+    console.log('the raw value:', v);
     
     let val = null;
     
@@ -421,9 +424,14 @@ const findPreviousMatch = () => {
       log.error('error getting value:', err);
     }
   
-    console.log('val:', val);
+    if(val === NOT_PARSED_SYMBOL){
+      consumer.warn('warning: value could not be parsed from:', v);
+      continue;
+    }
+  
+    console.log('the val:', val);
     
-    if (val && r.test(val)) {
+    if (val && r.test(<string>val)) {
       matched = true;
       break;
     }
@@ -461,6 +469,8 @@ const findLatestMatch = () => {
     
     const v = con.fromMemory.get(i) || readFromFile(i);
     
+    console.log('the raw value:', v);
+    
     let val = null;
     
     try {
@@ -470,9 +480,14 @@ const findLatestMatch = () => {
       consumer.error('error getting value:', err);
     }
     
-    console.log('val:', val);
+    if(val === NOT_PARSED_SYMBOL){
+      consumer.warn('warning: value could not be parsed from:', v);
+      continue;
+    }
     
-    if (val && r.test(val)) {
+    console.log('the val:', val);
+    
+    if (val && r.test(<string>val)) {
       matched = true;
       break;
     }

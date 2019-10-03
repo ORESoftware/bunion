@@ -151,7 +151,9 @@ export const getValFromTransformAlreadyIdentified = (t: any, v: any, opts: any):
 
 };
 
-export const getValue = (v: any, con: ConType, opts: any): string => {
+export const NOT_PARSED_SYMBOL = Symbol('could not parse value from message.');
+
+export const getValue = (v: any, con: ConType, opts: any): string | Symbol => {
 
   if (!(v && typeof v === 'object')) {
     return typeof v === 'string' ? v : String(v);
@@ -199,5 +201,5 @@ export const getValue = (v: any, con: ConType, opts: any): string => {
 
   }
 
-  return '[warning: message could not be parsed]';
+  return NOT_PARSED_SYMBOL;
 };
