@@ -126,7 +126,7 @@ export const onData = (d: any) => {
     clearLine();
     console.log(getHighlightedString(d, con, opts));
     
-    let val = '';
+    let val = null;
     try {
       val = getValue(d, con, opts);
     }
@@ -134,7 +134,12 @@ export const onData = (d: any) => {
       log.error('error getting value:', err);
     }
     
-    const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(val);
+    if (val === NOT_PARSED_SYMBOL) {
+      consumer.warn('Could not parse value from:', d);
+      val = '';
+    }
+    
+    const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(<string>val);
     handleSearchTermMatched(con, isMatched);
     
     return;
@@ -412,7 +417,7 @@ const findPreviousMatch = () => {
   while (i >= con.tail) {
     
     const v = con.fromMemory.get(i) || readFromFile(i);
-  
+    
     console.log('the raw value:', v);
     
     let val = null;
@@ -423,12 +428,12 @@ const findPreviousMatch = () => {
     catch (err) {
       log.error('error getting value:', err);
     }
-  
-    if(val === NOT_PARSED_SYMBOL){
+    
+    if (val === NOT_PARSED_SYMBOL) {
       consumer.warn('warning: value could not be parsed from:', v);
       continue;
     }
-  
+    
     console.log('the val:', val);
     
     if (val && r.test(<string>val)) {
@@ -480,7 +485,7 @@ const findLatestMatch = () => {
       consumer.error('error getting value:', err);
     }
     
-    if(val === NOT_PARSED_SYMBOL){
+    if (val === NOT_PARSED_SYMBOL) {
       consumer.warn('warning: value could not be parsed from:', v);
       continue;
     }
