@@ -418,8 +418,6 @@ const findPreviousMatch = () => {
     
     const v = con.fromMemory.get(i) || readFromFile(i);
     
-    console.log('the raw value:', v);
-    
     let val = null;
     
     try {
@@ -434,8 +432,6 @@ const findPreviousMatch = () => {
       i--;
       continue;
     }
-    
-    console.log('the val:', val);
     
     if (val && r.test(<string>val)) {
       matched = true;
@@ -475,8 +471,6 @@ const findLatestMatch = () => {
     
     const v = con.fromMemory.get(i) || readFromFile(i);
     
-    console.log('the raw value:', v);
-    
     let val = null;
     
     try {
@@ -491,8 +485,6 @@ const findLatestMatch = () => {
       i--;
       continue;
     }
-    
-    console.log('the val:', val);
     
     if (val && r.test(<string>val)) {
       matched = true;
