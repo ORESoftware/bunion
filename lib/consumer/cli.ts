@@ -424,7 +424,6 @@ const findPreviousMatch = () => {
   
   let i = Math.max(con.current - 1, con.tail), matched = false;
   const st = con.searchTerm;
-  console.log(`search term: '${st}'`);
   const r = new RegExp(st, 'i');
   
   while (i >= con.tail) {
@@ -477,7 +476,6 @@ const findLatestMatch = () => {
   
   let i = con.head, matched = false;
   const st = con.searchTerm;
-  console.log(`search term: '${st}'`);
   const r = new RegExp(st, 'i');
   
   while (i >= con.tail) {
