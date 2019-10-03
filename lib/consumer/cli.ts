@@ -430,7 +430,7 @@ const findPreviousMatch = () => {
     }
     
     if (val === NOT_PARSED_SYMBOL) {
-      consumer.warn('warning: value could not be parsed from:', v);
+      consumer.warn('warning: value could not be parsed from:\n', v);
       i--;
       continue;
     }
@@ -487,7 +487,7 @@ const findLatestMatch = () => {
     }
     
     if (val === NOT_PARSED_SYMBOL) {
-      consumer.warn('warning: value could not be parsed from:', v);
+      consumer.warn('warning: value could not be parsed from:\n', v);
       i--;
       continue;
     }
