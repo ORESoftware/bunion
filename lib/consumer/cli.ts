@@ -405,6 +405,7 @@ const findPreviousMatch = () => {
   
   let i = Math.max(con.current - 1, con.tail), matched = false;
   const st = con.searchTerm;
+  console.log(`search term: '${st}'`);
   const r = new RegExp(st, 'i');
   
   while (i >= con.tail) {
@@ -419,6 +420,8 @@ const findPreviousMatch = () => {
     catch (err) {
       log.error('error getting value:', err);
     }
+  
+    console.log('val:', val);
     
     if (val && r.test(val)) {
       matched = true;
@@ -435,7 +438,7 @@ const findPreviousMatch = () => {
     return;
   }
   
-  writeToStdout('Could not find anything matching:', con.searchTerm);
+  writeToStdout(`Could not find anything matching: '${con.searchTerm}'`);
   con.stopOnNextMatch = true;
   con.mode = BunionMode.SEARCHING;
   
@@ -451,6 +454,7 @@ const findLatestMatch = () => {
   
   let i = con.head, matched = false;
   const st = con.searchTerm;
+  console.log(`search term: '${st}'`);
   const r = new RegExp(st, 'i');
   
   while (i >= con.tail) {
@@ -465,6 +469,8 @@ const findLatestMatch = () => {
     catch (err) {
       consumer.error('error getting value:', err);
     }
+    
+    console.log('val:', val);
     
     if (val && r.test(val)) {
       matched = true;
@@ -481,7 +487,7 @@ const findLatestMatch = () => {
     return;
   }
   
-  writeToStdout('Could not find anything matching:', con.searchTerm);
+  writeToStdout(`Could not find anything matching: '${con.searchTerm}'`);
   con.stopOnNextMatch = true;
   con.mode = BunionMode.SEARCHING;
   
