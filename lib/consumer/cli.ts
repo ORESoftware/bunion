@@ -35,6 +35,7 @@ import {ConType} from "./con";
 import {opts} from './opts';
 import {convertToBunionMap} from "../utils";
 import {NOT_PARSED_SYMBOL} from "./transforms";
+import {utilInspectOpts} from "./constants";
 
 const dirId = uuid.v4();
 const bunionHome = path.resolve(process.env.HOME + '/.bunion');
@@ -48,21 +49,21 @@ try {
   fs.mkdirSync(bunionHome);
 }
 catch (err) {
-
+  // ignore
 }
 
 try {
   fs.mkdirSync(runs);
 }
 catch (e) {
-
+  // ignore
 }
 
 try {
   fs.mkdirSync(runId);
 }
 catch (e) {
-
+  // ignore
 }
 
 const maxIndex = 1;
@@ -172,13 +173,25 @@ const readFromFile = (pos: number): any => {
   const nb = b.slice(0, i);
   
   try {
-    const v = JSON.parse(String(nb).trim());
-    const nnb = Buffer.alloc(v.b);
-    fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
-    return JSON.parse(String(nnb).trim());
+    var nbt = String(nb).trim();
+    var v = JSON.parse(nbt);
   }
   catch (err) {
-    return chalk.red(err.message || (typeof err === 'string' ? err : util.inspect(err)));
+    consumer.warn('Could not parse:', nbt);
+    consumer.warn('Parse error was:', typeof err === 'string' ? err : util.inspect(err, utilInspectOpts));
+    return '[Could not parse line from file.]';
+  }
+  
+  try {
+    var nnb = Buffer.alloc(v.b);
+    fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
+    var mys = String(nnb).trim();
+    return JSON.parse(mys);
+  }
+  catch (err) {
+    consumer.warn('Could not parse:', mys);
+    consumer.warn('Parse error was:', typeof err === 'string' ? err : util.inspect(err, utilInspectOpts));
+    return '[Could not parse line from file.]';
   }
   
 };

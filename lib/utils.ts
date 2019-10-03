@@ -166,7 +166,7 @@ export const convertToBunionMap = (v: any): BunionJSON => {
     vers = parseInt(String(elems[elems.length - 1]).trim());
   }
   catch (err) {
-    log.warn(err);
+    log.warn('Could not parse integer:', err);
   }
   
   return {

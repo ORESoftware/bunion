@@ -1,13 +1,14 @@
 'use strict';
 
 import * as os from "os";
-import {producer,consumer} from "./loggers";
+import {producer, consumer} from "./loggers";
 import deepMixin from "@oresoftware/deep.mixin";
 import * as util from "util";
 import path = require('path');
 import AJV = require('ajv');
 import {BunionConf, BunionLevel, BunionLevelInternal} from "./bunion";
 import {findRootDir} from "residence";
+
 const ajv = new AJV();
 const schema = require('../assets/schema/bunion.conf.json');
 
@@ -91,7 +92,7 @@ export const getConf = (): BunionConf => {
     }
   }
   catch (e) {
-    consumer.debug(e.message || e);
+    consumer.debug('Error validating bunion conf:', e.message || e);
   }
   
   return conf;
