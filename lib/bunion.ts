@@ -70,6 +70,7 @@ export interface BunionFields {
 
 export interface BunionOpts {
   level?: BunionLevel
+  maxLevel?: BunionLevel,
   maxlevel?: BunionLevel
   appName?: string
   name?: string
