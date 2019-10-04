@@ -8,9 +8,27 @@ import path = require('path');
 import AJV = require('ajv');
 import {BunionConf, BunionLevel, BunionLevelInternal} from "./bunion";
 import {findRootDir} from "residence";
+import {BunionLevelToNum} from "./bunion";
 
 const ajv = new AJV();
 const schema = require('../assets/schema/bunion.conf.json');
+
+export const getProducerLevel = (): BunionLevel => {
+  return <BunionLevel>process.env.bunion_producer_max_level ||
+    <BunionLevel>process.env.bunion_producer_level ||
+    <BunionLevel>process.env.bunion_log_level ||
+    <BunionLevel>process.env.bunion_level ||
+    BunionLevelInternal.TRACE;
+};
+
+export const getConsumerLevel = (): BunionLevel => {
+  return <BunionLevel>process.env.bunion_consumer_max_level ||
+    <BunionLevel>process.env.bunion_consumer_level ||
+    <BunionLevel>process.env.bunion_log_level ||
+    <BunionLevel>process.env.bunion_level ||
+    BunionLevelInternal.TRACE;
+};
+
 
 const getDefaultBunionConf = (): BunionConf => {
   return {
@@ -18,7 +36,7 @@ const getDefaultBunionConf = (): BunionConf => {
       appName: process.env.bunion_app_name || 'default',
       optimizedForConsumer: process.env.bunion_optimized === 'yes',
       forceRaw: process.env.bunion_force_raw === 'yes',
-      level: <BunionLevel>process.env.bunion_producer_level || BunionLevelInternal.TRACE,
+      level: getProducerLevel(),
       fields: {},
       getHostNameSync() {
         return process.env.bunion_host_name || os.hostname();
@@ -33,11 +51,11 @@ const getDefaultBunionConf = (): BunionConf => {
     consumer: {
       localeDateString: 'en-US',
       highlightMatches: true,
-      level: <BunionLevel>process.env.bunion_consumer_max_level || <BunionLevel>process.env.bunion_consumer_level || BunionLevelInternal.TRACE,
+      level: getConsumerLevel(),
       match: [],
       matchAny: [],
       matchAll: [],
-      formatDateToString(d: string | Date) : string{
+      formatDateToString(d: string | Date): string {
         if (!(d && d instanceof Date)) {
           return new Date(d).toUTCString();
         }
@@ -86,6 +104,18 @@ export const getConf = (): BunionConf => {
   conftemp = conftemp.default || conftemp;
   
   const conf = <BunionConf>deepMixin(getDefaultBunionConf(), conftemp);
+  
+  conf.producer.level = <BunionLevel>String(conf.producer.level || '').trim().toUpperCase();
+  conf.consumer.level = <BunionLevel>String(conf.consumer.level || '').trim().toUpperCase();
+  
+  
+  if (!(BunionLevelInternal as any)[conf.producer.level]) {
+    throw new Error(`Bunion producer level is not valid: ${util.inspect(conf.producer.level)}`)
+  }
+  
+  if (!(BunionLevelInternal as any)[conf.consumer.level]) {
+    throw new Error(`Bunion consumer level is not valid: ${util.inspect(conf.consumer.level)}`)
+  }
   
   try {
     const valid = ajv.validate(schema, conf);

@@ -907,8 +907,12 @@ const handleUserInput = () => {
 //   handleUserInput();
 // }
 
-if (process.stdout.isTTY || process.env.bunion_force_tty === 'yes') {
+if (process.stdout.isTTY) {
   consumer.info('Handing user keyboard input b/c stdout is a TTY.');
+  handleUserInput();
+}
+else if(process.env.bunion_force_tty === 'yes'){
+  consumer.info('Handing user keyboard input b/c env var "bunion_force_tty=yes".');
   handleUserInput();
 }
 else {

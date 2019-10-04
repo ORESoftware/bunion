@@ -6,8 +6,9 @@ const cp = require('child_process');
 
 if (process.env.oresoftware_dev === 'yes') {
   const projectRoot = path.dirname(__dirname);
-  const {run} = require('./run-tsc-if-script');
-  cp.execSync(run(projectRoot));
+  // const {run} = require('./run-tsc-if-script');
+  // cp.execSync(run(projectRoot));
+  console.log('in the future, run tsc here.')
 }
 
 
