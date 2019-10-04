@@ -21,7 +21,7 @@ const getDefaultBunionConf = (): BunionConf => {
       level: <BunionLevel>process.env.bunion_producer_level || BunionLevelInternal.TRACE,
       fields: {},
       getHostNameSync() {
-        return os.hostname();
+        return process.env.bunion_host_name || os.hostname();
       },
       getDateStringSync(d: Date) {
         if (!(d && d instanceof Date)) {
@@ -33,10 +33,16 @@ const getDefaultBunionConf = (): BunionConf => {
     consumer: {
       localeDateString: 'en-US',
       highlightMatches: true,
-      level: <BunionLevel>process.env.bunion_consumer_max_level || BunionLevelInternal.TRACE,
+      level: <BunionLevel>process.env.bunion_consumer_max_level || <BunionLevel>process.env.bunion_consumer_level || BunionLevelInternal.TRACE,
       match: [],
       matchAny: [],
       matchAll: [],
+      formatDateToString(d: string | Date) : string{
+        if (!(d && d instanceof Date)) {
+          return new Date(d).toUTCString();
+        }
+        return d.toUTCString();
+      },
       inspect: {
         array: {
           length: 69

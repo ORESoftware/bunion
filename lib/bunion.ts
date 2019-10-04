@@ -94,6 +94,7 @@ export interface BunionConf {
     match?: Array<string>
     matchAny?: Array<string>
     matchAll?: Array<string>,
+    formatDateToString?: (d: string | Date) => string,
     inspect?: {
       array?: {
         length?: number
