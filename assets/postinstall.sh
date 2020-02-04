@@ -7,11 +7,6 @@ if [ "$skip_postinstall" = "yes" ]; then
     exit 0;
 fi
 
-if [ "$skip_postinstall" = "yes" ]; then
-    echo "skipping postinstall routine.";
-    exit 0;
-fi
-
 export FORCE_COLOR=1;
 export skip_postinstall="yes";
 

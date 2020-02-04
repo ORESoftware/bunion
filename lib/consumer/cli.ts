@@ -179,7 +179,7 @@ const readFromFile = (pos: number): any => {
   catch (err) {
     consumer.warn('Could not parse:', nbt);
     consumer.warn('Parse error was:', typeof err === 'string' ? err : util.inspect(err, utilInspectOpts));
-    return '[Could not parse line from file.]';
+    return '[Could not parse line from file 1.]';
   }
   
   try {
@@ -191,7 +191,7 @@ const readFromFile = (pos: number): any => {
   catch (err) {
     consumer.warn('Could not parse:', mys);
     consumer.warn('Parse error was:', typeof err === 'string' ? err : util.inspect(err, utilInspectOpts));
-    return '[Could not parse line from file.]';
+    return '[Could not parse line from file 2.]';
   }
   
 };

@@ -159,11 +159,11 @@ bxn(){
  local all_args=( "$@" );
  local bxn_args=( );
 
- for v in "$@"; do
+  for v in "$@"; do
 
-  if [[ "$v" != '-'* ]]; then
+    if [[ "$v" != '-'* ]]; then
       break;
-  fi
+    fi
 
     bxn_args+=( "$v" );
     shift;
