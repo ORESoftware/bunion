@@ -212,8 +212,9 @@ export const handleIn = (d: any) => {
     return;
   }
   
-  if (!(d && typeof d === 'object')) {
+  if (!d) { // do not check for !(d && typeof d === 'object') since it could be a string/boolean etc
     log.error('Internal error: object should always be defined.');
+    log.error('The raw data was:', String(d));
     return;
   }
   
