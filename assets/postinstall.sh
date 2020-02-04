@@ -2,13 +2,13 @@
 
 set -e;
 
-if [ "$skip_postinstall" = "yes" ]; then
+if [[ "$bunion_skip_postinstall" = "yes" ]]; then
     echo "skipping postinstall routine.";
     exit 0;
 fi
 
 export FORCE_COLOR=1;
-export skip_postinstall="yes";
+export bunion_skip_postinstall="yes";
 
 mkdir -p "$HOME/.oresoftware/bin" || {
   echo "Could not create .oresoftware dir in user home.";
@@ -25,7 +25,7 @@ is_file_older_than() {
 
   diff="$(expr "$current_secs" - "$modified_secs")"
 
-  if [ "$diff" -gt "$seconds" ]; then
+  if [[ "$diff" -gt "$seconds" ]]; then
     return 0
   fi
 

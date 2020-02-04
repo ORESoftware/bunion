@@ -212,7 +212,7 @@ export const handleIn = (d: any) => {
     return;
   }
   
-  if (!d) {
+  if (!(d && typeof d === 'object')) {
     log.error('Internal error: object should always be defined.');
     return;
   }
@@ -356,6 +356,14 @@ const gotoLine = (line: number) => {
 
 type EVCb<T> = (err: any, v?: T) => void;
 
+const onTimeoutSub = (i : number, cb : EVCb<any>) => {
+  return () => {
+    if (con.mode === BunionMode.TAILING) {
+      doTailingSubroutine(i, cb);
+    }
+  };
+};
+
 const doTailingSubroutine = (i: number, cb: EVCb<any>) => {
   
   while (con.mode === BunionMode.TAILING) {
@@ -371,14 +379,9 @@ const doTailingSubroutine = (i: number, cb: EVCb<any>) => {
     onData(con.fromMemory.get(i) || readFromFile(i));
     
     if (i % 185 === 0) {
-      setTimeout(() => {
-        if (con.mode === BunionMode.TAILING) {
-          doTailingSubroutine(i, cb);
-        }
-      }, 35);
+      setTimeout(onTimeoutSub(i, cb), 35);
       break;
     }
-    
   }
   
 };
