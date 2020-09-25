@@ -32,7 +32,7 @@ const copyError = (o: any) => {
   
   for (const k of Object.keys(o)) {
     Object.defineProperty(v, k, {
-      value: (o as any)[k],
+      value: o[k],
       writable: false,
       configurable: true,
       enumerable: true
