@@ -29,31 +29,18 @@ process.on('unhandledRejection', (reason, p) => {
   process.exit(1);
 });
 
-process.exit(0)
 
 // your test goes here∂
 // assert.strictEqual(true, false, 'whoops');
 
-const k = cp.spawn('bash');
+const {log, metaMarker} = require('bunion');
+const Domain = require('domain');
 
-// log.error(new Error('foo'));
+const d = Domain.create();
 
-k.stdin.end('node -e "' + `
-    const {log} = require('bunion');
-    log.info('just saying hi.');
-    log.warn('shit hit the fan');
-    log.error('burrito');
-    process.exit(0);
-` + '"');
-
-
-k.stdout.pipe(process.stdout);
-k.stderr.pipe(process.stderr);
-
-// TODO: the following does not seem to log anything to stdout, whereas the above does?
-
-const z = cp.spawn('bunion');
-k.stdout.pipe(z.stdin);
-
-z.stderr.pipe(process.stderr);
-z.stdout.pipe(process.stdout);
+d.run(() => {
+  
+  d[metaMarker] = {my:'pony'};
+  
+  log.info('boop');
+});

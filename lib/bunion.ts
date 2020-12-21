@@ -51,7 +51,7 @@ export interface Transformer {
 
 export interface BunionJSON {
   '@bunion': true,
-  '@version': number,
+  '@bunionVersion': string,
   level: BunionLevelInternal
   value: string,
   date: string,
@@ -64,8 +64,11 @@ export interface BunionJSON {
   d?: string // formatted date
 }
 
-export interface BunionFields {
-  [key: string]: string
+export const BunionFieldMarker = Symbol('bunion-field-marker');
+
+export class BunionFields {
+  [BunionFieldMarker]: boolean
+  [key: string]: any
 }
 
 export interface BunionOpts {

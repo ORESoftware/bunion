@@ -10,8 +10,9 @@ import deepMixin from "@oresoftware/deep.mixin";
 import {logTTY} from "./log-tty";
 import {bunionConf} from '../conf';
 
-import {BunionFields, BunionLevel, BunionLevelInternal, BunionOpts, Level, ordered} from "../bunion";
+import {BunionFieldMarker, BunionFields, BunionLevel, BunionLevelInternal, BunionOpts, Level, ordered} from "../bunion";
 import {pkg} from "../pkg-json";
+import {RawJSONBytesSymbol} from "@oresoftware/json-stream-parser";
 
 export {BunionLevel};
 export {Level};
@@ -152,7 +153,7 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
   if (isLogTTY) {
     return logTTY(0, 'short', {
       '@bunion': true,
-      '@version': pkg.version,
+      '@bunionVersion': pkg.version,
       appName,
       level: level as BunionLevelInternal,
       fields: fields as BunionFields,
@@ -164,15 +165,27 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
   }
   
   if (isOptimized) {
+    
+    if(fields && Object.keys(fields).length > 0){
+      return safe.stringify([
+        '@bunion',
+        level,
+        new Date().toUTCString(),
+        fields,
+        clean
+      ]) + '\n';
+    }
+  
     return safe.stringify([
       '@bunion',
       level,
       new Date().toUTCString(),
-      fields,
       clean
     ]) + '\n';
+    
   }
   
+  // original object (instead of array) version:
   // return safe.stringify({
   //   '@bunion': true,
   //   date: new Date(),
@@ -184,6 +197,20 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
   //   host: host
   // }) + '\n';
   
+  if(fields && Object.keys(fields).length > 0){
+    return safe.stringify([
+      '@bunion',
+      appName,
+      level,
+      process.pid,
+      host,
+      new Date().toUTCString(),
+      fields,
+      clean
+    ]) + '\n';
+  }
+  
+  // we omit fields so we don't get meaningless "null" in the array
   return safe.stringify([
     '@bunion',
     appName,
@@ -191,14 +218,16 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
     process.pid,
     host,
     new Date().toUTCString(),
-    fields,
     clean
   ]) + '\n';
   
 };
 
-const getCombinedFields = function (v: object, fields: object) {
-  return deepMixin(fields, v);
+export const metaMarker = Symbol('bunion-meta-fields-marker')
+
+const getCombinedFields = function (fields: BunionFields, v?: object,) {
+  const meta = process.domain && (process.domain as any)[metaMarker];
+  return deepMixin(fields, meta, v);
 };
 
 const getHostName = () => {
@@ -299,7 +328,8 @@ export class BunionLogger {
   }
   
   addField(k: string, v: string): this {
-    const f = {[k]: v};
+    const f = new BunionFields()
+    f[k] = v;
     this.addFields(f);
     return this;
   }
@@ -311,7 +341,7 @@ export class BunionLogger {
   }
   
   clearFields(): this {
-    this.fields = {};
+    this.fields = new BunionFields();
     return this;
   }
   
@@ -363,11 +393,11 @@ export class BunionLogger {
   }
   
   fatal(...args: any[]): void {
-    process.stdout.write(getJSON('FATAL', args, this.appName, this.fields, this.hostname));
+    process.stdout.write(getJSON('FATAL', args, this.appName, getCombinedFields(this.fields), this.hostname));
   }
   
   fatalx(v: object, ...args: any[]): void {
-    process.stdout.write(getJSON('FATAL', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
+    process.stdout.write(getJSON('FATAL', args, this.appName, getCombinedFields(this.fields, v), this.hostname));
   }
   
   error(...args: any[]): void {
@@ -375,7 +405,7 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.ERROR);
       return;
     }
-    process.stdout.write(getJSON('ERROR', args, this.appName, this.fields, this.hostname));
+    process.stdout.write(getJSON('ERROR', args, this.appName, getCombinedFields(this.fields), this.hostname));
   }
   
   errorx(v: object, ...args: any[]): void {
@@ -383,7 +413,7 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.ERROR);
       return;
     }
-    process.stdout.write(getJSON('ERROR', args, this.appName, this.fields, this.hostname));
+    process.stdout.write(getJSON('ERROR', args, this.appName, getCombinedFields(this.fields), this.hostname));
   }
   
   warn(...args: any[]): void {
@@ -391,7 +421,7 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.WARN);
       return;
     }
-    process.stdout.write(getJSON('WARN', args, this.appName, this.fields, this.hostname));
+    process.stdout.write(getJSON('WARN', args, this.appName, getCombinedFields(this.fields), this.hostname));
   }
   
   warnx(v: object, ...args: any[]): void {
@@ -399,7 +429,7 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.WARN);
       return;
     }
-    process.stdout.write(getJSON('WARN', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
+    process.stdout.write(getJSON('WARN', args, this.appName, getCombinedFields(this.fields, v), this.hostname));
   }
   
   info(...args: any[]): void {
@@ -407,7 +437,7 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.INFO);
       return;
     }
-    process.stdout.write(getJSON('INFO', args, this.appName, this.fields, this.hostname));
+    process.stdout.write(getJSON('INFO', args, this.appName, getCombinedFields(this.fields), this.hostname));
   }
   
   infox(v: object, ...args: any[]): void {
@@ -415,7 +445,7 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.INFO);
       return;
     }
-    process.stdout.write(getJSON('INFO', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
+    process.stdout.write(getJSON('INFO', args, this.appName, getCombinedFields(this.fields, v), this.hostname));
   }
   
   debug(...args: any[]): void {
@@ -423,7 +453,7 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.DEBUG);
       return;
     }
-    process.stdout.write(getJSON('DEBUG', args, this.appName, this.fields, this.hostname));
+    process.stdout.write(getJSON('DEBUG', args, this.appName, getCombinedFields(this.fields), this.hostname));
   }
   
   debugx(v: object, ...args: any[]): void {
@@ -431,7 +461,7 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.DEBUG);
       return;
     }
-    process.stdout.write(getJSON('DEBUG', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
+    process.stdout.write(getJSON('DEBUG', args, this.appName, getCombinedFields(this.fields, v), this.hostname));
   }
   
   trace(...args: any[]): void {
@@ -439,7 +469,7 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.TRACE);
       return;
     }
-    process.stdout.write(getJSON('TRACE', args, this.appName, this.fields, this.hostname));
+    process.stdout.write(getJSON('TRACE', args, this.appName, getCombinedFields(this.fields), this.hostname));
   }
   
   tracex(v: object, ...args: any[]): void {
@@ -447,7 +477,7 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.TRACE);
       return;
     }
-    process.stdout.write(getJSON('TRACE', args, this.appName, getCombinedFields(v, this.fields), this.hostname));
+    process.stdout.write(getJSON('TRACE', args, this.appName, getCombinedFields(this.fields, v), this.hostname));
   }
   
   isLevelEnabled(level: BunionLevel): boolean {

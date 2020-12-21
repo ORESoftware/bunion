@@ -43,6 +43,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@types/chalk": "^2.2.0",
     "@types/node": "^12.6.8",
     "@types/uuid": "^3.4.5",
     "typescript": "3.6.3"

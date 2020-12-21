@@ -86,7 +86,7 @@ export const fromStringToBunionMap = (v: string): BunionJSON => {
   if (isOptimized) {
     return {
       '@bunion': true,
-      '@version': pkgVersion,
+      '@bunionVersion': pkgVersion,
       appName: appName,
       pid: bSettings.producerPID,
       host: hstname,
@@ -99,7 +99,7 @@ export const fromStringToBunionMap = (v: string): BunionJSON => {
   
   return {
     '@bunion': true,
-    '@version': -1,
+    '@bunionVersion': pkgVersion,
     appName: 'unknown',
     level: BunionLevelInternal.WARN,
     pid: -1,
@@ -123,7 +123,7 @@ export const convertToBunionMap = (v: any): BunionJSON => {
       log.warn('Object did not have a "@bunion" property pointing to true.');
       return {
         '@bunion': true,
-        '@version': -1,
+        '@bunionVersion': pkgVersion,
         appName: 'unknown',
         level: BunionLevelInternal.WARN,
         pid: bSettings.producerPID,
@@ -149,7 +149,7 @@ export const convertToBunionMap = (v: any): BunionJSON => {
   if (isOptimized) {
     return {
       '@bunion': true,
-      '@version': pkgVersion,
+      '@bunionVersion': pkgVersion,
       appName: appName,
       pid: bSettings.producerPID,
       host: hstname,
@@ -160,18 +160,20 @@ export const convertToBunionMap = (v: any): BunionJSON => {
     }
   }
   
-  let vers = -1;
+  let vers = '<unknown>';
   
   try {
-    vers = parseInt(String(elems[elems.length - 1]).trim());
+    vers = String(elems[elems.length - 1]).trim();
   }
   catch (err) {
     log.warn('Could not parse integer:', err);
   }
   
+  vers = vers[0] === 'v' ? vers : `v${vers}`
+  
   return {
     '@bunion': true,
-    '@version': Number.isInteger(vers) ? vers : -1,
+    '@bunionVersion': vers,
     appName: v[1],
     level: v[2] || 'WARN',
     pid: v[3] || bSettings.producerPID,
