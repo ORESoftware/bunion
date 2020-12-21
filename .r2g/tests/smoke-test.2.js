@@ -41,6 +41,5 @@ const d = Domain.create();
 d.run(() => {
   
   d[metaMarker] = {my:'pony'};
-  
   log.info('boop');
 });

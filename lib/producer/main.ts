@@ -13,6 +13,8 @@ import {bunionConf} from '../conf';
 import {BunionFieldMarker, BunionFields, BunionLevel, BunionLevelInternal, BunionOpts, Level, ordered} from "../bunion";
 import {pkg} from "../pkg-json";
 import {RawJSONBytesSymbol} from "@oresoftware/json-stream-parser";
+import * as Domain from "domain";
+import * as http from "http";
 
 export {BunionLevel};
 export {Level};
@@ -223,9 +225,11 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
   
 };
 
-export const metaMarker = Symbol('bunion-meta-fields-marker')
+// export const metaMarker = Symbol('bunion-meta-fields-marker')
 
-const getCombinedFields = function (fields: BunionFields, v?: object,) {
+export const metaMarker = '_bunionCtx';
+
+const getCombinedFields = function (fields: BunionFields, v?: object) {
   const meta = process.domain && (process.domain as any)[metaMarker];
   return deepMixin(fields, meta, v);
 };
@@ -268,6 +272,46 @@ export class BunionLogger {
       throw new Error(
         chalk.red('Option "level" is not set to a valid value, must be one of: ' + Object.keys(BunionLevelInternal))
       );
+    }
+  }
+  
+  middleware(){
+    return this.mw.apply(this,arguments)
+  }
+  
+  addContext(req: any, v: {[key:string]: any}): void {
+    
+    const d = req._bunionDomain
+    
+    if(!d){
+      log.warn(`could not add context to an object without a '_bunionDomain' property`);
+      log.warn(`perhaps you need to register the log.mw() middleware before this point.`)
+      return;
+    }
+    
+    const c = d._bunionCtx
+    
+    if(!c){
+      log.warn(`could read the '_bunionCtx' property from the bunionDomain`);
+      log.warn(`perhaps you need to register the log.mw() middleware before this point.`)
+      return;
+    }
+    
+    Object.assign(c, v)
+  }
+  
+  addLoggingContextForRequest(req: http.ClientRequest, v: {[key:string]: any}): void {
+     this.addContext(req, v);
+  }
+  
+  mw(){
+    return (req: any, res: any, next: (err?: any) => void) : void => {
+      const d = req._bunionDomain = res._bunionDomain = (req._havenDomain || Domain.create())
+      d._bunionCtx = d._bunionCtx || {}
+      if(process.domain === d){
+        return next();
+      }
+      d.run(next);
     }
   }
   
