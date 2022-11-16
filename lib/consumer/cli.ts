@@ -271,6 +271,10 @@ export const handleIn = (d: any) => {
 };
 
 const onStdinEnd = () => {
+  if(process.env.bunion_force_exit_on_stdin_end_event === 'yes'){
+    consumer.warn('Exiting bc stdin has ended and "bunion_force_exit_on_stdin_end_event"="yes".')
+    process.exit(0);
+  }
   if (process.env.bunion_force_read_on_stdin_end !== 'yes') {
     con.mode = BunionMode.SEARCHING;
   }
@@ -911,7 +915,12 @@ const handleUserInput = () => {
 //   handleUserInput();
 // }
 
-if (process.stdout.isTTY) {
+if(process.env.bunion_force_non_tty === 'yes'){
+  if(process.env.bunion_force_tty === 'yes'){
+    throw new Error('Both "bunion_force_tty" and "bunion_force_non_tty" set to yes, contradiction.')
+  }
+}
+else if (process.stdout.isTTY) {
   consumer.info('Handing user keyboard input b/c stdout is a TTY.');
   handleUserInput();
 }

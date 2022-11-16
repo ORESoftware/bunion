@@ -29,7 +29,7 @@ process.on('unhandledRejection', (reason, p) => {
   process.exit(1);
 });
 
-process.exit(0)
+// process.exit(0)
 
 // your test goes here∂
 // assert.strictEqual(true, false, 'whoops');

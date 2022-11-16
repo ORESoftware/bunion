@@ -1,6 +1,9 @@
 
 full inspection of extra props: should use a custom inspect function, and ignore stack/message properties
 
+use ctrl-z to suspend process - go through logs - come back
+ctrl-z + fg
+
 
 If we pass:
 
