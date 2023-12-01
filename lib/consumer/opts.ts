@@ -11,7 +11,7 @@ try {
   opts = cliParser.parse(process.argv);
 }
 catch (e) {
-  consumer.error('bunion: error: %s', e.message);
+  consumer.error("c7abf3f6-827b-4673-b396-c548e8bacf6d:", e);
   process.exit(1);
 }
 

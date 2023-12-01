@@ -4,7 +4,7 @@ import {consumer} from '../loggers';
 
 process.on('uncaughtException', (e: any) => {
   console.error();
-  consumer.error('Uncaught exception:', e);
+  consumer.error("a02c3aab-6111-4012-a8a6-33d66e646cde", 'Uncaught exception:', e);
   console.error();
   if (process.env.bunion_no_exit_on_exception !== 'yes') {
     process.exit(1);
@@ -14,7 +14,7 @@ process.on('uncaughtException', (e: any) => {
 
 process.on('unhandledRejection', (e: any) => {
   console.error();
-  consumer.error('Unhandled rejection:', e);
+  consumer.error("73a7efb5-79cd-4e21-be9e-66ddff7ae87d", 'Unhandled rejection:', e);
   console.error();
   if (process.env.bunion_no_exit_on_exception !== 'yes') {
     process.exit(1);

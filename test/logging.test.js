@@ -12,11 +12,11 @@ process.on('SIGINT', s => {
 });
 
 process.on('uncaughtException', (e) => {
-  console.error('Uncaught exception:', e);
+  console.error("3ae20ef6-2024-4f97-a7da-c570d5f79ebf", 'Uncaught exception:', e);
 });
 
 process.on('unhandledRejection', (e) => {
-  console.error('Unhandled rejection:', e);
+  console.error("9ca3e7cf-f30d-49e3-8a11-6e9917627132", 'Unhandled rejection:', e);
 });
 
 // const fd = fs.openSync('/dev/tty', 'r');

@@ -29,7 +29,7 @@ export default (budsFile: string, cwd: string, con: ConType) => {
     
     c.pipe(new JSONParser())
       .on('error', e => {
-        console.error('client conn error:', e);
+        console.error("09d3eff8-b74c-4f23-a261-ba90c12b931c", 'client conn error:', e);
       })
       .on('string', s => {
         console.log('string from client:', s);
@@ -69,7 +69,7 @@ export default (budsFile: string, cwd: string, con: ConType) => {
   }
   
   server.on('error', e => {
-    consumer.warn("5de13abc-2d34-4c1e-af67-7b4944bdd600", e);
+    consumer.error("5de13abc-2d34-4c1e-af67-7b4944bdd600", e);
   });
   
   server.listen(udsFile, () => {

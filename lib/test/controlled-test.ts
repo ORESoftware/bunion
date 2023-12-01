@@ -9,11 +9,11 @@ process.on('SIGINT', s => {
 });
 
 process.on('uncaughtException', (e) => {
-  console.error('Uncaught exception:', e.message || e);
+  console.error("05c50edc-e96e-4b8a-871f-598a3d16dac5", 'Uncaught exception:', e.message || e);
 });
 
 process.on('unhandledRejection', (e: any) => {
-  console.error('Unhandled rejection:', e.message || e);
+  console.error("1f7d9e00-5106-4591-8385-87121a54f22c", 'Unhandled rejection:', e);
 });
 
 let i = 0;

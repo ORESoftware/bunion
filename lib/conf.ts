@@ -84,7 +84,8 @@ export const getConf = (): BunionConf => {
     bunionConfFolder = findRootDir(process.cwd(), '.bunion.js');
   }
   catch (err) {
-    producer.error('bunion could not find the project root given the current working directory:', process.cwd());
+    producer.error("44c600e8-f061-482f-8845-9ce855cc2ad9",
+      'bunion could not find the project root given the current working directory:', process.cwd());
     throw err;
   }
   
@@ -97,7 +98,7 @@ export const getConf = (): BunionConf => {
     conftemp = require(confPath);
   }
   catch (err) {
-    producer.warn('Missing ".bunion.js" file:', err);
+    producer.warn("26b4b360-4a51-497f-9221-89e02e9c4a2c", 'Missing ".bunion.js" file:', err);
     conftemp = {};
   }
   

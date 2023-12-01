@@ -132,11 +132,11 @@ export const onData = (d: any) => {
       val = getValue(d, con, opts);
     }
     catch (err) {
-      log.error('error getting value:', err);
+      log.error("be4f8e37-27ba-4b67-be79-8ec016629b3e",'error getting value:', err);
     }
     
     if (val === NOT_PARSED_SYMBOL) {
-      consumer.warn('Could not parse value from:', d);
+      consumer.warn("9b34e4ed-555d-4a1f-9550-1c9008f9930c", 'Could not parse value from:', d);
       val = '';
     }
     
@@ -177,8 +177,8 @@ const readFromFile = (pos: number): any => {
     var v = JSON.parse(nbt);
   }
   catch (err) {
-    consumer.warn('Could not parse:', nbt);
-    consumer.warn('Parse error was:', err);
+    consumer.warn("111e5550-8030-4a13-b7b6-6b11547c286f", 'Could not parse:', nbt);
+    consumer.warn("7b7905a0-49f0-4139-947d-f62b132ce2d0", 'Parse error was:', err);
     return '[Could not parse line from file 1.]';
   }
   
@@ -189,8 +189,8 @@ const readFromFile = (pos: number): any => {
     return JSON.parse(mys);
   }
   catch (err) {
-    consumer.warn('Could not parse:', mys);
-    consumer.warn('Parse error was:', err);
+    consumer.warn("8ae28897-f642-4d08-bd67-431f83ed97dc", 'Could not parse:', mys);
+    consumer.warn("514d91a1-800c-4dbf-ae92-23f2749774b0", 'Parse error was:', err);
     return '[Could not parse line from file 2.]';
   }
   
@@ -213,7 +213,7 @@ export const handleIn = (d: any) => {
   }
   
   if (!d) { // do not check for !(d && typeof d === 'object') since it could be a string/boolean etc
-    log.error('Internal error: object should always be defined.');
+    log.error("605377e5-447f-4881-b6d5-fa3bc7233497", 'Internal error: object should always be defined.');
     log.error('The raw data was:', String(d));
     return;
   }
@@ -445,7 +445,7 @@ const findPreviousMatch = () => {
       val = getValue(v, con, opts);
     }
     catch (err) {
-      log.error('error getting value:', err);
+      log.error("dc7c40be-682b-45a7-a0c4-e441a877b889", 'error getting value:', err);
     }
     
     if (val === NOT_PARSED_SYMBOL) {
@@ -497,7 +497,7 @@ const findLatestMatch = () => {
       val = getValue(v, con, opts);
     }
     catch (err) {
-      consumer.error('error getting value:', err);
+      consumer.error("2b0ecb96-b481-42c5-8fac-c2d99080f258", 'error getting value:', err);
     }
     
     if (val === NOT_PARSED_SYMBOL) {
@@ -934,7 +934,7 @@ else if(process.env.bunion_force_tty === 'yes'){
   handleUserInput();
 }
 else {
-  consumer.warn('Not connected to stdin.')
+  consumer.warn("0e8ad7a9-1aca-4ecc-bd40-9e3fff8cf45c", 'Not connected to stdin.')
 }
 
 
