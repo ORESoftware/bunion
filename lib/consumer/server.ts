@@ -65,11 +65,11 @@ export default (budsFile: string, cwd: string, con: ConType) => {
     fs.unlinkSync(udsFile);
   }
   catch (e) {
-    // consumer.warn(e);
+    // ignore
   }
   
   server.on('error', e => {
-    consumer.warn(e);
+    consumer.warn("5de13abc-2d34-4c1e-af67-7b4944bdd600", e);
   });
   
   server.listen(udsFile, () => {

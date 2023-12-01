@@ -97,7 +97,7 @@ export const getConf = (): BunionConf => {
     conftemp = require(confPath);
   }
   catch (err) {
-    producer.warn('Missing ".bunion.js" file:', String(err.message || err).split('\n')[0]);
+    producer.warn('Missing ".bunion.js" file:', err);
     conftemp = {};
   }
   
@@ -128,7 +128,7 @@ export const getConf = (): BunionConf => {
     }
   }
   catch (e) {
-    consumer.debug('Error validating bunion conf:', e.message || e);
+    consumer.debug('Error validating bunion conf:', e);
   }
   
   return conf;

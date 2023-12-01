@@ -73,7 +73,7 @@ export const onBunionUnknownJSON = (con: ConType, opts: any, v: any): void => {
       }
       catch (err) {
         clearLine();
-        consumer.error(err);
+        consumer.error("6077a87d-12cf-4c32-a5e8-1068beeabda0", err);
         consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
         consumer.error('The function body is:', t.identifyViaJSObject.toString());
       }
@@ -102,7 +102,7 @@ export const getValFromTransform = (t: any, v: any, con: ConType, opts: any): st
     }
     catch (err) {
       clearLine();
-      consumer.error(err);
+      consumer.error("eb4ab246-38d5-48f2-b45e-9f114682dc02", err);
       consumer.error('Could not call identifyViaJSObject(v) for value v:', v);
       consumer.error('The function body is:', t.identifyViaJSObject.toString());
       writeStatusToStdout(con);
@@ -114,7 +114,7 @@ export const getValFromTransform = (t: any, v: any, con: ConType, opts: any): st
       }
       catch (err) {
         clearLine();
-        consumer.error(err);
+        consumer.error("790df3cf-2c3b-4cc2-adab-c6e6bfd805ae", err);
         consumer.error('Could not call getValue on value:', v);
         consumer.error('The function body is:', t.getValue.toString());
         writeStatusToStdout(con);
@@ -138,7 +138,7 @@ export const getValFromTransformAlreadyIdentified = (t: any, v: any, opts: any):
     }
   }
   catch (err) {
-    consumer.error(err);
+    consumer.error("02fd713c-0cbe-41ff-bc47-f957f8ad39e8", err);
   }
   
   return getInspected(val, opts);

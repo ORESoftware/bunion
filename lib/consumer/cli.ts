@@ -85,7 +85,7 @@ const tryAndLogErrors = (fn: EVCb<void>) => {
     fn(null);
   }
   catch (err) {
-    consumer.warn(err.message || err);
+    consumer.warn("75c30bd3-52ca-473d-80e0-209c29c5a382", err);
   }
 };
 
@@ -100,12 +100,12 @@ process.once('exit', code => {
   // fs.unlinkSync(logFileId);
   // fs.unlinkSync(rawFileId);
   
-  tryAndLogErrors(() => fs.unlinkSync(rawFileId));
-  
+
   if (con.keepLogFile) {
     consumer.info('Log file path:', rawFileId);
   }
   else {
+    tryAndLogErrors(() => fs.unlinkSync(rawFileId));
     tryAndLogErrors(() => fs.unlinkSync(logFileId));
     tryAndLogErrors(() => fs.rmdirSync(runId))
   }
@@ -178,7 +178,7 @@ const readFromFile = (pos: number): any => {
   }
   catch (err) {
     consumer.warn('Could not parse:', nbt);
-    consumer.warn('Parse error was:', typeof err === 'string' ? err : util.inspect(err, utilInspectOpts));
+    consumer.warn('Parse error was:', err);
     return '[Could not parse line from file 1.]';
   }
   
@@ -190,7 +190,7 @@ const readFromFile = (pos: number): any => {
   }
   catch (err) {
     consumer.warn('Could not parse:', mys);
-    consumer.warn('Parse error was:', typeof err === 'string' ? err : util.inspect(err, utilInspectOpts));
+    consumer.warn('Parse error was:', err);
     return '[Could not parse line from file 2.]';
   }
   
@@ -248,14 +248,14 @@ export const handleIn = (d: any) => {
     fs.writeSync(rawFD, raw, pos);
   }
   catch (err) {
-    consumer.warn(err.message || err);
+    consumer.warn("d0e0267e-a473-472f-a705-1e4805772394", err);
   }
   
   try {
     fs.writeSync(logFD, JSON.stringify({p: pos, b: byteLen}), h * 50, 'utf-8');
   }
   catch (err) {
-    consumer.warn(err.message || err);
+    consumer.warn("e511504b-917f-46e8-b797-eb349b28ca16", err);
   }
   
   pos += byteLen;
@@ -383,7 +383,7 @@ const doTailingSubroutine = (i: number, cb: EVCb<any>) => {
     con.current = i;
     onData(con.fromMemory.get(i) || readFromFile(i));
     
-    if (i % 185 === 0) {
+    if (i+1 % 185 === 0) {
       setTimeout(onTimeoutSub(i, cb), 35);
       break;
     }
@@ -401,13 +401,13 @@ const doTailing = (startPoint?: number) => {
   
   doTailingSubroutine(i, e => {
     
-    if (con.mode === <any>BunionMode.SEARCHING) {
+    if (con.mode === BunionMode.SEARCHING) {
       return;
     }
     
     con.mode = BunionMode.READING;
-    clearLine();   // remove later, do not need
-    createLoggedBreak('[ctrl-p]');  // remove later, do not need
+    // clearLine();   // remove later, do not need
+    // createLoggedBreak('[ctrl-p]');  // remove later, do not need
     writeStatusToStdout(con);
     
   });
@@ -427,6 +427,7 @@ const findPreviousMatch = () => {
   if (con.searchTerm === '') {
     con.mode = BunionMode.SEARCHING;
     writeToStdout('No search term.');
+    // writeStatusToStdout(con, 'No search term');
     return;
   }
   
@@ -716,7 +717,9 @@ const handleUserInput = () => {
   strm.setRawMode(true);
   
   strm.on('data', (d: any) => {
-    
+
+    const keyIn = String(d);
+    const keyInTrimmed = String(d).trim();
     con.paused = false;
     createTimeout();
     createDataTimeout(20);
@@ -728,38 +731,38 @@ const handleUserInput = () => {
     con.lastUserEvent = Date.now();
     
     if (con.logChars) {
-      console.log({d: String(d)});
+      console.log({d: keyIn});
     }
     
-    if (con.mode !== BunionMode.STOPPED && con.mode !== BunionMode.PAUSED && String(d) === ':') {
+    if (con.mode !== BunionMode.STOPPED && con.mode !== BunionMode.PAUSED && keyInTrimmed === ':') {
       con.mode = BunionMode.STOPPED;
       writeToStdout(':');
       return;
     }
     
-    if (String(d) === '\u000e') {
+    if (keyIn === '\u000e') {
       con.logChars = !con.logChars;
       return;
     }
     
-    if (String(d).trim() === '\u0003') {
+    if (keyIn === '\u0003') {
       handleCtrlC();
       return;
     }
     
-    if (String(d).trim() === '\u0004') {
+    if (keyIn === '\u0004') {
       handleCtrlD();
       return;
     }
     
     con.sigCount = 0;
     
-    if (String(d) === '\u0002') { // ctrl-l
+    if (keyIn === '\u0002') { // ctrl-l
       gotoLine(0);
       return;
     }
     
-    if (String(d) === '\f') { // ctrl-l
+    if (keyIn === '\f') { // ctrl-l
       con.searchTerm = '';
       clearLine();
       writeToStdout('Cleared search term.');
@@ -772,7 +775,7 @@ const handleUserInput = () => {
     //   return;
     // }
     
-    if (String(d) === '\u0013') {  // ctrl-s
+    if (keyIn === '\u0013') {  // ctrl-s
       con.stopOnNextMatch = true;
       return;
     }
@@ -789,27 +792,29 @@ const handleUserInput = () => {
       }
       return;
     }
-    
-    if (String(d) === ' ') {  // spacebar not ctrl-z
-      if (con.mode !== BunionMode.FIND_LAST) {
-        con.mode = BunionMode.FIND_LAST;
-        findPreviousMatch();
+
+    if(con.mode === BunionMode.SEARCHING){
+      if (keyIn === ' ' || keyIn === '\u001b[Z') {  // spacebar not ctrl-z, shift+tab
+          con.mode = BunionMode.FIND_LAST;
+          findPreviousMatch();
+        return;
       }
-      return;
     }
+
     
     // if(con.mode === BunionMode.SEARCHING && String(d) === '\r'){
     //   doTailing();
     //   return;
     // }
     
-    if (con.mode !== BunionMode.PAUSED && String(d) === '\u001b[Z') {
-      console.log('shift tab');
-      return;
-    }
+    // if (con.mode !== BunionMode.PAUSED && keyIn === '\u001b[Z') { //shift + tab
+    //   console.log('shift tab');
+    //   return;
+    // }
     
-    if (con.mode === BunionMode.SEARCHING && String(d) === '\t') {
+    if (con.mode === BunionMode.SEARCHING && keyIn === '\t') {
       con.stopOnNextMatch = true;
+      con.mode = BunionMode.TAILING;
       doTailing();
       return;
     }
@@ -819,8 +824,8 @@ const handleUserInput = () => {
       return;
     }
     
-    if (con.mode !== BunionMode.PAUSED && levelMap.has(String(d))) {
-      con.logLevel = levelMap.get(String(d));
+    if (con.mode !== BunionMode.PAUSED && levelMap.has(keyIn)) {
+      con.logLevel = levelMap.get(keyIn);
       writeStatusToStdout(con);
       return;
     }
@@ -831,7 +836,7 @@ const handleUserInput = () => {
       return;
     }
     
-    if (String(d) === 's' && con.mode !== BunionMode.PAUSED) {
+    if (keyIn === 's' && con.mode !== BunionMode.PAUSED) {
       if (con.mode !== BunionMode.SEARCHING) {
         con.mode = BunionMode.SEARCHING;
         writeStatusToStdout(con);
@@ -839,27 +844,27 @@ const handleUserInput = () => {
       return;
     }
     
-    if (String(d) === '\u001b[A' && con.mode === BunionMode.SEARCHING) {
+    if (keyIn === '\u001b[A' && con.mode === BunionMode.SEARCHING) {
       scrollUpOneLine();
       return;
     }
     
-    if ((String(d) === '\u001b[2A' || String(d) === '\u001b[1;2A') && con.mode === BunionMode.SEARCHING) {
+    if ((keyIn === '\u001b[2A' || keyIn === '\u001b[1;2A') && con.mode === BunionMode.SEARCHING) {
       scrollUpFive();
       return;
     }
     
-    if ((String(d) === '\u001b[2B' || String(d) === '\u001b[1;2B') && con.mode === BunionMode.SEARCHING) {
+    if ((keyIn === '\u001b[2B' || keyIn === '\u001b[1;2B') && con.mode === BunionMode.SEARCHING) {
       scrollDownFive();
       return;
     }
     
-    if ((String(d) === '\r' || String(d) === '\u001b[B') && con.mode === BunionMode.SEARCHING) {
+    if ((keyIn === '\r' || keyIn === '\u001b[B') && con.mode === BunionMode.SEARCHING) {
       scrollDown();
       return;
     }
     
-    if (String(d).trim() === 'p' && con.mode !== BunionMode.PAUSED) {
+    if (keyIn === 'p' && con.mode !== BunionMode.PAUSED) {
       con.mode = BunionMode.PAUSED;
       clearLine();
       // writeToStdout(chalk.bgBlack.whiteBright(`Mode: ${con.mode} - use ctrl+p to return to reading mode. `));
@@ -872,25 +877,25 @@ const handleUserInput = () => {
     // shift up: \u001b[2A
     // shift down: \u001b[2B
     
-    if (String(d).trim() === '\u0010' && con.mode !== BunionMode.READING) { // ctrl-p
+    if (keyIn === '\u0010' && con.mode !== BunionMode.READING) { // ctrl-p
       startReading();
       return;
     }
     
-    if (con.mode === BunionMode.PAUSED && String(d) === '') { // backspace!
+    if (con.mode === BunionMode.PAUSED && keyIn === '') { // backspace!
       con.searchTerm = con.searchTerm.slice(0, -1);
       clearLine();
       writeToStdout('Search term:', con.searchTerm);
       return;
     }
     
-    if (String(d) === '\t' && con.mode === BunionMode.PAUSED) {
+    if (keyIn === '\t' && con.mode === BunionMode.PAUSED) {
       con.stopOnNextMatch = true;
       doTailing();
       return;
     }
     
-    if (String(d) === '\r' && con.mode === BunionMode.PAUSED) {
+    if (keyIn === '\r' && con.mode === BunionMode.PAUSED) {
       con.stopOnNextMatch = true;
       con.mode = BunionMode.SEARCHING;
       writeStatusToStdout(con);
@@ -902,7 +907,7 @@ const handleUserInput = () => {
       return;
     }
     
-    if (String(d) === '\r') {
+    if (keyIn === '\r') {
       resume();
     }
     

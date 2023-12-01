@@ -30,7 +30,7 @@ const tryReadingInputFile = (): number => {
     return fs.openSync(f, 'r');
   } catch (err) {
     log.error('Could not open the following file for reading:', f);
-    log.error(err.message || err);
+    log.error("02fd713c-0cbe-41ff-bc47-f957f8ad39e8",  err);
     process.exit(1);
   }
 };
