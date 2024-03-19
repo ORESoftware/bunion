@@ -3,6 +3,8 @@
 const path = require('path');
 const cp = require('child_process');
 
+console.log(new Error('Who required me?').stack);
+
 
 if (process.env.oresoftware_dev === 'yes') {
   const projectRoot = path.dirname(__dirname);

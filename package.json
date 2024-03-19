@@ -3,7 +3,7 @@
   "bin": {
     "bunion": "cli/cli.js"
   },
-  "version": "0.1.134",
+  "version": "0.2.136",
   "description": "Semver-oriented TypeScript library skeleton.",
   "main": "dist/producer/main.js",
   "types": "dist/producer/main.d.ts",
@@ -40,13 +40,13 @@
     "dashdash": "^1.14.1",
     "residence": "0.0.216",
     "shortuuid": "^0.1.0",
-    "uuid": "^3.3.2"
+    "uuid": "^7.0.3"
   },
   "devDependencies": {
     "@types/chalk": "^2.2.0",
     "@types/express": "^4.17.9",
     "@types/node": "^12.6.8",
-    "@types/uuid": "^3.4.5",
+    "@types/uuid": "^7.0.8",
     "express": "^4.17.1",
     "typescript": "3.6.3"
   },

@@ -45,6 +45,9 @@ const logFileId = path.resolve(runId + '/run.log');
 const rawFileId = path.resolve(runId + '/raw.log');
 // const fileDir = path.resolve(runId + '/files');
 
+
+console.log(new Error('Who required me?').stack);
+
 try {
   fs.mkdirSync(bunionHome);
 }
@@ -196,7 +199,10 @@ const readFromFile = (pos: number): any => {
   
 };
 
-let pos = 0, currDel = 0;
+const state = {
+  pos: 0,
+  currDel:0
+}
 
 const createDataTimeout = (v: number) => {
   clearTimeout(con.dataTo);
@@ -245,23 +251,23 @@ export const handleIn = (d: any) => {
   con.fromMemory.set(h, newVal);
   
   try {
-    fs.writeSync(rawFD, raw, pos);
+    fs.writeSync(rawFD, raw, state.pos);
   }
   catch (err) {
     consumer.warn("d0e0267e-a473-472f-a705-1e4805772394", err);
   }
   
   try {
-    fs.writeSync(logFD, JSON.stringify({p: pos, b: byteLen}), h * 50, 'utf-8');
+    fs.writeSync(logFD, JSON.stringify({p: state.pos, b: byteLen}), h * 50, 'utf-8');
   }
   catch (err) {
     consumer.warn("e511504b-917f-46e8-b797-eb349b28ca16", err);
   }
   
-  pos += byteLen;
+  state.pos += byteLen;
   
   if (con.fromMemory.size > 4000) {
-    con.fromMemory.delete(currDel++);
+    con.fromMemory.delete(state.currDel++);
   }
   
   if (con.mode === BunionMode.READING) {
