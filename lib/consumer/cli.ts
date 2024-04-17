@@ -205,7 +205,9 @@ const state = {
 }
 
 const createDataTimeout = (v: number) => {
-  clearTimeout(con.dataTo);
+  if(con.dataTo){
+    clearTimeout(con.dataTo as any);
+  }
   con.dataTo = setTimeout(() => {
     sendRequestForData();
   }, v);
@@ -305,7 +307,9 @@ const onTimeout = () => {
 };
 
 const createTimeout = () => {
-  clearTimeout(con.to);
+  if(con.to){
+    clearTimeout(con.to as any);
+  }
   con.to = setTimeout(onTimeout, con.timeout);
 };
 

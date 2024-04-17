@@ -113,7 +113,9 @@ const handleConn = () => {
 };
 
 const setChangeTo = () => {
-  clearTimeout(con.changeTo);
+  if(con.changeTo){
+    clearTimeout(con.changeTo as any);
+  }
   con.changeTo = setTimeout(handleConn, con.oto -= 10);
 };
 
@@ -123,7 +125,9 @@ w.on('change', (ev, f) => {
   
   if (con.changeCount > 8) {
     w.close();
-    clearTimeout(con.changeTo);
+    if(con.changeTo as any){
+      clearTimeout(con.changeTo as any);
+    }
     handleConn();
     return;
   }
@@ -143,7 +147,9 @@ const dataRead = () => {
 };
 
 const createTimeout = () => {
-  clearTimeout(con.dataTo);
+  if(con.dataTo){
+    clearTimeout(con.dataTo as any);
+  }
   con.dataTo = setTimeout(dataRead, 8000);
 };
 

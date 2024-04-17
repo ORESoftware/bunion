@@ -55,7 +55,9 @@ export default (budsFile: string, cwd: string, con: ConType) => {
   };
   
   const sendRequestForData = () => {
-    clearTimeout(con.dataTo);
+    if(con.dataTo){
+      clearTimeout(con.dataTo as any);
+    }
     for (const c of connections) {
       writeReq(c);
     }

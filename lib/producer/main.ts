@@ -226,11 +226,10 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
 };
 
 // export const metaMarker = Symbol('bunion-meta-fields-marker')
-
 export const metaMarker = '_bunionCtx';
 
 const getCombinedFields = function (fields: BunionFields, v?: object) {
-  const meta = process.domain && (process.domain as any)[metaMarker];
+  const meta = (process as any).domain && (process as any).domain[metaMarker];
   return deepMixin(fields, meta, v);
 };
 
@@ -308,7 +307,7 @@ export class BunionLogger {
     return (req: any, res: any, next: (err?: any) => void) : void => {
       const d = req._bunionDomain = res._bunionDomain = (req._havenDomain || Domain.create())
       d._bunionCtx = d._bunionCtx || {}
-      if(process.domain === d){
+      if((process as any).domain === d){
         return next();
       }
       d.run(next);
@@ -449,7 +448,8 @@ export class BunionLogger {
       this.logOnce(BunionLevelInternal.ERROR);
       return;
     }
-    process.stdout.write(getJSON('ERROR', args, this.appName, getCombinedFields(this.fields), this.hostname));
+    const e = new Error(util.inspect(args, { breakLength: Infinity, colors: process.stdout.isTTY }));
+    process.stdout.write(getJSON('ERROR', args.concat(e), this.appName, getCombinedFields(this.fields), this.hostname));
   }
   
   errorx(v: object, ...args: any[]): void {

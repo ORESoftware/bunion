@@ -45,10 +45,9 @@
   "devDependencies": {
     "@types/chalk": "^2.2.0",
     "@types/express": "^4.17.9",
-    "@types/node": "^12.6.8",
+    "@types/node": "^20.12.7",
     "@types/uuid": "^7.0.8",
-    "express": "^4.17.1",
-    "typescript": "3.6.3"
+    "express": "^4.17.1"
   },
   "r2g": {
     "test": "echo 'r2g test noop'"
