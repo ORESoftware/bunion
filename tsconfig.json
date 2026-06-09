@@ -6,13 +6,14 @@
     "declaration": true,
     "baseUrl": ".",
     "rootDir": "lib",
-    "target": "es2018",
+    "target": "es2022",
     "module": "commonjs",
+    "strict": true,
     "noImplicitAny": true,
     "removeComments": true,
     "allowUnreachableCode": true,
     "lib": [
-      "es2017"
+      "esnext"
     ]
   },
   "compileOnSave": false,

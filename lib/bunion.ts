@@ -58,7 +58,7 @@ export interface BunionJSON {
   [RawJSONBytesSymbol]?: Symbol
   appName: string,
   appNameDisplay?: string
-  fields: BunionFields,
+  fields: BunionFields | null,
   pid: number,
   host: string // hostname
   d?: string // formatted date
@@ -67,7 +67,7 @@ export interface BunionJSON {
 export const BunionFieldMarker = Symbol('bunion-field-marker');
 
 export class BunionFields {
-  [BunionFieldMarker]: boolean
+  [BunionFieldMarker]?: boolean
   [key: string]: any
 }
 
