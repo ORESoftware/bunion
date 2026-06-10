@@ -1,6 +1,7 @@
 'use strict';
 
 import * as util from "util";
+import * as os from "os";
 import {BunionJSON} from "./bunion";
 import {BunionLevelInternal} from "./bunion";
 import {bunionConf} from './conf';
@@ -9,8 +10,8 @@ import {bSettings} from "./settings";
 import log from './logging';
 import chalk from "chalk";
 
-const hstname = bunionConf.producer.getHostNameSync();
-const appName = bunionConf.producer.appName;
+const hstname = bunionConf.producer.getHostNameSync ? bunionConf.producer.getHostNameSync() : os.hostname();
+const appName = bunionConf.producer.appName || 'unknown';
 
 const cleanField = (v: any) => {
   return String(v || '#')

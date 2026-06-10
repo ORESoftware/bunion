@@ -12,7 +12,7 @@ import {getErrorString} from '../utils';
 import {opts} from "./opts";
 import {Transformer} from "../bunion";
 
-let transformer: Transformer = null;
+let transformer: Transformer | null = null;
 
 if (opts.key) {
   transformer = transformKeys[opts.key];
@@ -48,7 +48,8 @@ const runTransform = (v: any, t: any, con: ConType, opts: any): boolean => {
   catch (err) {
     return false;  // explicit for your pleasure
   }
-  
+
+  return false;  // transform produced no usable object
 };
 
 export const onBunionUnknownJSON = (con: ConType, opts: any, v: any): void => {

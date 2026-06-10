@@ -106,8 +106,8 @@ const copyObj = (o: object) => {
   
 };
 
-const getJSON = (level: string, args: any[], appName: string, fields: object, host: string, opt?: boolean): string => {
-  
+const getJSON = (level: string, args: any[], appName: string, fields: object | null, host: string, opt?: boolean): string => {
+
   fields = fields || null;
   
   if (fields && typeof fields !== 'object') {
@@ -228,9 +228,10 @@ const getJSON = (level: string, args: any[], appName: string, fields: object, ho
 // export const metaMarker = Symbol('bunion-meta-fields-marker')
 export const metaMarker = '_bunionCtx';
 
-const getCombinedFields = function (fields: BunionFields, v?: object) {
+const getCombinedFields = function (fields: BunionFields | null, v?: object) {
   const meta = (process as any).domain && (process as any).domain[metaMarker];
-  return deepMixin(fields, meta, v);
+  // deepMixin only accepts objects; coerce null/undefined to {} (an empty merge is a no-op).
+  return deepMixin(fields || {}, meta || {}, v || {});
 };
 
 const getHostName = () => {
@@ -275,7 +276,7 @@ export class BunionLogger {
   }
   
   middleware(){
-    return this.mw.apply(this,arguments)
+    return this.mw();
   }
   
   addContext(req: any, v: {[key:string]: any}): void {
@@ -391,7 +392,7 @@ export class BunionLogger {
   child(shallow?: boolean): BunionLogger {
     return new BunionLogger({
       appName: this.appName,
-      fields: shallow ? Object.assign({}, this.fields) : <any>deepMixin(this.fields),
+      fields: shallow ? Object.assign({}, this.fields) : <any>deepMixin(this.fields || {}),
       level: this.level
     });
   }
@@ -525,7 +526,7 @@ export class BunionLogger {
   }
   
   isLevelEnabled(level: BunionLevel): boolean {
-    return this.isEnabled.apply(this, arguments);
+    return this.isEnabled(level);
   }
   
   isEnabled(level: BunionLevel): boolean {

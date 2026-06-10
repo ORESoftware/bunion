@@ -123,7 +123,7 @@ export const getConf = (): BunionConf => {
     
     if (!valid) {
       producer.warn('Your bunion configuation file has an invalid format, see the following error(s):');
-      for (const e of ajv.errors) {
+      for (const e of ajv.errors || []) {
         producer.error(util.inspect(e, {depth: 5, colors: true}));
       }
     }
@@ -137,5 +137,5 @@ export const getConf = (): BunionConf => {
 };
 
 export const bunionConf = getConf();
-export const transformKeys = bunionConf.consumer.transform && bunionConf.consumer.transform.keys;
-export const transformers = Object.keys(transformKeys || {});
+export const transformKeys = (bunionConf.consumer.transform && bunionConf.consumer.transform.keys) || {};
+export const transformers = Object.keys(transformKeys);

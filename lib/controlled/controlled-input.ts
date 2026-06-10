@@ -90,9 +90,9 @@ const makeConnection = (cb: EVCb<any>) => {
 const con = {
   currentByte: 0,
   prom: Promise.resolve(null),
-  dataTo: null as Timer,
+  dataTo: null as Timer | null,
   defaultBytesToRead: 50000,
-  changeTo: null as Timer,
+  changeTo: null as Timer | null,
   changeCount: 0,
   oto: 125
 };

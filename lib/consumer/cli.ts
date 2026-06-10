@@ -37,6 +37,11 @@ import {convertToBunionMap} from "../utils";
 import {NOT_PARSED_SYMBOL} from "./transforms";
 import {utilInspectOpts} from "./constants";
 
+// The index file (run.log) stores one fixed-width record per line at offset `lineNum * INDEX_SLOT_BYTES`.
+// Each record is JSON like {"p":<rawFileByteOffset>,"b":<byteLength>}; the slot must be wide enough to
+// hold the largest such record, and unused trailing bytes stay 0x00 (sparse), which readFromFile relies on.
+const INDEX_SLOT_BYTES = 50;
+
 const dirId = uuid.v4();
 const bunionHome = path.resolve(process.env.HOME + '/.bunion');
 const runs = path.resolve(bunionHome + '/runs');
@@ -44,7 +49,6 @@ const runId = path.resolve(runs + '/' + dirId);
 const logFileId = path.resolve(runId + '/run.log');
 const rawFileId = path.resolve(runId + '/raw.log');
 // const fileDir = path.resolve(runId + '/files');
-
 
 try {
   fs.mkdirSync(bunionHome);
@@ -68,11 +72,14 @@ catch (e) {
 }
 
 const maxIndex = 1;
-const indexRecordByteLength = 50;
-const inspect = opts.inspect = true;
-const output = opts.output = 'medium' || 'short';
-const highlight = opts.highlight = Boolean(true);
-const darkBackground = Boolean(true);
+
+// Honor the CLI flags parsed in ./opts rather than hardcoding. dashdash exposes
+// --no-highlight as opts.no_highlight, --background/--bg as opts.background, etc.
+opts.inspect = opts.inspect !== false;                          // --inspect/--pretty (pretty-print objects by default)
+opts.output = opts.output || 'medium';                          // --output/-o: short | medium | long
+opts.highlight = !opts.no_highlight;                            // --highlight (default) / --no-highlight
+opts.darkBackground = !(opts.light || opts.background === 'light'); // --light / --dark / --bg (dark by default)
+
 const con: ConType = makeCon(maxIndex);
 
 const budsFile = process.env.bunion_uds_file || '';
@@ -81,24 +88,6 @@ const {sendRequestForData, connections} = makeServer(budsFile, cwd, con);
 
 const rawFD = fs.openSync(rawFileId, 'w+');
 const logFD = fs.openSync(logFileId, 'w+');
-
-const sliceBeforeNullByte = (b: Buffer): Buffer => {
-  const nullByteIndex = b.indexOf(0x00);
-  return nullByteIndex >= 0 ? b.slice(0, nullByteIndex) : b;
-};
-
-const writeIndexRecord = (line: number, record: { p: number, b: number }) => {
-  const raw = JSON.stringify(record);
-  const byteLength = Buffer.byteLength(raw);
-
-  if (byteLength >= indexRecordByteLength) {
-    throw new Error(`Index record is too large to fit in ${indexRecordByteLength} bytes: ${raw}`);
-  }
-
-  const b = Buffer.alloc(indexRecordByteLength);
-  b.write(raw, 'utf-8');
-  fs.writeSync(logFD, b, 0, b.length, line * indexRecordByteLength);
-};
 
 const tryAndLogErrors = (fn: EVCb<void>) => {
   try {
@@ -160,7 +149,7 @@ export const onData = (d: any) => {
       val = '';
     }
     
-    const isMatched = con.searchTerm !== '' && new RegExp(con.searchTerm, 'i').test(<string>val);
+    const isMatched = Boolean(con.searchRegex && con.searchRegex.test(<string>val));
     handleSearchTermMatched(con, isMatched);
     
     return;
@@ -185,26 +174,32 @@ const onJSON = (v: Array<any>) => {
 };
 
 const readFromFile = (pos: number): any => {
-  
-  const start = pos * indexRecordByteLength;
-  const b = Buffer.alloc(indexRecordByteLength);
-  const bytesRead = fs.readSync(logFD, b, 0, b.length, start);
-  const nb = sliceBeforeNullByte(b.slice(0, bytesRead));
-  
+
+  const start = pos * INDEX_SLOT_BYTES;
+  const b = Buffer.alloc(INDEX_SLOT_BYTES);
+  fs.readSync(logFD, b, 0, b.length, start);
+  const i = b.indexOf(0x00);
+  // i === -1 means the slot was completely filled (no null terminator) - use the whole buffer.
+  const nb = i === -1 ? b : b.slice(0, i);
+
+  let nbt = '', v: any;
+
   try {
-    var nbt = String(nb).trim();
-    var v = JSON.parse(nbt);
+    nbt = String(nb).trim();
+    v = JSON.parse(nbt);
   }
   catch (err) {
     consumer.warn("111e5550-8030-4a13-b7b6-6b11547c286f", 'Could not parse:', nbt);
     consumer.warn("7b7905a0-49f0-4139-947d-f62b132ce2d0", 'Parse error was:', err);
     return '[Could not parse line from file 1.]';
   }
-  
+
+  let mys = '';
+
   try {
-    var nnb = Buffer.alloc(v.b);
-    const rawBytesRead = fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
-    var mys = String(nnb.slice(0, rawBytesRead)).trim();
+    const nnb = Buffer.alloc(v.b);
+    fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
+    mys = String(nnb).trim();
     return JSON.parse(mys);
   }
   catch (err) {
@@ -212,13 +207,39 @@ const readFromFile = (pos: number): any => {
     consumer.warn("514d91a1-800c-4dbf-ae92-23f2749774b0", 'Parse error was:', err);
     return '[Could not parse line from file 2.]';
   }
-  
+
 };
 
 const state = {
   pos: 0,
   currDel:0
 }
+
+// Disk writes are done asynchronously and serialized through a single promise chain. A synchronous
+// fs.writeSync per log line (the previous approach) blocks the event loop and stalls both parsing and
+// keystroke handling under load; chaining also avoids unsequenced concurrent fs.write on the same fd
+// (which Node documents as unsafe).
+//
+// NOTE: we deliberately do NOT throttle by pausing process.stdin here. stdin is piped into the parser,
+// and pausing a piped source suppresses its 'end' event - which onStdinEnd relies on to switch into
+// scroll/search mode (and to exit under bunion_force_exit_on_stdin_end_event). In practice appends are
+// fast so the backlog stays small; true backpressure would require turning the ingest path into a
+// Writable so the pipe's native flow control can apply.
+//
+// con.writeChain holds ONLY the latest (tail) promise. Each `.then` link, once settled and its
+// continuation has run, becomes unreachable and is garbage-collected - so the chain does not grow with
+// the number of lines processed. The only transient growth is the set of still-pending writes when the
+// producer briefly outruns the disk; that set drains as soon as ingestion pauses.
+const queueWrite = (fd: number, data: string, position: number, errId: string) => {
+  con.writeChain = con.writeChain.then(() => new Promise<void>(resolve => {
+    fs.write(fd, data, position, 'utf-8', err => {
+      if (err && !con.exiting) {
+        consumer.warn(errId, err);
+      }
+      resolve();
+    });
+  }));
+};
 
 const createDataTimeout = (v: number) => {
   if(con.dataTo){
@@ -264,24 +285,27 @@ export const handleIn = (d: any) => {
   
   const raw = JSON.stringify(d) + '\n';
   const byteLen = Buffer.byteLength(raw);
-  
-  const newVal = JSON.parse(raw);
+
+  // d is already a freshly-parsed object from the stream parser, so we can store it directly
+  // instead of round-tripping through JSON.stringify -> JSON.parse to clone it.
+  const newVal = d;
   con.fromMemory.set(h, newVal);
-  
-  try {
-    fs.writeSync(rawFD, raw, state.pos);
+
+  const rawPos = state.pos;
+  queueWrite(rawFD, raw, rawPos, "d0e0267e-a473-472f-a705-1e4805772394");
+
+  const indexRecord = JSON.stringify({p: rawPos, b: byteLen});
+
+  if (Buffer.byteLength(indexRecord) > INDEX_SLOT_BYTES) {
+    consumer.error(
+      "5e1b8c7a-2f9d-4a1c-9c3e-7d4b6f0a1e22",
+      `Index record exceeds the ${INDEX_SLOT_BYTES}-byte slot; scroll-back for this line may be corrupt:`,
+      indexRecord
+    );
   }
-  catch (err) {
-    consumer.warn("d0e0267e-a473-472f-a705-1e4805772394", err);
-  }
-  
-  try {
-    writeIndexRecord(h, {p: state.pos, b: byteLen});
-  }
-  catch (err) {
-    consumer.warn("e511504b-917f-46e8-b797-eb349b28ca16", err);
-  }
-  
+
+  queueWrite(logFD, indexRecord, h * INDEX_SLOT_BYTES, "e511504b-917f-46e8-b797-eb349b28ca16");
+
   state.pos += byteLen;
   
   if (con.fromMemory.size > 4000) {
@@ -315,11 +339,8 @@ const parser = process.stdin.resume()
                       .on('data', handleIn);
 
 const onTimeout = () => {
-  con.paused = true;
   clearLine();
   writeStatusToStdout(con, 'Paused');
-  // parser.destroy();
-  // process.exit(1);
 };
 
 const createTimeout = () => {
@@ -327,28 +348,6 @@ const createTimeout = () => {
     clearTimeout(con.to as any);
   }
   con.to = setTimeout(onTimeout, con.timeout);
-};
-
-const resume = () => {
-  
-  return;
-  
-  clearLine();
-  
-  switch (con.mode) {
-    
-    case BunionMode.READING:
-      return;
-    
-    case BunionMode.CLOSED:
-      con.mode = BunionMode.READING;
-      createTimeout();
-      return;
-    
-    default:
-      writeStatusToStdout(con);
-  }
-  
 };
 
 const createLoggedBreak = (m: string) => {
@@ -408,8 +407,8 @@ const doTailingSubroutine = (i: number, cb: EVCb<any>) => {
     
     con.current = i;
     onData(con.fromMemory.get(i) || readFromFile(i));
-    
-    if ((i + 1) % 185 === 0) {
+
+    if ((i + 1) % 185 === 0) {  // yield to the event loop every 185 lines so keystrokes stay responsive
       setTimeout(onTimeoutSub(i, cb), 35);
       break;
     }
@@ -423,7 +422,7 @@ const doTailing = (startPoint?: number) => {
   clearLine();
   createLoggedBreak('[ctrl-t]');
   
-  let i = Number.isInteger(startPoint) ? startPoint : con.current;
+  let i = typeof startPoint === 'number' && Number.isInteger(startPoint) ? startPoint : con.current;
   
   doTailingSubroutine(i, e => {
     
@@ -448,110 +447,60 @@ const startReading = () => {
   writeStatusToStdout(con);
 };
 
-const findPreviousMatch = () => {
-  
-  if (con.searchTerm === '') {
+// Scan backwards from startIndex toward con.tail for the current search term, recentering the
+// viewport on a hit. findLatestMatch starts at the head (newest line); findPreviousMatch starts
+// just above the current line. Both previously duplicated this body.
+const findMatchBackwardsFrom = (startIndex: number) => {
+
+  if (con.searchTerm === '' || !con.searchRegex) {
     con.mode = BunionMode.SEARCHING;
     writeToStdout('No search term.');
-    // writeStatusToStdout(con, 'No search term');
     return;
   }
-  
-  let i = Math.max(con.current - 1, con.tail), matched = false;
-  const st = con.searchTerm;
-  const r = new RegExp(st, 'i');
-  
+
+  let i = Math.max(con.tail, Math.min(startIndex, con.head)), matched = false;
+
   while (i >= con.tail) {
-    
+
     const v = con.fromMemory.get(i) || readFromFile(i);
-    
+
     let val = null;
-    
+
     try {
       val = getValue(v, con, opts);
     }
     catch (err) {
-      log.error("dc7c40be-682b-45a7-a0c4-e441a877b889", 'error getting value:', err);
+      consumer.error("dc7c40be-682b-45a7-a0c4-e441a877b889", 'error getting value:', err);
     }
-    
+
     if (val === NOT_PARSED_SYMBOL) {
       consumer.warn('warning: value could not be parsed from:\n', v);
       i--;
       continue;
     }
-    
-    if (val && r.test(<string>val)) {
+
+    if (val && con.searchRegex.test(<string>val)) {
       matched = true;
       break;
     }
-    
+
     i--;
   }
-  
+
   if (matched) {
     con.current = i + 5;
     scrollUpFive();
     con.mode = BunionMode.SEARCHING;
     return;
   }
-  
+
   writeToStdout(`Could not find anything matching: '${con.searchTerm}'`);
   con.stopOnNextMatch = true;
   con.mode = BunionMode.SEARCHING;
-  
 };
 
-const findLatestMatch = () => {
-  
-  if (con.searchTerm === '') {
-    con.mode = BunionMode.SEARCHING;
-    writeToStdout('No search term.');
-    return;
-  }
-  
-  let i = con.head, matched = false;
-  const st = con.searchTerm;
-  const r = new RegExp(st, 'i');
-  
-  while (i >= con.tail) {
-    
-    const v = con.fromMemory.get(i) || readFromFile(i);
-    
-    let val = null;
-    
-    try {
-      val = getValue(v, con, opts);
-    }
-    catch (err) {
-      consumer.error("2b0ecb96-b481-42c5-8fac-c2d99080f258", 'error getting value:', err);
-    }
-    
-    if (val === NOT_PARSED_SYMBOL) {
-      consumer.warn('warning: value could not be parsed from:\n', v);
-      i--;
-      continue;
-    }
-    
-    if (val && r.test(<string>val)) {
-      matched = true;
-      break;
-    }
-    
-    i--;
-  }
-  
-  if (matched) {
-    con.current = i + 5;
-    scrollUpFive();
-    con.mode = BunionMode.SEARCHING;
-    return;
-  }
-  
-  writeToStdout(`Could not find anything matching: '${con.searchTerm}'`);
-  con.stopOnNextMatch = true;
-  con.mode = BunionMode.SEARCHING;
-  
-};
+const findPreviousMatch = () => findMatchBackwardsFrom(con.current - 1);
+const findLatestMatch = () => findMatchBackwardsFrom(con.head);
 
 const scrollUpOneLine = () => {
   
@@ -658,28 +607,42 @@ const scrollDownFive = () => {
   
 };
 
+// Single place that mutates the search term so con.searchRegex never drifts out of sync with
+// con.searchTerm. The cached regex is non-global ('i') so it is safe to reuse across repeated
+// .test() calls (a global regex would carry lastIndex state between calls and miss matches).
+const setSearchTerm = (term: string): boolean => {
+
+  let regex: RegExp | null = null;
+
+  if (term !== '') {
+    try {
+      regex = new RegExp(term, 'i');
+    }
+    catch (e) {
+      consumer.warn('Could not create regex from string:', term);
+      return false;
+    }
+  }
+
+  con.searchTerm = term;
+  con.searchRegex = regex as RegExp;
+  return true;
+};
+
 const handleSearchTermTyping = (d: string) => {
-  
+
   clearLine();
-  
+
   if (ctrlChars.has(String(d))) {
     writeToStdout('ctrl command ignored. to match a tab, use \\t, to exit use return/tab keys.');
     return;
   }
-  
-  const newSearchTerm = con.searchTerm + String(d);
-  
-  try {
-    con.searchRegex = new RegExp(newSearchTerm, 'ig');
-  }
-  catch (e) {
-    consumer.warn('Could not create regex from string:', newSearchTerm);
+
+  if (!setSearchTerm(con.searchTerm + String(d))) {
     return;
   }
-  
-  con.searchTerm = newSearchTerm;
+
   writeToStdout('Search term:', con.searchTerm);
-  
 };
 
 const handleShutdown = (signal: string) => () => {
@@ -746,7 +709,6 @@ const handleUserInput = () => {
 
     const keyIn = String(d);
     const keyInTrimmed = String(d).trim();
-    con.paused = false;
     createTimeout();
     createDataTimeout(20);
     
@@ -789,7 +751,7 @@ const handleUserInput = () => {
     }
     
     if (keyIn === '\f') { // ctrl-l
-      con.searchTerm = '';
+      setSearchTerm('');
       clearLine();
       writeToStdout('Cleared search term.');
       return;
@@ -850,8 +812,9 @@ const handleUserInput = () => {
       return;
     }
     
-    if (con.mode !== BunionMode.PAUSED && levelMap.has(keyIn)) {
-      con.logLevel = levelMap.get(keyIn);
+    const mappedLevel = levelMap.get(keyIn);
+    if (con.mode !== BunionMode.PAUSED && mappedLevel !== undefined) {
+      con.logLevel = mappedLevel;
       writeStatusToStdout(con);
       return;
     }
@@ -909,7 +872,7 @@ const handleUserInput = () => {
     }
     
     if (con.mode === BunionMode.PAUSED && keyIn === '') { // backspace!
-      con.searchTerm = con.searchTerm.slice(0, -1);
+      setSearchTerm(con.searchTerm.slice(0, -1));  // keeps con.searchRegex in sync (the old code did not)
       clearLine();
       writeToStdout('Search term:', con.searchTerm);
       return;
@@ -931,10 +894,6 @@ const handleUserInput = () => {
     if (con.mode === BunionMode.PAUSED) {
       handleSearchTermTyping(d);
       return;
-    }
-    
-    if (keyIn === '\r') {
-      resume();
     }
     
   });
@@ -962,3 +921,5 @@ else if(process.env.bunion_force_tty === 'yes'){
 else {
   consumer.warn("0e8ad7a9-1aca-4ecc-bd40-9e3fff8cf45c", 'Not connected to stdin.')
 }
+
+

@@ -10,8 +10,7 @@ export const makeCon = (maxIndex: number) => ({
   exiting: false,
   stdinEnd: false,
   siblingProducerPID: -1,
-  paused: false,
-  rsi: null as ReadStream,
+  rsi: null as ReadStream | null,
   fullTrace: false,
   tail: 0,
   keepLogFile: false,
@@ -25,9 +24,12 @@ export const makeCon = (maxIndex: number) => ({
   stopOnNextMatch: true,
   logChars: false,
   sigCount: 0,
-  lastUserEvent: null as number,
-  dataTo: null as Timer,
-  to: null as Timer,
-  searchRegex: null as RegExp,
-  timeout: 555500  // 450 seconds
+  lastUserEvent: null as number | null,
+  dataTo: null as Timer | null,
+  to: null as Timer | null,
+  searchRegex: null as RegExp | null,
+  // Tail of the serialized async file-write chain (see queueWrite). Holds only the latest promise;
+  // settled links are GC'd, so this does not grow with the number of log lines processed.
+  writeChain: Promise.resolve() as Promise<void>,
+  timeout: 555500  // ms of inactivity before the status line shows "Paused" (~555 seconds)
 });
