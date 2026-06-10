@@ -11,14 +11,20 @@ import {EVCb} from "../bunion";
 import {producer} from "../loggers";
 
 const fileFlagIndex = process.argv.indexOf('-f');
-let fraw = process.env.bxn_file_path || process.argv[fileFlagIndex + 1];
+let fraw = process.env.bxn_file_path || (fileFlagIndex > -1 ? process.argv[fileFlagIndex + 1] : '');
 
 const cwd = process.cwd();
+
+if (!fraw || fraw === '-f') {
+  throw new Error('Pass filepath with -f <path> or set bxn_file_path.');
+}
+
 const f = path.isAbsolute(fraw) ? path.resolve(fraw) : path.resolve(cwd + '/' + fraw);
 
-if (!f) {
-  throw 'Pass filepath as first arg.';
-}
+const sliceBeforeNullByte = (b: Buffer): Buffer => {
+  const nullByteIndex = b.indexOf(0x00);
+  return nullByteIndex >= 0 ? b.slice(0, nullByteIndex) : b;
+};
 
 const tryReadingInputFile = (): number => {
   
@@ -137,11 +143,22 @@ const read = (v: any) => {
     const curr = con.currentByte;
     const b = Buffer.alloc(bytesToRead);
     
-    fs.read(fd, b, 0, bytesToRead, curr, (e, v) => {
+    fs.read(fd, b, 0, bytesToRead, curr, (e, bytesRead) => {
+      if (e) {
+        log.error('Could not read from file:', f);
+        log.error("ef82f767-193d-4f12-918c-3b6162fc78d4", e);
+        resolve(null);
+        return;
+      }
       
-      const i = b.indexOf(0x00);
-      const shortb = b.slice(0, i);
-      con.currentByte = curr + shortb.length;
+      const shortb = sliceBeforeNullByte(b.slice(0, bytesRead));
+
+      if (shortb.length < 1) {
+        resolve(null);
+        return;
+      }
+
+      con.currentByte = curr + bytesRead;
       process.stdout.write(shortb);
       resolve(null);
       
@@ -165,6 +182,3 @@ const createTimeout = () => {
 fs.watch(f, ev => {
   createTimeout();
 });
-
-
-

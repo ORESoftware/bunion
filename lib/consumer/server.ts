@@ -19,7 +19,7 @@ export default (budsFile: string, cwd: string, con: ConType) => {
     
     connections.add(c);
     
-    c.once('end', () => {
+    c.once('close', () => {
       connections.delete(c);
     });
     
@@ -29,14 +29,13 @@ export default (budsFile: string, cwd: string, con: ConType) => {
     
     c.pipe(new JSONParser())
       .on('error', e => {
-        console.error("09d3eff8-b74c-4f23-a261-ba90c12b931c", 'client conn error:', e);
+        consumer.warn("09d3eff8-b74c-4f23-a261-ba90c12b931c", 'client conn error:', e);
       })
       .on('string', s => {
-        console.log('string from client:', s);
+        consumer.debug('Ignoring string from client:', s);
       })
       .on('data', d => {
-        console.log('json from client:', d);
-        process.exit(0);
+        consumer.debug('Ignoring JSON from client:', d);
       })
     
   });

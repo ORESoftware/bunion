@@ -46,8 +46,6 @@ const rawFileId = path.resolve(runId + '/raw.log');
 // const fileDir = path.resolve(runId + '/files');
 
 
-console.log(new Error('Who required me?').stack);
-
 try {
   fs.mkdirSync(bunionHome);
 }
@@ -70,6 +68,7 @@ catch (e) {
 }
 
 const maxIndex = 1;
+const indexRecordByteLength = 50;
 const inspect = opts.inspect = true;
 const output = opts.output = 'medium' || 'short';
 const highlight = opts.highlight = Boolean(true);
@@ -82,6 +81,24 @@ const {sendRequestForData, connections} = makeServer(budsFile, cwd, con);
 
 const rawFD = fs.openSync(rawFileId, 'w+');
 const logFD = fs.openSync(logFileId, 'w+');
+
+const sliceBeforeNullByte = (b: Buffer): Buffer => {
+  const nullByteIndex = b.indexOf(0x00);
+  return nullByteIndex >= 0 ? b.slice(0, nullByteIndex) : b;
+};
+
+const writeIndexRecord = (line: number, record: { p: number, b: number }) => {
+  const raw = JSON.stringify(record);
+  const byteLength = Buffer.byteLength(raw);
+
+  if (byteLength >= indexRecordByteLength) {
+    throw new Error(`Index record is too large to fit in ${indexRecordByteLength} bytes: ${raw}`);
+  }
+
+  const b = Buffer.alloc(indexRecordByteLength);
+  b.write(raw, 'utf-8');
+  fs.writeSync(logFD, b, 0, b.length, line * indexRecordByteLength);
+};
 
 const tryAndLogErrors = (fn: EVCb<void>) => {
   try {
@@ -169,11 +186,10 @@ const onJSON = (v: Array<any>) => {
 
 const readFromFile = (pos: number): any => {
   
-  const start = pos * 50;
-  const b = Buffer.alloc(299);
-  fs.readSync(logFD, b, 0, b.length, start);
-  const i = b.indexOf(0x00);
-  const nb = b.slice(0, i);
+  const start = pos * indexRecordByteLength;
+  const b = Buffer.alloc(indexRecordByteLength);
+  const bytesRead = fs.readSync(logFD, b, 0, b.length, start);
+  const nb = sliceBeforeNullByte(b.slice(0, bytesRead));
   
   try {
     var nbt = String(nb).trim();
@@ -187,8 +203,8 @@ const readFromFile = (pos: number): any => {
   
   try {
     var nnb = Buffer.alloc(v.b);
-    fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
-    var mys = String(nnb).trim();
+    const rawBytesRead = fs.readSync(rawFD, nnb, 0, nnb.length, v.p);
+    var mys = String(nnb.slice(0, rawBytesRead)).trim();
     return JSON.parse(mys);
   }
   catch (err) {
@@ -260,7 +276,7 @@ export const handleIn = (d: any) => {
   }
   
   try {
-    fs.writeSync(logFD, JSON.stringify({p: state.pos, b: byteLen}), h * 50, 'utf-8');
+    writeIndexRecord(h, {p: state.pos, b: byteLen});
   }
   catch (err) {
     consumer.warn("e511504b-917f-46e8-b797-eb349b28ca16", err);
@@ -393,7 +409,7 @@ const doTailingSubroutine = (i: number, cb: EVCb<any>) => {
     con.current = i;
     onData(con.fromMemory.get(i) || readFromFile(i));
     
-    if (i+1 % 185 === 0) {
+    if ((i + 1) % 185 === 0) {
       setTimeout(onTimeoutSub(i, cb), 35);
       break;
     }
@@ -946,5 +962,3 @@ else if(process.env.bunion_force_tty === 'yes'){
 else {
   consumer.warn("0e8ad7a9-1aca-4ecc-bd40-9e3fff8cf45c", 'Not connected to stdin.')
 }
-
-
