@@ -5,3 +5,7 @@ node_modules
 dist
 
 !dist/readme.md
+tmp
+temp
+tmp/worktrees
+temp/worktrees
